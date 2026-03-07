@@ -492,6 +492,10 @@ func generateEntities() {
 		builder.WriteString(fmt.Sprintf("	case %s:\n", strings.Join(typeStrings, ", ")))
 		builder.WriteString(fmt.Sprintf("		entity = %s\n", constructorFunction))
 	}
+	// Manually registered entities not defined in XML spec (complex parsing)
+	builder.WriteString("	case \"HATCH\":\n")
+	builder.WriteString("		entity = NewHatch()\n")
+
 	builder.WriteString("	default:\n")
 	builder.WriteString("		ok = false\n")
 	builder.WriteString("	}\n")

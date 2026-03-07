@@ -16956,6 +16956,8 @@ func createEntity(entityType string) (entity Entity, ok bool) {
 		entity = NewdimensionHelper()
 	case "ELLIPSE":
 		entity = NewEllipse()
+	case "HATCH":
+		entity = NewHatch()
 	case "HELIX":
 		entity = NewHelix()
 	case "IMAGE":
