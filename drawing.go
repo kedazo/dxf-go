@@ -335,6 +335,8 @@ func readFromCodePairReader(reader codePairReader) (Drawing, error) {
 				drawing.Header, nextPair, err = readHeader(nextPair, reader)
 			case "TABLES":
 				nextPair, err = readTables(&drawing, nextPair, reader)
+			case "BLOCKS":
+				drawing.Blocks, nextPair, err = readBlocksSection(nextPair, reader)
 			default:
 				// swallow unsupported section
 				for err == nil && !nextPair.isEndSection() {
@@ -364,6 +366,76 @@ func readFromCodePairReader(reader codePairReader) (Drawing, error) {
 
 	bindPointers(&drawing)
 	return drawing, nil
+}
+
+func readBlocksSection(np CodePair, reader codePairReader) (blocks []Block, nextPair CodePair, err error) {
+	nextPair = np
+	for err == nil && !nextPair.isEndSection() {
+		if nextPair.Code != 0 {
+			nextPair, err = reader.readCodePair()
+			continue
+		}
+		entityType := nextPair.Value.(StringCodePairValue).Value
+		if entityType == "BLOCK" {
+			var block Block
+			// Read block header fields
+			nextPair, err = reader.readCodePair()
+			for err == nil && nextPair.Code != 0 {
+				switch nextPair.Code {
+				case 2, 3:
+					block.Name = nextPair.Value.(StringCodePairValue).Value
+				case 5:
+					block.handle = handleFromString(nextPair.Value.(StringCodePairValue).Value)
+				case 8:
+					block.Layer = nextPair.Value.(StringCodePairValue).Value
+				case 10:
+					block.BasePoint.X = nextPair.Value.(DoubleCodePairValue).Value
+				case 20:
+					block.BasePoint.Y = nextPair.Value.(DoubleCodePairValue).Value
+				case 30:
+					block.BasePoint.Z = nextPair.Value.(DoubleCodePairValue).Value
+				case 1:
+					block.XrefName = nextPair.Value.(StringCodePairValue).Value
+				case 4:
+					block.Description = nextPair.Value.(StringCodePairValue).Value
+				case 67:
+					block.IsInPaperSpace = nextPair.Value.(ShortCodePairValue).Value != 0
+				}
+				nextPair, err = reader.readCodePair()
+			}
+			// Read block entities until ENDBLK
+			for err == nil {
+				if nextPair.Code == 0 {
+					val := nextPair.Value.(StringCodePairValue).Value
+					if val == "ENDBLK" {
+						// Skip past ENDBLK's pairs
+						nextPair, err = reader.readCodePair()
+						for err == nil && nextPair.Code != 0 {
+							nextPair, err = reader.readCodePair()
+						}
+						break
+					}
+				}
+				var entity Entity
+				var ok bool
+				entity, nextPair, ok, err = readEntity(nextPair, reader)
+				if err != nil {
+					return
+				}
+				if ok {
+					block.Entities = append(block.Entities, entity)
+				}
+			}
+			blocks = append(blocks, block)
+		} else {
+			// Skip non-BLOCK entity type
+			nextPair, err = reader.readCodePair()
+			for err == nil && nextPair.Code != 0 {
+				nextPair, err = reader.readCodePair()
+			}
+		}
+	}
+	return
 }
 
 func assignHandles(d *Drawing) {

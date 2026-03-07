@@ -39,7 +39,25 @@ func codePairReaderFromReader(reader io.Reader, e encoding.Encoding) (r codePair
 		r = newTextCodePairReader(reader, decoder, firstLine)
 	}
 
-	return r, err
+	return &commentFilteringReader{inner: r}, err
+}
+
+// commentFilteringReader wraps a codePairReader and silently skips group code 999 (comment) pairs.
+type commentFilteringReader struct {
+	inner codePairReader
+}
+
+func (r *commentFilteringReader) readCodePair() (CodePair, error) {
+	for {
+		pair, err := r.inner.readCodePair()
+		if err != nil || pair.Code != 999 {
+			return pair, err
+		}
+	}
+}
+
+func (r *commentFilteringReader) setUtf8Reader() {
+	r.inner.setUtf8Reader()
 }
 
 // code pairs
@@ -157,13 +175,13 @@ func readBoolText(line string) (bool, error) {
 }
 
 func readShortText(line string) (int16, error) {
-	value, err := strconv.ParseInt(strings.TrimSpace(line), 10, 16)
+	value, err := strconv.ParseInt(strings.TrimSpace(line), 10, 64)
 	result := int16(value)
 	return result, err
 }
 
 func readIntText(line string) (int, error) {
-	value, err := strconv.ParseInt(strings.TrimSpace(line), 10, 32)
+	value, err := strconv.ParseInt(strings.TrimSpace(line), 10, 64)
 	result := int(value)
 	return result, err
 }
