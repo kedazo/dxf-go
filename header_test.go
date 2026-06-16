@@ -20,6 +20,21 @@ func TestReadNonDefaultHeaderVersion(t *testing.T) {
 	assertEqInt(t, 6, int(header.MaintenanceVersion))
 }
 
+func TestTolerateMalformedHeaderVariable(t *testing.T) {
+	// $ACADMAINTVER expects a code-70 (short) value, but here it is followed by
+	// a code-1 (string) value — the kind of degraded HEADER that LibreDWG emits
+	// for some AutoCAD 2018/AC1032 DWGs ("Template section not found"). Strict
+	// parsing used to abort with "expected code 70"; tolerant parsing must skip
+	// the bad variable and still read the well-formed $ACADVER that follows.
+	header := parseHeader(t,
+		NewStringCodePair(9, "$ACADMAINTVER"),
+		NewStringCodePair(1, "GARBAGE"),
+		NewStringCodePair(9, "$ACADVER"),
+		NewStringCodePair(1, "AC1014"),
+	)
+	assertEqInt(t, int(R14), int(header.Version))
+}
+
 func TestWriteVersionSpecificVariables(t *testing.T) {
 	header := *NewHeader()
 

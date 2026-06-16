@@ -3,7 +3,6 @@
 package dxf
 
 import (
-	"errors"
 	"math"
 	"time"
 
@@ -2764,33 +2763,28 @@ func readHeader(nextPair CodePair, reader codePairReader) (Header, CodePair, err
 		} else {
 			switch variableName {
 			case "$ACADVER":
-				if nextPair.Code != 1 {
-					return header, nextPair, errors.New("expected code 1")
-				}
-				header.Version = parseAcadVersion(nextPair.Value.(StringCodePairValue).Value)
+				if nextPair.Code == 1 {
+					header.Version = parseAcadVersion(nextPair.Value.(StringCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 				if header.Version >= R2007 {
 					reader.setUtf8Reader()
 				}
 			case "$ACADMAINTVER":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.MaintenanceVersion = nextPair.Value.(ShortCodePairValue).Value
+				if nextPair.Code == 70 {
+					header.MaintenanceVersion = nextPair.Value.(ShortCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DWGCODEPAGE":
-				if nextPair.Code != 3 {
-					return header, nextPair, errors.New("expected code 3")
-				}
-				header.DrawingCodePage = nextPair.Value.(StringCodePairValue).Value
+				if nextPair.Code == 3 {
+					header.DrawingCodePage = nextPair.Value.(StringCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$LASTSAVEDBY":
-				if nextPair.Code != 1 {
-					return header, nextPair, errors.New("expected code 1")
-				}
-				header.LastSavedBy = nextPair.Value.(StringCodePairValue).Value
+				if nextPair.Code == 1 {
+					header.LastSavedBy = nextPair.Value.(StringCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$REQUIREDVERSIONS":
-				if nextPair.Code != 160 {
-					return header, nextPair, errors.New("expected code 160")
-				}
-				header.RequiredVersions = nextPair.Value.(LongCodePairValue).Value
+				if nextPair.Code == 160 {
+					header.RequiredVersions = nextPair.Value.(LongCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$INSBASE":
 				switch nextPair.Code {
 				case 10:
@@ -2833,700 +2827,561 @@ func readHeader(nextPair CodePair, reader codePairReader) (Header, CodePair, err
 					header.MaximumDrawingLimits.Y = nextPair.Value.(DoubleCodePairValue).Value
 				}
 			case "$ORTHOMODE":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DrawOrthoganalLines = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DrawOrthoganalLines = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$REGENMODE":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.UseRegenMode = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.UseRegenMode = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$FILLMODE":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.FillModeOn = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.FillModeOn = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$QTEXTMODE":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.UseQuickTextMode = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.UseQuickTextMode = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$MIRRTEXT":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.MirrorText = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.MirrorText = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DRAGMODE":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DragMode = DragMode(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DragMode = DragMode(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$LTSCALE":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.LineTypeScale = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.LineTypeScale = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$OSMODE":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.ObjectSnapFlags = int(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.ObjectSnapFlags = int(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$ATTMODE":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.AttributeVisibility = AttributeVisibility(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.AttributeVisibility = AttributeVisibility(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$TEXTSIZE":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.DefaultTextHeight = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.DefaultTextHeight = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$TRACEWID":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.TraceWidth = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.TraceWidth = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$TEXTSTYLE":
-				if nextPair.Code != 7 {
-					return header, nextPair, errors.New("expected code 7")
-				}
-				header.TextStyle = nextPair.Value.(StringCodePairValue).Value
+				if nextPair.Code == 7 {
+					header.TextStyle = nextPair.Value.(StringCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$CLAYER":
-				if nextPair.Code != 8 {
-					return header, nextPair, errors.New("expected code 8")
-				}
-				header.CurrentLayer = nextPair.Value.(StringCodePairValue).Value
+				if nextPair.Code == 8 {
+					header.CurrentLayer = nextPair.Value.(StringCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$CELTYPE":
-				if nextPair.Code != 6 {
-					return header, nextPair, errors.New("expected code 6")
-				}
-				header.CurrentEntityLineType = nextPair.Value.(StringCodePairValue).Value
+				if nextPair.Code == 6 {
+					header.CurrentEntityLineType = nextPair.Value.(StringCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$CECOLOR":
-				if nextPair.Code != 62 {
-					return header, nextPair, errors.New("expected code 62")
-				}
-				header.CurrentEntityColor = Color(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 62 {
+					header.CurrentEntityColor = Color(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$CELTSCALE":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.CurrentEntityLineTypeScale = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.CurrentEntityLineTypeScale = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DELOBJ":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.RetainDeletedObjects = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.RetainDeletedObjects = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DISPSILH":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DisplaySilhouetteCurvesInWireframeMode = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DisplaySilhouetteCurvesInWireframeMode = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DRAGVS":
-				if nextPair.Code != 349 {
-					return header, nextPair, errors.New("expected code 349")
-				}
-				header.SolidVisualStylePointer = handleFromString(nextPair.Value.(StringCodePairValue).Value)
+				if nextPair.Code == 349 {
+					header.SolidVisualStylePointer = handleFromString(nextPair.Value.(StringCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMSCALE":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.DimensioningScaleFactor = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.DimensioningScaleFactor = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMASZ":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.DimensioningArrowSize = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.DimensioningArrowSize = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMEXO":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.DimensionExtensionLineOffset = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.DimensionExtensionLineOffset = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMDLI":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.DimensionLineIncrement = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.DimensionLineIncrement = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMRND":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.DimensionDistanceRoundingValue = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.DimensionDistanceRoundingValue = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMDLE":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.DimensionLineExtension = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.DimensionLineExtension = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMEXE":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.DimensionExtensionLineExtension = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.DimensionExtensionLineExtension = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMTP":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.DimensionPlusTolerance = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.DimensionPlusTolerance = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMTM":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.DimensionMinusTolerance = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.DimensionMinusTolerance = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMTXT":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.DimensioningTextHeight = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.DimensioningTextHeight = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMCEN":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.CenterMarkSize = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.CenterMarkSize = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMTSZ":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.DimensioningTickSize = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.DimensioningTickSize = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMTOL":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.GenerateDimensionTolerances = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.GenerateDimensionTolerances = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMLIM":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.GenerateDimensionLimits = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.GenerateDimensionLimits = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMTIH":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensionTextInsideHorizontal = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DimensionTextInsideHorizontal = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMTOH":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensionTextOutsideHorizontal = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DimensionTextOutsideHorizontal = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMSE1":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.SuppressFirstDimensionExtensionLine = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.SuppressFirstDimensionExtensionLine = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMSE2":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.SuppressSecondDimensionExtensionLine = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.SuppressSecondDimensionExtensionLine = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMTAD":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.TextAboveDimensionLine = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.TextAboveDimensionLine = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMZIN":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensionUnitZeroSuppression = UnitZeroSuppression(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DimensionUnitZeroSuppression = UnitZeroSuppression(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMBLK":
-				if nextPair.Code != 1 {
-					return header, nextPair, errors.New("expected code 1")
-				}
-				header.ArrowBlockName = nextPair.Value.(StringCodePairValue).Value
+				if nextPair.Code == 1 {
+					header.ArrowBlockName = nextPair.Value.(StringCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMASO":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.CreateAssociativeDimensioning = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.CreateAssociativeDimensioning = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMSHO":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.RecomputeDimensionsWhileDragging = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.RecomputeDimensionsWhileDragging = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMPOST":
-				if nextPair.Code != 1 {
-					return header, nextPair, errors.New("expected code 1")
-				}
-				header.DimensioningSuffix = nextPair.Value.(StringCodePairValue).Value
+				if nextPair.Code == 1 {
+					header.DimensioningSuffix = nextPair.Value.(StringCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMAPOST":
-				if nextPair.Code != 1 {
-					return header, nextPair, errors.New("expected code 1")
-				}
-				header.AlternateDimensioningSuffix = nextPair.Value.(StringCodePairValue).Value
+				if nextPair.Code == 1 {
+					header.AlternateDimensioningSuffix = nextPair.Value.(StringCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMALT":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.UseAlternateDimensioning = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.UseAlternateDimensioning = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMALTD":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.AlternateDimensioningDecimalPlaces = nextPair.Value.(ShortCodePairValue).Value
+				if nextPair.Code == 70 {
+					header.AlternateDimensioningDecimalPlaces = nextPair.Value.(ShortCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMALTF":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.AlternateDimensioningScaleFactor = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.AlternateDimensioningScaleFactor = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMLFAC":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.DimensionLinearMeasurementsScaleFactor = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.DimensionLinearMeasurementsScaleFactor = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMTOFL":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.ForceDimensionLineExtensionsOutsideIfTextIs = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.ForceDimensionLineExtensionsOutsideIfTextIs = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMTVP":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.DimensionVerticalTextPosition = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.DimensionVerticalTextPosition = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMTIX":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.ForceDimensionTextInsideExtensions = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.ForceDimensionTextInsideExtensions = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMSOXD":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.SuppressOutsideExtensionDimensionLines = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.SuppressOutsideExtensionDimensionLines = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMSAH":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.UseSeparateArrowBlocksForDimensions = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.UseSeparateArrowBlocksForDimensions = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMBLK1":
-				if nextPair.Code != 1 {
-					return header, nextPair, errors.New("expected code 1")
-				}
-				header.FirstArrowBlockName = nextPair.Value.(StringCodePairValue).Value
+				if nextPair.Code == 1 {
+					header.FirstArrowBlockName = nextPair.Value.(StringCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMBLK2":
-				if nextPair.Code != 1 {
-					return header, nextPair, errors.New("expected code 1")
-				}
-				header.SecondArrowBlockName = nextPair.Value.(StringCodePairValue).Value
+				if nextPair.Code == 1 {
+					header.SecondArrowBlockName = nextPair.Value.(StringCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMSTYLE":
-				if nextPair.Code != 2 {
-					return header, nextPair, errors.New("expected code 2")
-				}
-				header.DimensionStyleName = nextPair.Value.(StringCodePairValue).Value
+				if nextPair.Code == 2 {
+					header.DimensionStyleName = nextPair.Value.(StringCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMCLRD":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensionLineColor = Color(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DimensionLineColor = Color(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMCLRE":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensionExtensionLineColor = Color(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DimensionExtensionLineColor = Color(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMCLRT":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensionTextColor = Color(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DimensionTextColor = Color(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMTFAC":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.DimensionToleranceDisplayScaleFactor = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.DimensionToleranceDisplayScaleFactor = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMGAP":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.DimensionLineGap = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.DimensionLineGap = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMJUST":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensionTextJustification = DimensionTextJustification(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DimensionTextJustification = DimensionTextJustification(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMTOLJ":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensionToleranceVerticalJustification = Justification(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DimensionToleranceVerticalJustification = Justification(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMTZIN":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensionToleranceZeroSuppression = UnitZeroSuppression(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DimensionToleranceZeroSuppression = UnitZeroSuppression(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMALTZ":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.AlternateDimensioningZeroSupression = UnitZeroSuppression(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.AlternateDimensioningZeroSupression = UnitZeroSuppression(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMALTTZ":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.AlternateDimensioningToleranceZeroSupression = UnitZeroSuppression(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.AlternateDimensioningToleranceZeroSupression = UnitZeroSuppression(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMFIT":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensionTextAndArrowPlacement = DimensionFit(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DimensionTextAndArrowPlacement = DimensionFit(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMUPT":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensionCursorControlsTextPosition = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DimensionCursorControlsTextPosition = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMUNIT":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensionUnitFormat = UnitFormat(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DimensionUnitFormat = UnitFormat(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMDEC":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensionUnitToleranceDecimalPlaces = nextPair.Value.(ShortCodePairValue).Value
+				if nextPair.Code == 70 {
+					header.DimensionUnitToleranceDecimalPlaces = nextPair.Value.(ShortCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMTDEC":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensionToleranceDecimalPlaces = nextPair.Value.(ShortCodePairValue).Value
+				if nextPair.Code == 70 {
+					header.DimensionToleranceDecimalPlaces = nextPair.Value.(ShortCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMALTU":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.AlternateDimensioningUnits = UnitFormat(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.AlternateDimensioningUnits = UnitFormat(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMALTTD":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.AlternateDimensioningToleranceDecimalPlaces = nextPair.Value.(ShortCodePairValue).Value
+				if nextPair.Code == 70 {
+					header.AlternateDimensioningToleranceDecimalPlaces = nextPair.Value.(ShortCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMTXSTY":
-				if nextPair.Code != 7 {
-					return header, nextPair, errors.New("expected code 7")
-				}
-				header.DimensionTextStyle = nextPair.Value.(StringCodePairValue).Value
+				if nextPair.Code == 7 {
+					header.DimensionTextStyle = nextPair.Value.(StringCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMAUNIT":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensioningAngleFormat = AngleFormat(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DimensioningAngleFormat = AngleFormat(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMADEC":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.AngularDimensionPrecision = nextPair.Value.(ShortCodePairValue).Value
+				if nextPair.Code == 70 {
+					header.AngularDimensionPrecision = nextPair.Value.(ShortCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMALTRND":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.AlternateDimensioningUnitRounding = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.AlternateDimensioningUnitRounding = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMAZIN":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensionAngleZeroSuppression = UnitZeroSuppression(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DimensionAngleZeroSuppression = UnitZeroSuppression(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMDSEP":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensionDecimalSeparatorRune = rune(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DimensionDecimalSeparatorRune = rune(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMFRAC":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensionTextHeightScaleFactor = DimensionFractionFormat(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DimensionTextHeightScaleFactor = DimensionFractionFormat(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMLDRBLK":
-				if nextPair.Code != 1 {
-					return header, nextPair, errors.New("expected code 1")
-				}
-				header.DimensionLeaderBlockName = nextPair.Value.(StringCodePairValue).Value
+				if nextPair.Code == 1 {
+					header.DimensionLeaderBlockName = nextPair.Value.(StringCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMLUNIT":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensionNonAngularUnits = NonAngularUnits(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DimensionNonAngularUnits = NonAngularUnits(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMLWD":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensionLineWeight = LineWeight(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DimensionLineWeight = LineWeight(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMLWE":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensionExtensionLineWeight = LineWeight(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DimensionExtensionLineWeight = LineWeight(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMTMOVE":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensionTextMovementRule = DimensionTextMovementRule(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DimensionTextMovementRule = DimensionTextMovementRule(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMFXL":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.DimensionLineFixedLength = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.DimensionLineFixedLength = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMFXLON":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensionLineFixedLengthOn = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DimensionLineFixedLengthOn = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMJOGANG":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.DimensionTransverseSegmentAngleInJoggedRadius = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.DimensionTransverseSegmentAngleInJoggedRadius = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMTFILL":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensionTextBackgroundColorMode = DimensionTextBackgroundColorMode(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DimensionTextBackgroundColorMode = DimensionTextBackgroundColorMode(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMTFILLCLR":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensionTextBackgroundCustomColor = Color(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DimensionTextBackgroundCustomColor = Color(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMARCSYM":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensionArcSymbolDisplayMode = DimensionArcSymbolDisplayMode(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DimensionArcSymbolDisplayMode = DimensionArcSymbolDisplayMode(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMLTYPE":
-				if nextPair.Code != 6 {
-					return header, nextPair, errors.New("expected code 6")
-				}
-				header.DimensionLineType = nextPair.Value.(StringCodePairValue).Value
+				if nextPair.Code == 6 {
+					header.DimensionLineType = nextPair.Value.(StringCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMLTEX1":
-				if nextPair.Code != 6 {
-					return header, nextPair, errors.New("expected code 6")
-				}
-				header.DimensionFirstExtensionLineType = nextPair.Value.(StringCodePairValue).Value
+				if nextPair.Code == 6 {
+					header.DimensionFirstExtensionLineType = nextPair.Value.(StringCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMLTEX2":
-				if nextPair.Code != 6 {
-					return header, nextPair, errors.New("expected code 6")
-				}
-				header.DimensionSecondExtensionLineType = nextPair.Value.(StringCodePairValue).Value
+				if nextPair.Code == 6 {
+					header.DimensionSecondExtensionLineType = nextPair.Value.(StringCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMTXTDIRECTION":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DimensionTextDirection = TextDirection(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DimensionTextDirection = TextDirection(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$LUNITS":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.UnitFormat = UnitFormat(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.UnitFormat = UnitFormat(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$LUPREC":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.UnitPrecision = nextPair.Value.(ShortCodePairValue).Value
+				if nextPair.Code == 70 {
+					header.UnitPrecision = nextPair.Value.(ShortCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$SKETCHINC":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.SketchRecordIncrement = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.SketchRecordIncrement = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$FILLETRAD":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.FilletRadius = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.FilletRadius = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$AUNITS":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.AngleUnitFormat = AngleFormat(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.AngleUnitFormat = AngleFormat(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$AUPREC":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.AngleUnitPrecision = nextPair.Value.(ShortCodePairValue).Value
+				if nextPair.Code == 70 {
+					header.AngleUnitPrecision = nextPair.Value.(ShortCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$MENU":
-				if nextPair.Code != 1 {
-					return header, nextPair, errors.New("expected code 1")
-				}
-				header.FileName = nextPair.Value.(StringCodePairValue).Value
+				if nextPair.Code == 1 {
+					header.FileName = nextPair.Value.(StringCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$ELEVATION":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.Elevation = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.Elevation = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$PELEVATION":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.PaperspaceElevation = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.PaperspaceElevation = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$THICKNESS":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.Thickness = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.Thickness = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$LIMCHECK":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.UseLimitsChecking = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.UseLimitsChecking = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$BLIPMODE":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.BlipMode = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.BlipMode = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$CHAMFERA":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.FirstChamferDistance = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.FirstChamferDistance = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$CHAMFERB":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.SecondChamferDistance = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.SecondChamferDistance = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$CHAMFERC":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.ChamferLength = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.ChamferLength = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$CHAMFERD":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.ChamferAngle = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.ChamferAngle = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$SKPOLY":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.PolylineSketchMode = PolySketchMode(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.PolylineSketchMode = PolySketchMode(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$TDCREATE":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.CreationDate = timeFromJulianDays(nextPair.Value.(DoubleCodePairValue).Value)
+				if nextPair.Code == 40 {
+					header.CreationDate = timeFromJulianDays(nextPair.Value.(DoubleCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$TDUCREATE":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.CreationDateUniversal = timeFromJulianDays(nextPair.Value.(DoubleCodePairValue).Value)
+				if nextPair.Code == 40 {
+					header.CreationDateUniversal = timeFromJulianDays(nextPair.Value.(DoubleCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$TDUPDATE":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.UpdateDate = timeFromJulianDays(nextPair.Value.(DoubleCodePairValue).Value)
+				if nextPair.Code == 40 {
+					header.UpdateDate = timeFromJulianDays(nextPair.Value.(DoubleCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$TDUUPDATE":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.UpdateDateUniversal = timeFromJulianDays(nextPair.Value.(DoubleCodePairValue).Value)
+				if nextPair.Code == 40 {
+					header.UpdateDateUniversal = timeFromJulianDays(nextPair.Value.(DoubleCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$TDINDWG":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.TimeInDrawing = durationFromDays(nextPair.Value.(DoubleCodePairValue).Value)
+				if nextPair.Code == 40 {
+					header.TimeInDrawing = durationFromDays(nextPair.Value.(DoubleCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$TDUSRTIMER":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.UserElapsedTimer = durationFromDays(nextPair.Value.(DoubleCodePairValue).Value)
+				if nextPair.Code == 40 {
+					header.UserElapsedTimer = durationFromDays(nextPair.Value.(DoubleCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$USRTIMER":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.UserTimerOn = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.UserTimerOn = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$ANGBASE":
-				if nextPair.Code != 50 {
-					return header, nextPair, errors.New("expected code 50")
-				}
-				header.AngleZeroDirection = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 50 {
+					header.AngleZeroDirection = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$ANGDIR":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.AngleDirection = AngleDirection(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.AngleDirection = AngleDirection(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$PDMODE":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.PointDisplayMode = int(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.PointDisplayMode = int(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$PDSIZE":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.PointDisplaySize = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.PointDisplaySize = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$PLINEWID":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.DefaultPolylineWidth = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.DefaultPolylineWidth = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$COORDS":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.CoordinateDisplay = CoordinateDisplay(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.CoordinateDisplay = CoordinateDisplay(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$SPLFRAME":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DisplaySplinePolygonControl = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DisplaySplinePolygonControl = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$SPLINETYPE":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.PEditSplineCurveType = PolylineCurvedAndSmoothSurfaceType(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.PEditSplineCurveType = PolylineCurvedAndSmoothSurfaceType(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$SPLINESEGS":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.LineSegmentsPerSplinePatch = nextPair.Value.(ShortCodePairValue).Value
+				if nextPair.Code == 70 {
+					header.LineSegmentsPerSplinePatch = nextPair.Value.(ShortCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$ATTDIA":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.ShowAttributeEntryDialogs = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.ShowAttributeEntryDialogs = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$ATTREQ":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.PromptForAttributeOnInsert = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.PromptForAttributeOnInsert = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$HANDLING":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.HandlesEnabled = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.HandlesEnabled = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$HANDSEED":
-				if nextPair.Code != 5 {
-					return header, nextPair, errors.New("expected code 5")
-				}
-				header.NextAvailableHandle = handleFromString(nextPair.Value.(StringCodePairValue).Value)
+				if nextPair.Code == 5 {
+					header.NextAvailableHandle = handleFromString(nextPair.Value.(StringCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$SURFTAB1":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.MeshTabulationsInFirstDirection = nextPair.Value.(ShortCodePairValue).Value
+				if nextPair.Code == 70 {
+					header.MeshTabulationsInFirstDirection = nextPair.Value.(ShortCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$SURFTAB2":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.MeshTabulationsInSecondDirection = nextPair.Value.(ShortCodePairValue).Value
+				if nextPair.Code == 70 {
+					header.MeshTabulationsInSecondDirection = nextPair.Value.(ShortCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$SURFTYPE":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.PEditSmoothSurfaceType = PolylineCurvedAndSmoothSurfaceType(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.PEditSmoothSurfaceType = PolylineCurvedAndSmoothSurfaceType(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$SURFU":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.PEditSmoothMDensith = nextPair.Value.(ShortCodePairValue).Value
+				if nextPair.Code == 70 {
+					header.PEditSmoothMDensith = nextPair.Value.(ShortCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$SURFV":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.PEditSmoothNDensith = nextPair.Value.(ShortCodePairValue).Value
+				if nextPair.Code == 70 {
+					header.PEditSmoothNDensith = nextPair.Value.(ShortCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$UCSBASE":
-				if nextPair.Code != 2 {
-					return header, nextPair, errors.New("expected code 2")
-				}
-				header.UCSDefinitionName = nextPair.Value.(StringCodePairValue).Value
+				if nextPair.Code == 2 {
+					header.UCSDefinitionName = nextPair.Value.(StringCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$UCSNAME":
-				if nextPair.Code != 2 {
-					return header, nextPair, errors.New("expected code 2")
-				}
-				header.UCSName = nextPair.Value.(StringCodePairValue).Value
+				if nextPair.Code == 2 {
+					header.UCSName = nextPair.Value.(StringCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$UCSORG":
 				switch nextPair.Code {
 				case 10:
@@ -3555,15 +3410,13 @@ func readHeader(nextPair CodePair, reader codePairReader) (Header, CodePair, err
 					header.UCSYAxis.Z = nextPair.Value.(DoubleCodePairValue).Value
 				}
 			case "$UCSORTHOREF":
-				if nextPair.Code != 2 {
-					return header, nextPair, errors.New("expected code 2")
-				}
-				header.OrthoUCSReference = nextPair.Value.(StringCodePairValue).Value
+				if nextPair.Code == 2 {
+					header.OrthoUCSReference = nextPair.Value.(StringCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$UCSORTHOVIEW":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.OrthgraphicViewType = OrthographicViewType(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.OrthgraphicViewType = OrthographicViewType(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$UCSORGTOP":
 				switch nextPair.Code {
 				case 10:
@@ -3619,15 +3472,13 @@ func readHeader(nextPair CodePair, reader codePairReader) (Header, CodePair, err
 					header.UCSOriginBack.Z = nextPair.Value.(DoubleCodePairValue).Value
 				}
 			case "$PUCSBASE":
-				if nextPair.Code != 2 {
-					return header, nextPair, errors.New("expected code 2")
-				}
-				header.PaperspaceUCSDefinitionName = nextPair.Value.(StringCodePairValue).Value
+				if nextPair.Code == 2 {
+					header.PaperspaceUCSDefinitionName = nextPair.Value.(StringCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$PUCSNAME":
-				if nextPair.Code != 2 {
-					return header, nextPair, errors.New("expected code 2")
-				}
-				header.PaperspaceUCSName = nextPair.Value.(StringCodePairValue).Value
+				if nextPair.Code == 2 {
+					header.PaperspaceUCSName = nextPair.Value.(StringCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$PUCSORG":
 				switch nextPair.Code {
 				case 10:
@@ -3656,15 +3507,13 @@ func readHeader(nextPair CodePair, reader codePairReader) (Header, CodePair, err
 					header.PaperspaceYAxis.Z = nextPair.Value.(DoubleCodePairValue).Value
 				}
 			case "$PUCSORTHOREF":
-				if nextPair.Code != 2 {
-					return header, nextPair, errors.New("expected code 2")
-				}
-				header.PaperspaceOrthoUCSReference = nextPair.Value.(StringCodePairValue).Value
+				if nextPair.Code == 2 {
+					header.PaperspaceOrthoUCSReference = nextPair.Value.(StringCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$PUCSORTHOVIEW":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.PaperspaceOrthographicViewType = OrthographicViewType(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.PaperspaceOrthographicViewType = OrthographicViewType(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$PUCSORGTOP":
 				switch nextPair.Code {
 				case 10:
@@ -3720,80 +3569,65 @@ func readHeader(nextPair CodePair, reader codePairReader) (Header, CodePair, err
 					header.PaperspaceUCSOriginBack.Z = nextPair.Value.(DoubleCodePairValue).Value
 				}
 			case "$USERI1":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.UserInt1 = nextPair.Value.(ShortCodePairValue).Value
+				if nextPair.Code == 70 {
+					header.UserInt1 = nextPair.Value.(ShortCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$USERI2":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.UserInt2 = nextPair.Value.(ShortCodePairValue).Value
+				if nextPair.Code == 70 {
+					header.UserInt2 = nextPair.Value.(ShortCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$USERI3":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.UserInt3 = nextPair.Value.(ShortCodePairValue).Value
+				if nextPair.Code == 70 {
+					header.UserInt3 = nextPair.Value.(ShortCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$USERI4":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.UserInt4 = nextPair.Value.(ShortCodePairValue).Value
+				if nextPair.Code == 70 {
+					header.UserInt4 = nextPair.Value.(ShortCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$USERI5":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.UserInt5 = nextPair.Value.(ShortCodePairValue).Value
+				if nextPair.Code == 70 {
+					header.UserInt5 = nextPair.Value.(ShortCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$USERR1":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.UserReal1 = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.UserReal1 = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$USERR2":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.UserReal2 = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.UserReal2 = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$USERR3":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.UserReal3 = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.UserReal3 = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$USERR4":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.UserReal4 = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.UserReal4 = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$USERR5":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.UserReal5 = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.UserReal5 = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$WORLDVIEW":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.SetUCSToWCSInDViewOrVPoint = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.SetUCSToWCSInDViewOrVPoint = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$SHADEDGE":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.EdgeShading = ShadeEdgeMode(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.EdgeShading = ShadeEdgeMode(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$SHADEDIF":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.PercentAmbientToDiffuse = nextPair.Value.(ShortCodePairValue).Value
+				if nextPair.Code == 70 {
+					header.PercentAmbientToDiffuse = nextPair.Value.(ShortCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$TILEMODE":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.PreviousReleaseTileCompatability = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.PreviousReleaseTileCompatability = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$MAXACTVP":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.MaximumActiveViewports = nextPair.Value.(ShortCodePairValue).Value
+				if nextPair.Code == 70 {
+					header.MaximumActiveViewports = nextPair.Value.(ShortCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$PINSBASE":
 				switch nextPair.Code {
 				case 10:
@@ -3804,10 +3638,9 @@ func readHeader(nextPair CodePair, reader codePairReader) (Header, CodePair, err
 					header.PaperspaceInsertionBase.Z = nextPair.Value.(DoubleCodePairValue).Value
 				}
 			case "$PLIMCHECK":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.LimitCheckingInPaperspace = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.LimitCheckingInPaperspace = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$PEXTMIN":
 				switch nextPair.Code {
 				case 10:
@@ -3841,35 +3674,29 @@ func readHeader(nextPair CodePair, reader codePairReader) (Header, CodePair, err
 					header.PaperspaceMaximumDrawingLimits.Y = nextPair.Value.(DoubleCodePairValue).Value
 				}
 			case "$UNITMODE":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DisplayFractionsInInput = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DisplayFractionsInInput = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$VISRETAIN":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.RetainXRefDependentVisibilitySettings = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.RetainXRefDependentVisibilitySettings = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$PLINEGEN":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.IsPolylineContinuousAroundVerticies = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.IsPolylineContinuousAroundVerticies = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$PSLTSCALE":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.ScaleLineTypesInPaperspace = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.ScaleLineTypesInPaperspace = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$TREEDEPTH":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.SpacialIndexMaxDepth = nextPair.Value.(ShortCodePairValue).Value
+				if nextPair.Code == 70 {
+					header.SpacialIndexMaxDepth = nextPair.Value.(ShortCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$PICKSTYLE":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.PickStyle = PickStyle(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.PickStyle = PickStyle(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$CMLSTYLE":
 				switch nextPair.Code {
 				case 7:
@@ -3877,118 +3704,96 @@ func readHeader(nextPair CodePair, reader codePairReader) (Header, CodePair, err
 				case 2:
 					header.CurrentMultilineStyle = nextPair.Value.(StringCodePairValue).Value
 				default:
-					return header, nextPair, errors.New("expected codes 7, 2")
+					// tolerate malformed header variable: unexpected code, skip and continue
 				}
 			case "$CMLJUST":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.CurrentMultilineJustification = Justification(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.CurrentMultilineJustification = Justification(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$CMLSCALE":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.CurrentMultilineScale = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.CurrentMultilineScale = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$PROXYGRAPHICS":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.SaveProxyGraphics = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.SaveProxyGraphics = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$MEASUREMENT":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DrawingUnits = DrawingUnits(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DrawingUnits = DrawingUnits(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$CELWEIGHT":
-				if nextPair.Code != 370 {
-					return header, nextPair, errors.New("expected code 370")
-				}
-				header.NewObjectLineWeight = LineWeight(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 370 {
+					header.NewObjectLineWeight = LineWeight(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$ENDCAPS":
-				if nextPair.Code != 280 {
-					return header, nextPair, errors.New("expected code 280")
-				}
-				header.EndCapSetting = EndCapSetting(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 280 {
+					header.EndCapSetting = EndCapSetting(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$JOINSTYLE":
-				if nextPair.Code != 280 {
-					return header, nextPair, errors.New("expected code 280")
-				}
-				header.LineweightJointSetting = JoinStyle(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 280 {
+					header.LineweightJointSetting = JoinStyle(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$LWDISPLAY":
-				if nextPair.Code != 290 {
-					return header, nextPair, errors.New("expected code 290")
-				}
-				header.DisplayLinewieghtInModelAndLayoutTab = nextPair.Value.(BoolCodePairValue).Value
+				if nextPair.Code == 290 {
+					header.DisplayLinewieghtInModelAndLayoutTab = nextPair.Value.(BoolCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$INSUNITS":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.DefaultDrawingUnits = Units(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.DefaultDrawingUnits = Units(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$HYPERLINKBASE":
-				if nextPair.Code != 1 {
-					return header, nextPair, errors.New("expected code 1")
-				}
-				header.HyperlinkBase = nextPair.Value.(StringCodePairValue).Value
+				if nextPair.Code == 1 {
+					header.HyperlinkBase = nextPair.Value.(StringCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$STYLESHEET":
-				if nextPair.Code != 1 {
-					return header, nextPair, errors.New("expected code 1")
-				}
-				header.Stylesheet = nextPair.Value.(StringCodePairValue).Value
+				if nextPair.Code == 1 {
+					header.Stylesheet = nextPair.Value.(StringCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$XEDIT":
-				if nextPair.Code != 290 {
-					return header, nextPair, errors.New("expected code 290")
-				}
-				header.CanUseInPlaceReferenceEditing = nextPair.Value.(BoolCodePairValue).Value
+				if nextPair.Code == 290 {
+					header.CanUseInPlaceReferenceEditing = nextPair.Value.(BoolCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$CEPSNID":
-				if nextPair.Code != 390 {
-					return header, nextPair, errors.New("expected code 390")
-				}
-				header.NewObjectPlotStyleHandle = handleFromString(nextPair.Value.(StringCodePairValue).Value)
+				if nextPair.Code == 390 {
+					header.NewObjectPlotStyleHandle = handleFromString(nextPair.Value.(StringCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$CEPSNTYPE":
-				if nextPair.Code != 380 {
-					return header, nextPair, errors.New("expected code 380")
-				}
-				header.NewObjectPlotStyle = PlotStyle(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 380 {
+					header.NewObjectPlotStyle = PlotStyle(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$PSTYLEMODE":
-				if nextPair.Code != 290 {
-					return header, nextPair, errors.New("expected code 290")
-				}
-				header.UsesColorDependentPlotStyleTables = nextPair.Value.(BoolCodePairValue).Value
+				if nextPair.Code == 290 {
+					header.UsesColorDependentPlotStyleTables = nextPair.Value.(BoolCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$FINGERPRINTGUID":
-				if nextPair.Code != 2 {
-					return header, nextPair, errors.New("expected code 2")
-				}
-				header.FingerprintGuid = uuidFromString(nextPair.Value.(StringCodePairValue).Value)
+				if nextPair.Code == 2 {
+					header.FingerprintGuid = uuidFromString(nextPair.Value.(StringCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$VERSIONGUID":
-				if nextPair.Code != 2 {
-					return header, nextPair, errors.New("expected code 2")
-				}
-				header.VersionGuid = uuidFromString(nextPair.Value.(StringCodePairValue).Value)
+				if nextPair.Code == 2 {
+					header.VersionGuid = uuidFromString(nextPair.Value.(StringCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$EXTNAMES":
-				if nextPair.Code != 290 {
-					return header, nextPair, errors.New("expected code 290")
-				}
-				header.UseACad2000SymbolTableNaming = nextPair.Value.(BoolCodePairValue).Value
+				if nextPair.Code == 290 {
+					header.UseACad2000SymbolTableNaming = nextPair.Value.(BoolCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$PSVPSCALE":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.ViewportViewScaleFactor = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.ViewportViewScaleFactor = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$OLESTARTUP":
-				if nextPair.Code != 290 {
-					return header, nextPair, errors.New("expected code 290")
-				}
-				header.OleStartup = nextPair.Value.(BoolCodePairValue).Value
+				if nextPair.Code == 290 {
+					header.OleStartup = nextPair.Value.(BoolCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$SORTENTS":
-				if nextPair.Code != 280 {
-					return header, nextPair, errors.New("expected code 280")
-				}
-				header.ObjectSortingMethodsFlags = int(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 280 {
+					header.ObjectSortingMethodsFlags = int(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$INDEXCTL":
-				if nextPair.Code != 280 {
-					return header, nextPair, errors.New("expected code 280")
-				}
-				header.LayerAndSpatialIndexSaveMode = LayerAndSpatialIndexSaveMode(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 280 {
+					header.LayerAndSpatialIndexSaveMode = LayerAndSpatialIndexSaveMode(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$HIDETEXT":
 				switch nextPair.Code {
 				case 280:
@@ -3996,7 +3801,7 @@ func readHeader(nextPair CodePair, reader codePairReader) (Header, CodePair, err
 				case 290:
 					header.HideTextObjectsWhenProducintHiddenView = nextPair.Value.(BoolCodePairValue).Value
 				default:
-					return header, nextPair, errors.New("expected codes 280, 290")
+					// tolerate malformed header variable: unexpected code, skip and continue
 				}
 			case "$XCLIPFRAME":
 				switch nextPair.Code {
@@ -4005,23 +3810,20 @@ func readHeader(nextPair CodePair, reader codePairReader) (Header, CodePair, err
 				case 280:
 					header.XRefClippingBoundaryVisible = XrefClippingBoundaryVisibility(nextPair.Value.(ShortCodePairValue).Value)
 				default:
-					return header, nextPair, errors.New("expected codes 290, 280")
+					// tolerate malformed header variable: unexpected code, skip and continue
 				}
 			case "$HALOGAP":
-				if nextPair.Code != 280 {
-					return header, nextPair, errors.New("expected code 280")
-				}
-				header.HaloGapPercent = float64(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 280 {
+					header.HaloGapPercent = float64(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$OBSCOLOR":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.ObscuredLineColor = Color(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.ObscuredLineColor = Color(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$OBSLTYPE":
-				if nextPair.Code != 280 {
-					return header, nextPair, errors.New("expected code 280")
-				}
-				header.ObscuredLineTypeStyle = LineTypeStyle(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 280 {
+					header.ObscuredLineTypeStyle = LineTypeStyle(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$INTERSECTIONDISPLAY":
 				switch nextPair.Code {
 				case 280:
@@ -4029,178 +3831,144 @@ func readHeader(nextPair CodePair, reader codePairReader) (Header, CodePair, err
 				case 290:
 					header.DisplayIntersectionPolylines = nextPair.Value.(BoolCodePairValue).Value
 				default:
-					return header, nextPair, errors.New("expected codes 280, 290")
+					// tolerate malformed header variable: unexpected code, skip and continue
 				}
 			case "$INTERSECTIONCOLOR":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.IntersectionPolylineColor = Color(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.IntersectionPolylineColor = Color(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DIMASSOC":
-				if nextPair.Code != 280 {
-					return header, nextPair, errors.New("expected code 280")
-				}
-				header.DimensionObjectAssociativity = DimensionAssociativity(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 280 {
+					header.DimensionObjectAssociativity = DimensionAssociativity(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$PROJECTNAME":
-				if nextPair.Code != 1 {
-					return header, nextPair, errors.New("expected code 1")
-				}
-				header.ProjectName = nextPair.Value.(StringCodePairValue).Value
+				if nextPair.Code == 1 {
+					header.ProjectName = nextPair.Value.(StringCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$CAMERADISPLAY":
-				if nextPair.Code != 290 {
-					return header, nextPair, errors.New("expected code 290")
-				}
-				header.UseCameraDisplay = nextPair.Value.(BoolCodePairValue).Value
+				if nextPair.Code == 290 {
+					header.UseCameraDisplay = nextPair.Value.(BoolCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$LENSLENGTH":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.LensLength = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.LensLength = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$CAMERAHEIGHT":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.CameraHeight = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.CameraHeight = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$STEPSPERSEC":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.StepsPerSecondInWalkOrFlyMode = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.StepsPerSecondInWalkOrFlyMode = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$STEPSIZE":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.StepSizeInWalkOrFlyMode = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.StepSizeInWalkOrFlyMode = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$3DDWFPREC":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.Dwf3DPrecision = Dwf3DPrecision(int16(nextPair.Value.(DoubleCodePairValue).Value))
+				if nextPair.Code == 40 {
+					header.Dwf3DPrecision = Dwf3DPrecision(int16(nextPair.Value.(DoubleCodePairValue).Value))
+				} // else: tolerate malformed header variable, skip and continue
 			case "$PSOLWIDTH":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.LastPolySolidWidth = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.LastPolySolidWidth = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$PSOLHEIGHT":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.LastPolySolidHeight = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.LastPolySolidHeight = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$LOFTANG1":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.LoftOperationFirstDraftAngle = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.LoftOperationFirstDraftAngle = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$LOFTANG2":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.LoftOperationSecondDraftAngle = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.LoftOperationSecondDraftAngle = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$LOFTMAG1":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.LoftOperationFirstMagnitude = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.LoftOperationFirstMagnitude = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$LOFTMAG2":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.LoftOperationSecondMagnitude = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.LoftOperationSecondMagnitude = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$LOFTPARAM":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.LoftFlags = int(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.LoftFlags = int(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$LOFTNORMALS":
-				if nextPair.Code != 280 {
-					return header, nextPair, errors.New("expected code 280")
-				}
-				header.LoftedObjectNormalMode = LoftedObjectNormalMode(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 280 {
+					header.LoftedObjectNormalMode = LoftedObjectNormalMode(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$LATITUDE":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.Latitude = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.Latitude = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$LONGITUDE":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.Longitude = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.Longitude = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$NORTHDIRECTION":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.AngleBetweenYAxisAndNorth = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.AngleBetweenYAxisAndNorth = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$TIMEZONE":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.TimeZone = TimeZone(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.TimeZone = TimeZone(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$LIGHTGLYPHDISPLAY":
-				if nextPair.Code != 280 {
-					return header, nextPair, errors.New("expected code 280")
-				}
-				header.UseLightGlyphDisplay = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 280 {
+					header.UseLightGlyphDisplay = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$TILEMODELIGHTSYNCH":
-				if nextPair.Code != 280 {
-					return header, nextPair, errors.New("expected code 280")
-				}
-				header.UseTileModeLightSync = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 280 {
+					header.UseTileModeLightSync = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$CMATERIAL":
-				if nextPair.Code != 347 {
-					return header, nextPair, errors.New("expected code 347")
-				}
-				header.CurrentMaterialHandle = handleFromString(nextPair.Value.(StringCodePairValue).Value)
+				if nextPair.Code == 347 {
+					header.CurrentMaterialHandle = handleFromString(nextPair.Value.(StringCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$SOLIDHIST":
-				if nextPair.Code != 280 {
-					return header, nextPair, errors.New("expected code 280")
-				}
-				header.NewSolidsContainHistory = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 280 {
+					header.NewSolidsContainHistory = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$SHOWHIST":
-				if nextPair.Code != 280 {
-					return header, nextPair, errors.New("expected code 280")
-				}
-				header.SolidHistoryMode = SolidHistoryMode(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 280 {
+					header.SolidHistoryMode = SolidHistoryMode(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$DWFFRAME":
-				if nextPair.Code != 280 {
-					return header, nextPair, errors.New("expected code 280")
-				}
-				header.UnderlayFrameMode = UnderlayFrameMode(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 280 {
+					header.UnderlayFrameMode = UnderlayFrameMode(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$REALWORLDSCALE":
-				if nextPair.Code != 290 {
-					return header, nextPair, errors.New("expected code 290")
-				}
-				header.UseRealWorldScale = nextPair.Value.(BoolCodePairValue).Value
+				if nextPair.Code == 290 {
+					header.UseRealWorldScale = nextPair.Value.(BoolCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$INTERFERECOLOR":
-				if nextPair.Code != 62 {
-					return header, nextPair, errors.New("expected code 62")
-				}
-				header.InterferenceObjectColor = Color(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 62 {
+					header.InterferenceObjectColor = Color(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$INTERFEREOBJVS":
-				if nextPair.Code != 345 {
-					return header, nextPair, errors.New("expected code 345")
-				}
-				header.InterferenceObjectVisualStylePointer = handleFromString(nextPair.Value.(StringCodePairValue).Value)
+				if nextPair.Code == 345 {
+					header.InterferenceObjectVisualStylePointer = handleFromString(nextPair.Value.(StringCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$INTERFEREVPVS":
-				if nextPair.Code != 346 {
-					return header, nextPair, errors.New("expected code 346")
-				}
-				header.InterferenceViewPortVisualStylePointer = handleFromString(nextPair.Value.(StringCodePairValue).Value)
+				if nextPair.Code == 346 {
+					header.InterferenceViewPortVisualStylePointer = handleFromString(nextPair.Value.(StringCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$CSHADOW":
-				if nextPair.Code != 280 {
-					return header, nextPair, errors.New("expected code 280")
-				}
-				header.ShadowMode = ShadowMode(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 280 {
+					header.ShadowMode = ShadowMode(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$SHADOWPLANELOCATION":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.ShadowPlaneZOffset = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.ShadowPlaneZOffset = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$AXISMODE":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.AxisOn = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.AxisOn = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$AXISUNIT":
 				switch nextPair.Code {
 				case 10:
@@ -4209,15 +3977,13 @@ func readHeader(nextPair CodePair, reader codePairReader) (Header, CodePair, err
 					header.AxisTickSpacing.Y = nextPair.Value.(DoubleCodePairValue).Value
 				}
 			case "$FASTZOOM":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.FastZoom = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.FastZoom = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$GRIDMODE":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.GridOn = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.GridOn = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$GRIDUNIT":
 				switch nextPair.Code {
 				case 10:
@@ -4226,10 +3992,9 @@ func readHeader(nextPair CodePair, reader codePairReader) (Header, CodePair, err
 					header.GridSpacing.Y = nextPair.Value.(DoubleCodePairValue).Value
 				}
 			case "$SNAPANG":
-				if nextPair.Code != 50 {
-					return header, nextPair, errors.New("expected code 50")
-				}
-				header.SnapRotationAngle = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 50 {
+					header.SnapRotationAngle = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			case "$SNAPBASE":
 				switch nextPair.Code {
 				case 10:
@@ -4238,20 +4003,17 @@ func readHeader(nextPair CodePair, reader codePairReader) (Header, CodePair, err
 					header.SnapBasePoint.Y = nextPair.Value.(DoubleCodePairValue).Value
 				}
 			case "$SNAPISOPAIR":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.SnapIsometricPlane = SnapIsometricPlane(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.SnapIsometricPlane = SnapIsometricPlane(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$SNAPMODE":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.SnapOn = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.SnapOn = boolFromShort(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$SNAPSTYLE":
-				if nextPair.Code != 70 {
-					return header, nextPair, errors.New("expected code 70")
-				}
-				header.SnapStyle = SnapStyle(nextPair.Value.(ShortCodePairValue).Value)
+				if nextPair.Code == 70 {
+					header.SnapStyle = SnapStyle(nextPair.Value.(ShortCodePairValue).Value)
+				} // else: tolerate malformed header variable, skip and continue
 			case "$SNAPUNIT":
 				switch nextPair.Code {
 				case 10:
@@ -4276,10 +4038,9 @@ func readHeader(nextPair CodePair, reader codePairReader) (Header, CodePair, err
 					header.ViewDirection.Z = nextPair.Value.(DoubleCodePairValue).Value
 				}
 			case "$VIEWSIZE":
-				if nextPair.Code != 40 {
-					return header, nextPair, errors.New("expected code 40")
-				}
-				header.ViewHeight = nextPair.Value.(DoubleCodePairValue).Value
+				if nextPair.Code == 40 {
+					header.ViewHeight = nextPair.Value.(DoubleCodePairValue).Value
+				} // else: tolerate malformed header variable, skip and continue
 			default:
 				// ignore unsupported header variable
 			}

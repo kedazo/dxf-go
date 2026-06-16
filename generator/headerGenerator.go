@@ -53,7 +53,6 @@ func generateHeader() {
 	builder.WriteString("package dxf\n")
 	builder.WriteString("\n")
 	builder.WriteString("import (\n")
-	builder.WriteString("	\"errors\"\n")
 	builder.WriteString("	\"math\"\n")
 	builder.WriteString("	\"time\"\n")
 	builder.WriteString("\n")
@@ -215,20 +214,17 @@ func generateHeader() {
 
 				if len(duplicateVariables) > 1 {
 					builder.WriteString("				switch nextPair.Code {\n")
-					allowedCodes := make([]string, 0)
 					for _, v := range duplicateVariables {
-						allowedCodes = append(allowedCodes, fmt.Sprintf("%d", v.Code))
 						builder.WriteString(fmt.Sprintf("				case %d:\n", v.Code))
 						builder.WriteString(fmt.Sprintf("					header.%s = %s\n", v.FieldName, generateReadFunction(v)))
 					}
 					builder.WriteString("				default:\n")
-					builder.WriteString(fmt.Sprintf("					return header, nextPair, errors.New(\"expected codes %s\")\n", strings.Join(allowedCodes, ", ")))
+					builder.WriteString("					// tolerate malformed header variable: unexpected code, skip and continue\n")
 					builder.WriteString("				}\n")
 				} else {
-					builder.WriteString(fmt.Sprintf("				if nextPair.Code != %d {\n", variable.Code))
-					builder.WriteString(fmt.Sprintf("					return header, nextPair, errors.New(\"expected code %d\")\n", variable.Code))
-					builder.WriteString("				}\n")
-					builder.WriteString(fmt.Sprintf("				header.%s = %s\n", variable.FieldName, generateReadFunction(variable)))
+					builder.WriteString(fmt.Sprintf("				if nextPair.Code == %d {\n", variable.Code))
+					builder.WriteString(fmt.Sprintf("					header.%s = %s\n", variable.FieldName, generateReadFunction(variable)))
+					builder.WriteString("				} // else: tolerate malformed header variable, skip and continue\n")
 				}
 			}
 
