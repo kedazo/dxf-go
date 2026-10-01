@@ -233,6 +233,9 @@ func generateHeader() {
 				builder.WriteString("					reader.setUtf8Reader()\n")
 				builder.WriteString("				}\n")
 			}
+			if variable.Name == "DWGCODEPAGE" {
+				builder.WriteString(fmt.Sprintf("				reader.setCodePage(header.%s)\n", variable.FieldName))
+			}
 		}
 	}
 	builder.WriteString("			default:\n")

@@ -18,6 +18,9 @@ import (
 type codePairReader interface {
 	readCodePair() (CodePair, error)
 	setUtf8Reader()
+	// setCodePage switches pre-2007 text decoding to the `$DWGCODEPAGE` encoding, unless the caller chose an encoding
+	// or the file is UTF-8.
+	setCodePage(name string)
 }
 
 const readerBufferSize = 64 * 1024
@@ -78,6 +81,10 @@ func (r *commentFilteringReader) setUtf8Reader() {
 	r.inner.setUtf8Reader()
 }
 
+func (r *commentFilteringReader) setCodePage(name string) {
+	r.inner.setCodePage(name)
+}
+
 // code pairs
 type directCodePairReader struct {
 	index     int
@@ -106,25 +113,32 @@ func (d *directCodePairReader) setUtf8Reader() {
 	// noop
 }
 
+func (d *directCodePairReader) setCodePage(name string) {
+	// noop
+}
+
 // text
 type textCodePairReader struct {
-	reader        *bufio.Reader
-	decoder       *encoding.Decoder // nil when no decoding is needed
-	firstLine     string
-	firstLineRead bool
-	readAsUtf8    bool
-	scratch       []byte
+	reader           *bufio.Reader
+	decoder          *encoding.Decoder // nil when no decoding is needed
+	explicitEncoding bool              // the caller chose the encoding; the header must not override it
+	preferUtf8       bool              // keep lines that are valid UTF-8 as they are
+	firstLine        string
+	firstLineRead    bool
+	readAsUtf8       bool
+	scratch          []byte
 }
 
 var utf8ByteOrderMark = []byte{0xEF, 0xBB, 0xBF}
 
 func newTextCodePairReader(reader *bufio.Reader, decoder *encoding.Decoder, firstLine string) codePairReader {
 	return &textCodePairReader{
-		reader:        reader,
-		decoder:       decoder,
-		firstLine:     firstLine,
-		firstLineRead: false,
-		readAsUtf8:    false,
+		reader:           reader,
+		decoder:          decoder,
+		explicitEncoding: decoder != nil,
+		firstLine:        firstLine,
+		firstLineRead:    false,
+		readAsUtf8:       false,
 	}
 }
 
@@ -265,7 +279,7 @@ func (a *textCodePairReader) readCodePair() (CodePair, error) {
 	if err != nil {
 		return codePair, err
 	}
-	stringValue, err := decodeLine(rawValue, a.decoder, a.readAsUtf8)
+	stringValue, err := decodeLine(rawValue, a.decoder, a.readAsUtf8 || a.preferUtf8)
 	if err != nil {
 		return codePair, err
 	}
@@ -315,6 +329,18 @@ func (a *textCodePairReader) readCodePair() (CodePair, error) {
 func (a *textCodePairReader) setUtf8Reader() {
 	a.decoder = unicode.UTF8.NewDecoder()
 	a.readAsUtf8 = true
+}
+
+func (a *textCodePairReader) setCodePage(name string) {
+	if a.readAsUtf8 || a.explicitEncoding {
+		return
+	}
+	if e := encodingFromCodePage(name); e != nil {
+		a.decoder = e.NewDecoder()
+		// the code page is only a hint: some writers put UTF-8 into pre-2007 files, which no Windows code page text
+		// is likely to be valid as
+		a.preferUtf8 = true
+	}
 }
 
 // binary
@@ -556,6 +582,10 @@ func createShort(b1, b2 byte) int16 {
 }
 
 func (b *binaryCodePairReader) setUtf8Reader() {
+	// noop
+}
+
+func (b *binaryCodePairReader) setCodePage(name string) {
 	// noop
 }
 

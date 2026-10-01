@@ -2777,6 +2777,7 @@ func readHeader(nextPair CodePair, reader codePairReader) (Header, CodePair, err
 				if nextPair.Code == 3 {
 					header.DrawingCodePage = nextPair.Value.(StringCodePairValue).Value
 				} // else: tolerate malformed header variable, skip and continue
+				reader.setCodePage(header.DrawingCodePage)
 			case "$LASTSAVEDBY":
 				if nextPair.Code == 1 {
 					header.LastSavedBy = nextPair.Value.(StringCodePairValue).Value
