@@ -122,6 +122,17 @@ func TestPolygonOfEllipseEdge(t *testing.T) {
 	assertNearFloat64(t, end[0], end[1])
 }
 
+func TestPolygonOfFullEdgesWithRoundingNoise(t *testing.T) {
+	// a full clockwise ellipse whose stored angles are 360° apart up to rounding noise
+	ellipse := &HatchEllipseEdge{MajorAxis: [2]float64{3, 4}, MinorAxisRatio: 0.5, StartAngle: 332.5463039951844, EndAngle: 692.5463039951844}
+	points, _ := flattenHatchEdge(ellipse, 0.01)
+	assert(t, len(points) > 50, fmt.Sprintf("expected a full ellipse, got %d points", len(points)))
+
+	arc := &HatchArcEdge{Radius: 1, StartAngle: 12.345678901234, EndAngle: 372.345678901234, IsCounterClockwise: true}
+	points, _ = flattenHatchEdge(arc, 0.01)
+	assert(t, len(points) > 20, fmt.Sprintf("expected a full circle, got %d points", len(points)))
+}
+
 func TestPolygonOfLinearSplineEdge(t *testing.T) {
 	edge := &HatchSplineEdge{
 		Degree:        1,

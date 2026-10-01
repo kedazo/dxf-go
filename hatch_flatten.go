@@ -9,6 +9,8 @@ const (
 	relativeFlattenTolerance = 1e-3
 	maxCurveSegments         = 4096
 	maxSplineSubdivisions    = 12
+	// fullCurveEpsilon (degrees) absorbs rounding noise when an edge covers a full circle or ellipse
+	fullCurveEpsilon = 1e-9
 )
 
 // Polygon returns the boundary path as a polygon in the hatch's object coordinate system. Curves (bulges, arcs,
@@ -159,7 +161,8 @@ func counterClockwiseAngles(startAngle, endAngle float64, isCounterClockwise boo
 	if sweep < 0 {
 		sweep += 360.0
 	}
-	if sweep == 0 && endAngle != startAngle {
+	if (sweep < fullCurveEpsilon || sweep > 360.0-fullCurveEpsilon) && endAngle != startAngle {
+		// a full curve, possibly with rounding noise (e.g. 332.5 .. 692.5)
 		sweep = 360.0
 	}
 	return start, sweep

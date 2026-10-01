@@ -40,8 +40,7 @@ func (d *Drawing) explodeEntities(entities []Entity, options ExplodeOptions) (re
 	walkOptions := WalkOptions{IncludeDimensionBlocks: options.IncludeDimensionBlocks}
 	attributeOwners := map[*Attribute]*Insert{}
 
-	emit := func(e Entity, m Matrix, path []*Insert) {
-		transformed, issues := TransformEntity(e, m, options)
+	emitTransformed := func(transformed []Entity, issues []WalkIssue, path []*Insert) {
 		for _, issue := range issues {
 			issue.Path = append([]*Insert(nil), path...)
 			result.Issues = append(result.Issues, issue)
@@ -56,6 +55,10 @@ func (d *Drawing) explodeEntities(entities []Entity, options ExplodeOptions) (re
 			result.Entities = append(result.Entities, entity)
 		}
 	}
+	emit := func(e Entity, m Matrix, path []*Insert) {
+		transformed, issues := TransformEntity(e, m, options)
+		emitTransformed(transformed, issues, path)
+	}
 
 	walkIssues, _ := d.WalkEntities(entities, IdentityMatrix(), walkOptions, func(e Entity, m Matrix, path []*Insert) error {
 		switch ent := e.(type) {
@@ -67,7 +70,14 @@ func (d *Drawing) explodeEntities(entities []Entity, options ExplodeOptions) (re
 				// the walk continues with the block's contents
 				return nil
 			}
-			emit(e, m, path)
+			transformed, issues := TransformEntity(e, m, options)
+			if len(transformed) == 0 {
+				// an INSERT can't be sheared: explode this one too
+				result.Issues = append(result.Issues, WalkIssue{Kind: IssueApproximated, Entity: e, Path: append([]*Insert(nil), path...),
+					Message: "the nested INSERT of " + ent.Name + " can't be kept under this transformation, so it was exploded"})
+				return nil
+			}
+			emitTransformed(transformed, issues, path)
 			return SkipBlock
 		case *Attribute:
 			if ent.IsInvisible() {

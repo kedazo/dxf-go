@@ -112,6 +112,13 @@ func (t *entityTransformer) transform(e Entity) []Entity {
 		return []Entity{c}
 	case *Leader:
 		return t.transformLeader(ent)
+	case *Hatch:
+		return t.transformHatch(ent)
+	case *Insert:
+		return t.transformInsert(ent)
+	case Dimension:
+		t.report(IssueUnsupported, e, "transformed dimensions are not supported; explode them with IncludeDimensionBlocks")
+		return nil
 	case RasterImage:
 		c := CloneEntity(e)
 		image := c.(RasterImage)
@@ -230,7 +237,7 @@ func normalizeDegrees(angle float64) float64 {
 // arcSweep returns the counter-clockwise sweep from start to end in degrees; equal angles are a full circle.
 func arcSweep(start, end float64) float64 {
 	sweep := normalizeDegrees(end - start)
-	if sweep == 0 {
+	if sweep < fullCurveEpsilon || sweep > 360-fullCurveEpsilon {
 		sweep = 360
 	}
 	return sweep
@@ -591,6 +598,62 @@ func (t *entityTransformer) transformSpline(spline *Spline) []Entity {
 	if !spline.Normal.IsZero(0) {
 		if normal, ok := t.m.TransformNormal(spline.Normal); ok {
 			c.Normal = normal
+		}
+	}
+	return []Entity{c}
+}
+
+// transformInsert re-encodes an INSERT under the transformation. That is only possible while the block's axes stay
+// perpendicular to each other (INSERTs can't shear); otherwise nothing is returned and an issue is reported.
+func (t *entityTransformer) transformInsert(insert *Insert) []Entity {
+	extrusion := insert.ExtrusionDirection
+	if extrusion.IsZero(0) {
+		extrusion = *NewZAxis()
+	}
+	rotated := t.m.Mul(OCSToWCSMatrix(extrusion)).Mul(RotationZMatrix(insert.Rotation * math.Pi / 180))
+	xAxis := rotated.TransformVector(Vector{insert.XScaleFactor, 0, 0})
+	yAxis := rotated.TransformVector(Vector{0, insert.YScaleFactor, 0})
+	zAxis := rotated.TransformVector(Vector{0, 0, insert.ZScaleFactor})
+	xLength, yLength, zLength := xAxis.Length(), yAxis.Length(), zAxis.Length()
+	if xLength == 0 || yLength == 0 || zLength == 0 {
+		t.report(IssueDegenerate, insert, "the transformation collapses the INSERT")
+		return nil
+	}
+	if math.Abs(xAxis.Dot(yAxis)) > transformEpsilon*xLength*yLength || math.Abs(xAxis.Dot(zAxis)) > transformEpsilon*xLength*zLength ||
+		math.Abs(yAxis.Dot(zAxis)) > transformEpsilon*yLength*zLength {
+		t.report(IssueUnsupported, insert, "the INSERT of "+insert.Name+" would be sheared, which an INSERT can't represent")
+		return nil
+	}
+
+	// the new extrusion follows the block's Z axis; mirroring then shows as a negative Y scale
+	newExtrusion := zAxis.Scale(1 / zLength)
+	zScale := zLength
+	if !t.options.KeepNegativeExtrusion && isNegativeZ(newExtrusion) {
+		newExtrusion, zScale = *NewZAxis(), -zLength
+	}
+	toOCS := WCSToOCSMatrix(newExtrusion)
+	ocsX := toOCS.TransformVector(xAxis)
+	ocsY := toOCS.TransformVector(yAxis)
+	rotation := math.Atan2(ocsX.Y, ocsX.X)
+	sin, cos := math.Sincos(rotation)
+	yScale := yLength
+	if ocsY.Dot(Vector{-sin, cos, 0}) < 0 {
+		yScale = -yLength
+	}
+
+	c := CloneEntity(insert).(*Insert)
+	c.ExtrusionDirection = newExtrusion
+	c.Location = toOCS.TransformPoint(t.m.TransformPoint(OCSToWCSMatrix(extrusion).TransformPoint(insert.Location)))
+	c.Rotation = normalizeDegrees(rotation * 180 / math.Pi)
+	c.XScaleFactor, c.YScaleFactor, c.ZScaleFactor = xLength, yScale, zScale
+	// MINSERT spacing is measured along the rotated, unscaled block axes
+	c.ColumnSpacing = insert.ColumnSpacing * rotated.TransformVector(*NewXAxis()).Dot(OCSToWCSMatrix(newExtrusion).TransformVector(Vector{cos, sin, 0}))
+	c.RowSpacing = insert.RowSpacing * rotated.TransformVector(*NewYAxis()).Dot(OCSToWCSMatrix(newExtrusion).TransformVector(Vector{-sin, cos, 0}))
+
+	for i := range insert.Attributes {
+		transformed := t.transform(&insert.Attributes[i])
+		if len(transformed) == 1 {
+			c.Attributes[i] = *transformed[0].(*Attribute)
 		}
 	}
 	return []Entity{c}

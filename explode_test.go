@@ -453,17 +453,196 @@ func TestExplodeRecursively(t *testing.T) {
 
 func TestExplodeOneLevel(t *testing.T) {
 	drawing := explodeDrawing()
-	result := drawing.ExplodeInsert(drawing.Entities[0].(*Insert), ExplodeOptions{})
-	inserts := 0
+	outer := drawing.Entities[0].(*Insert)
+	outer.Rotation = 30
+	outer.XScaleFactor = -2
+	result := drawing.ExplodeInsert(outer, ExplodeOptions{})
+	assertEqInt(t, 0, len(result.Issues))
+
+	var inserts []*Insert
 	for _, e := range result.Entities {
 		if insert, ok := e.(*Insert); ok {
-			inserts++
-			assertEqString(t, "INNER", insert.Name)
+			inserts = append(inserts, insert)
 		}
 	}
-	// nested INSERTs are kept (transforming them is not supported yet, so they are reported)
-	assertEqInt(t, 0, inserts)
+	// the nested INSERT is kept and places its block exactly where the nested reference did
+	assertEqInt(t, 1, len(inserts))
+	assertEqString(t, "INNER", inserts[0].Name)
+	inner := drawing.Blocks[1].Entities[0].(*Insert)
+	block := drawing.BlockByName("INNER")
+	expected := InsertMatrix(outer, drawing.BlockByName("OUTER"), 0, 0).Mul(InsertMatrix(inner, block, 0, 0))
+	assertNearMatrix(t, expected, InsertMatrix(inserts[0], block, 0, 0))
+}
+
+func TestTransformInsertMatchesComposition(t *testing.T) {
+	block := &Block{Name: "B", BasePoint: Point{1, 2, 0}}
+	insert := insertEntity("B", Point{3, 4, 5})
+	insert.Rotation = 25
+	insert.XScaleFactor, insert.YScaleFactor, insert.ZScaleFactor = 2, -1.5, 0.5
+	insert.ColumnCount, insert.RowCount = 2, 3
+	insert.ColumnSpacing, insert.RowSpacing = 7, -4
+	insert.ExtrusionDirection = Vector{0.2, 0.1, 1}
+
+	transforms := map[string]Matrix{}
+	for name, m := range similarityTransforms {
+		transforms[name] = m
+	}
+	for name, m := range transforms {
+		transformed := transformSingle(t, insert, m).(*Insert)
+		for column := 0; column < 2; column++ {
+			for row := 0; row < 3; row++ {
+				expected := m.Mul(InsertMatrix(insert, block, column, row))
+				actual := InsertMatrix(transformed, block, column, row)
+				for r := 0; r < 3; r++ {
+					for c := 0; c < 4; c++ {
+						if math.Abs(expected[r][c]-actual[r][c]) > 1e-9 {
+							t.Fatalf("%s cell (%d, %d): expected %v, got %v", name, column, row, expected, actual)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// axis-aligned non-uniform scaling keeps an unrotated INSERT representable, a rotated one would be sheared
+	insert.Rotation, insert.ExtrusionDirection = 0, Vector{0, 0, 1}
+	_, issues := TransformEntity(insert, ScaleMatrix(1, 3, 1), ExplodeOptions{})
+	assertEqInt(t, 0, len(issues))
+	insert.Rotation = 45
+	result, issues := TransformEntity(insert, ScaleMatrix(1, 3, 1), ExplodeOptions{})
+	assertEqInt(t, 0, len(result))
+	assertEqInt(t, int(IssueUnsupported), int(issues[0].Kind))
+}
+
+func TestExplodeOneLevelExplodesShearedInserts(t *testing.T) {
+	drawing := explodeDrawing()
+	outer := drawing.Entities[0].(*Insert)
+	outer.XScaleFactor = 3
+	inner := drawing.Blocks[1].Entities[0].(*Insert)
+	inner.Rotation = 45
+	result := drawing.ExplodeInsert(outer, ExplodeOptions{})
+	lines := 0
+	for _, e := range result.Entities {
+		_, isInsert := e.(*Insert)
+		assert(t, !isInsert, "the sheared INSERT should have been exploded")
+		if _, ok := e.(*Line); ok {
+			lines++
+		}
+	}
+	assertEqInt(t, 1, lines)
 	assertEqInt(t, 1, len(result.Issues))
+	assertEqInt(t, int(IssueApproximated), int(result.Issues[0].Kind))
+}
+
+func distanceToPolygon(p Point, polygon []Point) float64 {
+	best := math.Inf(1)
+	for i := range polygon {
+		a, b := polygon[i], polygon[(i+1)%len(polygon)]
+		ab := b.Sub(a)
+		t := 0.0
+		if length := ab.Dot(ab); length > 0 {
+			t = math.Max(0, math.Min(1, p.Sub(a).Dot(ab)/length))
+		}
+		best = math.Min(best, p.Sub(a.Add(ab.Scale(t))).Length())
+	}
+	return best
+}
+
+func testHatch() *Hatch {
+	hatch := NewHatch()
+	hatch.SetElevation(0.5)
+	hatch.SolidFill = false
+	hatch.PatternName = "ANSI31"
+	hatch.PatternAngle = 45
+	hatch.PatternLines = []HatchPatternLine{{Angle: 45, BaseX: 1, BaseY: 0, OffsetX: -1, OffsetY: 1, Dashes: []float64{2, -1}}}
+	hatch.SeedPoints = [][2]float64{{1, 1}}
+	hatch.Paths = []HatchBoundaryPath{
+		{PathType: 2, Vertices: [][2]float64{{0, 0}, {4, 0}, {4, 4}}, Bulges: []float64{0.4, -0.7, 0}, IsClosed: true},
+		{PathType: 1, Edges: []HatchEdge{
+			&HatchLineEdge{Start: [2]float64{10, 0}, End: [2]float64{14, 0}},
+			// counter-clockwise half circle from (14, 0) to (10, 0)
+			&HatchArcEdge{Center: [2]float64{12, 0}, Radius: 2, StartAngle: 0, EndAngle: 180, IsCounterClockwise: true},
+		}},
+		{PathType: 1, Edges: []HatchEdge{
+			&HatchLineEdge{Start: [2]float64{20, 0}, End: [2]float64{24, 0}},
+			// clockwise quarter from (24, 0) down to (20, -4) around (20, 0): the range 270°..360° stored mirrored
+			&HatchArcEdge{Center: [2]float64{20, 0}, Radius: 4, StartAngle: 0, EndAngle: 90, IsCounterClockwise: false},
+			&HatchLineEdge{Start: [2]float64{20, -4}, End: [2]float64{20, 0}},
+		}},
+		{PathType: 1, Edges: []HatchEdge{
+			&HatchEllipseEdge{Center: [2]float64{30, 0}, MajorAxis: [2]float64{3, 1}, MinorAxisRatio: 0.5, StartAngle: 0, EndAngle: 360, IsCounterClockwise: true},
+		}},
+		{PathType: 1, Edges: []HatchEdge{
+			&HatchSplineEdge{Degree: 2, IsRational: true, Knots: []float64{0, 0, 0, 1, 1, 1},
+				ControlPoints: [][2]float64{{41, 0}, {41, 1}, {40, 1}}, Weights: []float64{1, math.Sqrt2 / 2, 1}},
+			&HatchLineEdge{Start: [2]float64{40, 1}, End: [2]float64{41, 0}},
+		}},
+	}
+	return hatch
+}
+
+func TestTransformHatchBoundariesExactly(t *testing.T) {
+	hatch := testHatch()
+	transforms := map[string]Matrix{}
+	for name, m := range similarityTransforms {
+		transforms[name] = m
+	}
+	for name, m := range nonUniformTransforms {
+		transforms[name] = m
+	}
+	for name, m := range transforms {
+		result, issues := TransformEntity(hatch, m, ExplodeOptions{})
+		assertEqInt(t, 1, len(result))
+		_, similar := hatchPlaneSimilarity(hatch, m)
+		if similar {
+			assertEqInt(t, 0, len(issues))
+		}
+		transformed := result[0].(*Hatch)
+		original := hatch.BoundaryPolygonsWCS(1e-4)
+		actual := transformed.BoundaryPolygonsWCS(1e-8)
+		assertEqInt(t, len(original), len(actual))
+		for i, polygon := range original {
+			for _, p := range polygon {
+				mapped := m.TransformPoint(p)
+				distance := distanceToPolygon(mapped, actual[i])
+				// full ellipses are flattened with at most 4096 segments, which deviate by about 1e-6 here
+				if distance > 1e-5 {
+					t.Errorf("%s path %d: %s is %v away from the transformed boundary", name, i, mapped.String(), distance)
+					break
+				}
+			}
+		}
+
+		// edges still chain
+		for i, path := range transformed.Paths {
+			var previous [2]float64
+			for j, edge := range path.Edges {
+				points, _ := flattenHatchEdge(edge, 0.01)
+				if j > 0 {
+					assert(t, math.Hypot(points[0][0]-previous[0], points[0][1]-previous[1]) < 1e-9, fmt.Sprintf("%s path %d edge %d is not connected", name, i, j))
+				}
+				previous = points[len(points)-1]
+			}
+		}
+
+		// the seed point and the pattern line base point follow the hatch plane
+		toWCS := OCSToWCSMatrix(transformed.ExtrusionDirection)
+		seed := toWCS.TransformPoint(Point{transformed.SeedPoints[0][0], transformed.SeedPoints[0][1], transformed.Elevation()})
+		assertNearPointWithin(t, name+" seed", m.TransformPoint(Point{1, 1, 0.5}), seed)
+		line := transformed.PatternLines[0]
+		base := toWCS.TransformPoint(Point{line.BaseX, line.BaseY, transformed.Elevation()})
+		assertNearPointWithin(t, name+" pattern base", m.TransformPoint(Point{1, 0, 0.5}), base)
+		direction := toWCS.TransformVector(Vector{math.Cos(line.Angle * math.Pi / 180), math.Sin(line.Angle * math.Pi / 180), 0})
+		mappedDirection := m.TransformVector(Vector{math.Cos(math.Pi / 4), math.Sin(math.Pi / 4), 0})
+		assertNearVector(t, mappedDirection.Normalize(), direction)
+		assertNearFloat64(t, 2*mappedDirection.Length(), line.Dashes[0])
+	}
+}
+
+func hatchPlaneSimilarity(hatch *Hatch, m Matrix) (float64, bool) {
+	transformer := entityTransformer{m: m}
+	plane, _ := transformer.plane(hatch.ExtrusionDirection, hatch)
+	return plane.similarityScale()
 }
 
 func TestResolveInheritedStopsAtNonBlockValues(t *testing.T) {
