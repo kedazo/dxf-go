@@ -3,7 +3,9 @@ package dxf
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"io"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -305,6 +307,49 @@ func TestReadEntityWithUnknownCodes(t *testing.T) {
 	line := drawing.Entities[0].(*Line)
 	assertEqPoint(t, Point{1.0, 0.0, 0.0}, line.P1)
 	assertEqPoint(t, Point{2.0, 0.0, 0.0}, line.P2)
+}
+
+func TestReadErrorHasTheLine(t *testing.T) {
+	_, err := ParseDrawing(join(
+		"  0", "SECTION",
+		"  2", "ENTITIES",
+		"  0", "LINE",
+		" 10", "not a number",
+		"  0", "ENDSEC",
+		"  0", "EOF",
+	))
+	var readError *ReadError
+	if !errors.As(err, &readError) {
+		t.Fatalf("expected a ReadError, got %v", err)
+	}
+	assertEqInt(t, 8, readError.Line)
+	assertEqInt(t, -1, int(readError.Offset))
+	assert(t, strings.HasPrefix(err.Error(), "line 8: "), "unexpected message "+err.Error())
+	var numError *strconv.NumError
+	assert(t, errors.As(err, &numError), "expected the parse error to be wrapped")
+
+	// a structural error: the last value read is the stray 1/x on line 2
+	_, err = ParseDrawing(join("  1", "x"))
+	assert(t, errors.As(err, &readError), "expected a ReadError")
+	assertEqInt(t, 2, readError.Line)
+}
+
+func TestReadErrorHasTheByteOffset(t *testing.T) {
+	data := []byte("AutoCAD Binary DXF\r\n\x1A\x00")
+	data = append(data,
+		0x00, 0x00, 'S', 'E', 'C', 'T', 'I', 'O', 'N', 0x00, // 0/SECTION at 22
+		0x02, 0x00, 'E', 'N', 'T', 'I', 'T', 'I', 'E', 'S', 0x00, // 2/ENTITIES at 32
+		0x00, 0x00, 'L', 'I', 'N', 'E', 0x00, // 0/LINE at 43
+		0x96, 0x00, 0x01, 0x02, // 150 at 50: a code of unknown type
+	)
+	_, err := ReadFromReader(bytes.NewReader(data))
+	var readError *ReadError
+	if !errors.As(err, &readError) {
+		t.Fatalf("expected a ReadError, got %v", err)
+	}
+	assertEqInt(t, 0, readError.Line)
+	assertEqInt(t, 50, int(readError.Offset))
+	assert(t, strings.HasPrefix(err.Error(), "byte offset 50: "), "unexpected message "+err.Error())
 }
 
 func TestReadEmptyFile(t *testing.T) {

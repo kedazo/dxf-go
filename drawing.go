@@ -339,8 +339,29 @@ func ReadFromReaderWithEncoding(reader io.Reader, e encoding.Encoding) (drawing 
 		return
 	}
 	drawing, err = readFromCodePairReader(r)
+	if line, offset, ok := readerPosition(r); err != nil && ok {
+		err = &ReadError{Line: line, Offset: offset, Err: err}
+	}
 	return
 }
+
+// ReadError is an error found while reading a file, with where it was found: the line of the last value read in a
+// text DXF, or the byte offset where the last code pair starts in a binary DXF. The drawing read up to there is
+// returned with it.
+type ReadError struct {
+	Line   int   // text DXF, from 1; 0 for binary DXF
+	Offset int64 // binary DXF; -1 for text DXF
+	Err    error
+}
+
+func (e *ReadError) Error() string {
+	if e.Line > 0 {
+		return fmt.Sprintf("line %d: %v", e.Line, e.Err)
+	}
+	return fmt.Sprintf("byte offset %d: %v", e.Offset, e.Err)
+}
+
+func (e *ReadError) Unwrap() error { return e.Err }
 
 // ParseDrawing returns a drawing as parsed from a `string`.
 func ParseDrawing(content string) (Drawing, error) {

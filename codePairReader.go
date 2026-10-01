@@ -28,11 +28,11 @@ type codePairReader interface {
 const readerBufferSize = 64 * 1024
 
 func codePairReaderFromReader(reader io.Reader, e encoding.Encoding) (r codePairReader, err error) {
-	// one buffered reader is shared by the format sniffing below and the actual code pair reader
-	buffered, ok := reader.(*bufio.Reader)
-	if !ok {
-		buffered = bufio.NewReaderSize(reader, readerBufferSize)
-	}
+	// one buffered reader is shared by the format sniffing below and the actual code pair reader; the bytes it reads
+	// are counted for the positions in errors
+	counter := &byteCountingReader{reader: reader}
+	buffered := bufio.NewReaderSize(counter, readerBufferSize)
+	consumed := func() int64 { return counter.count - int64(buffered.Buffered()) }
 
 	if e == nil {
 		// no explicit encoding, like ReadFile
@@ -58,10 +58,12 @@ func codePairReaderFromReader(reader io.Reader, e encoding.Encoding) (r codePair
 	}
 
 	if firstLine == "AutoCAD Binary DXF" {
-		r, err = newBinaryCodePairReader(buffered, decoder)
+		binaryReader, err := newBinaryCodePairReader(buffered, decoder)
 		if err != nil {
 			return nil, err
 		}
+		binaryReader.(*binaryCodePairReader).consumed = consumed
+		r = binaryReader
 	} else {
 		r = newTextCodePairReader(buffered, decoder, firstLine)
 	}
@@ -69,9 +71,41 @@ func codePairReaderFromReader(reader io.Reader, e encoding.Encoding) (r codePair
 	return &commentFilteringReader{inner: r}, nil
 }
 
+// byteCountingReader counts the bytes read through it.
+type byteCountingReader struct {
+	reader io.Reader
+	count  int64
+}
+
+func (c *byteCountingReader) Read(p []byte) (int, error) {
+	n, err := c.reader.Read(p)
+	c.count += int64(n)
+	return n, err
+}
+
+// positionReporter is implemented by the readers that know where in the file they are: the line of the last value
+// read (text DXF), or the byte offset of the last code pair read (binary DXF).
+type positionReporter interface {
+	position() (line int, offset int64)
+}
+
+// readerPosition returns the position of a reader, or false if it doesn't know it.
+func readerPosition(reader codePairReader) (line int, offset int64, ok bool) {
+	if reporter, isReporter := reader.(positionReporter); isReporter {
+		line, offset = reporter.position()
+		return line, offset, line > 0 || offset >= 0
+	}
+	return 0, -1, false
+}
+
 // commentFilteringReader wraps a codePairReader and silently skips group code 999 (comment) pairs.
 type commentFilteringReader struct {
 	inner codePairReader
+}
+
+func (r *commentFilteringReader) position() (int, int64) {
+	line, offset, _ := readerPosition(r.inner)
+	return line, offset
 }
 
 func (r *commentFilteringReader) readCodePair() (CodePair, error) {
@@ -230,6 +264,11 @@ type textCodePairReader struct {
 	firstLine     string
 	firstLineRead bool
 	scratch       []byte
+	line          int // the number of the last line read, from 1
+}
+
+func (a *textCodePairReader) position() (int, int64) {
+	return a.line, -1
 }
 
 var utf8ByteOrderMark = []byte{0xEF, 0xBB, 0xBF}
@@ -292,12 +331,17 @@ func isASCII(data []byte) bool {
 func (a *textCodePairReader) readRawLine() ([]byte, error) {
 	if !a.firstLineRead {
 		a.firstLineRead = true
+		a.line = 1
 		line := []byte(a.firstLine)
 		a.firstLine = ""
 		return line, nil
 	}
 
-	return readLineBytes(a.reader, &a.scratch)
+	line, err := readLineBytes(a.reader, &a.scratch)
+	if err == nil {
+		a.line++
+	}
+	return line, err
 }
 
 func (a *textCodePairReader) readCode() (int, error) {
@@ -443,6 +487,16 @@ type binaryCodePairReader struct {
 	reader          *bufio.Reader
 	hasReturnedPair bool
 	isPostR13       bool
+	// consumed returns the number of bytes read from the file so far; pairOffset is where the last code pair started
+	consumed   func() int64
+	pairOffset int64
+}
+
+func (b *binaryCodePairReader) position() (int, int64) {
+	if b.consumed == nil {
+		return 0, -1
+	}
+	return 0, b.pairOffset
 }
 
 func newBinaryCodePairReader(r *bufio.Reader, decoder *encoding.Decoder) (rdr codePairReader, err error) {
@@ -576,6 +630,9 @@ func readBinaryChunk(reader *bufio.Reader) (string, error) {
 func (b *binaryCodePairReader) readCodePair() (CodePair, error) {
 	var pair CodePair
 	var err error
+	if b.consumed != nil {
+		b.pairOffset = b.consumed()
+	}
 	code, err := b.readCode()
 	if err != nil {
 		return pair, err
