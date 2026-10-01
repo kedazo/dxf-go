@@ -105,7 +105,7 @@ This is a fork of [ixmilia/dxf-go](https://github.com/ixmilia/dxf-go). The most 
   - all dimensions were read as aligned;
   - BYLAYER and BYBLOCK line weights were swapped;
   - numbers were rounded to 12 decimals when writing;
-  - MLINE directions were wrong;
+  - MLINE directions were wrong, and MLINEs were written with the wrong group codes;
   - several crashes on malformed input.
 
 ## License

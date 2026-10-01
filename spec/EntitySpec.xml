@@ -721,7 +721,7 @@
   MLINE
 
   -->
-  <Entity Name="MLine" SubclassMarker="AcDbMline" TypeString="MLINE" MinVersion="R13">
+  <Entity Name="MLine" SubclassMarker="AcDbMline" TypeString="MLINE" MinVersion="R13" GenerateWriter="false">
     <Field Name="StyleName" Code="2" Type="string" DefaultValue='""' />
     <Field Name="styleHandle" Code="340" Type="string" DefaultValue='""' DisableWritingDefault="true" />
     <Field Name="ScaleFactor" Code="40" Type="float64" DefaultValue="1.0" />
@@ -748,41 +748,11 @@
     <Field Name="miterDirectionX" Code="13" Type="float64" DefaultValue="[]float64{}" AllowMultiples="true" />
     <Field Name="miterDirectionY" Code="23" Type="float64" DefaultValue="[]float64{}" AllowMultiples="true" />
     <Field Name="miterDirectionZ" Code="33" Type="float64" DefaultValue="[]float64{}" AllowMultiples="true" />
-    <Field Name="parameterCount" Code="74" Type="int" DefaultValue="0" ReadConverter="int(%v)" />
-    <Field Name="Parameters" Code="41" Type="float64" DefaultValue="[]float64{}" AllowMultiples="true" />
-    <Field Name="areaFillParameterCount" Code="75" Type="int" DefaultValue="0" ReadConverter="int(%v)" />
-    <Field Name="AreaFillParameters" Code="42" Type="float64" DefaultValue="[]float64{}" AllowMultiples="true" />
-    <WriteOrder>
-      <WriteSpecificValue Code="100" Value='"AcDbMline"' />
-      <WriteField Field="StyleName" />
-      <WriteField Field="styleHandle" />
-      <WriteField Field="ScaleFactor" />
-      <WriteField Field="Justification" />
-      <WriteField Field="Flags" />
-      <WriteSpecificValue Code="72" Value="int16(len(this.Vertices))" />
-      <WriteField Field="StyleElementCount" />
-      <WriteField Field="StartPoint" />
-      <WriteField Field="Normal" />
-      <Foreach Field="Vertices">
-        <WriteSpecificValue Code="10" Value="item.X" />
-        <WriteSpecificValue Code="20" Value="item.Y" />
-        <WriteSpecificValue Code="30" Value="item.Z" />
-      </Foreach>
-      <Foreach Field="SegmentDirections">
-        <WriteSpecificValue Code="11" Value="item.X" />
-        <WriteSpecificValue Code="21" Value="item.Y" />
-        <WriteSpecificValue Code="31" Value="item.Z" />
-      </Foreach>
-      <Foreach Field="MiterDirections">
-        <WriteSpecificValue Code="12" Value="item.X" />
-        <WriteSpecificValue Code="22" Value="item.Y" />
-        <WriteSpecificValue Code="32" Value="item.Z" />
-      </Foreach>
-      <WriteSpecificValue Code="74" Value="int16(len(this.Parameters))" />
-      <WriteField Field="Parameters" />
-      <WriteSpecificValue Code="75" Value="int16(len(this.AreaFillParameters))" />
-      <WriteField Field="AreaFillParameters" />
-    </WriteOrder>
+    <Field Name="ElementParameters" Code="-1" Type="[]MLineElementParameters" DefaultValue="[][]MLineElementParameters{}" AllowMultiples="true" Comment="[vertex][element]: the parametrization of each element along the segment that starts at the vertex; this is what is written" />
+    <Field Name="parameterCounts" Code="74" Type="int" DefaultValue="[]int{}" AllowMultiples="true" ReadConverter="int(%v)" />
+    <Field Name="Parameters" Code="41" Type="float64" DefaultValue="[]float64{}" AllowMultiples="true" Comment="every element's 41 values in file order, as read; see ElementParameters" />
+    <Field Name="areaFillParameterCounts" Code="75" Type="int" DefaultValue="[]int{}" AllowMultiples="true" ReadConverter="int(%v)" />
+    <Field Name="AreaFillParameters" Code="42" Type="float64" DefaultValue="[]float64{}" AllowMultiples="true" Comment="every element's 42 values in file order, as read; see ElementParameters" />
   </Entity>
   <!--
 

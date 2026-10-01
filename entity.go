@@ -290,6 +290,7 @@ func afterRead(entity *Entity) {
 		ent.Vertices = append(ent.Vertices, pointsFromCoordinates(ent.vertexCount, ent.vertexX, ent.vertexY, ent.vertexZ)...)
 		ent.SegmentDirections = append(ent.SegmentDirections, pointsFromCoordinates(ent.vertexCount, ent.segmentDirectionX, ent.segmentDirectionY, ent.segmentDirectionZ)...)
 		ent.MiterDirections = append(ent.MiterDirections, pointsFromCoordinates(ent.vertexCount, ent.miterDirectionX, ent.miterDirectionY, ent.miterDirectionZ)...)
+		ent.buildElementParameters()
 	case *OleFrame:
 		ent.BinaryData = stringsToBytes(ent.binaryDataStrings)
 	case *Ole2Frame:

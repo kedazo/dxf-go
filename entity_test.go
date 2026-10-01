@@ -464,6 +464,54 @@ func TestReadMLineDirections(t *testing.T) {
 	assertEqPoint(t, Point{-1.0, 0.0, 0.0}, mline.MiterDirections[1])
 }
 
+func mlineVertexPairs(x float64, elements ...[]float64) []CodePair {
+	pairs := []CodePair{
+		NewDoubleCodePair(11, x), NewDoubleCodePair(21, 0.0), NewDoubleCodePair(31, 0.0),
+		NewDoubleCodePair(12, 1.0), NewDoubleCodePair(22, 0.0), NewDoubleCodePair(32, 0.0),
+		NewDoubleCodePair(13, 0.0), NewDoubleCodePair(23, 1.0), NewDoubleCodePair(33, 0.0),
+	}
+	for _, element := range elements {
+		pairs = append(pairs, NewShortCodePair(74, int16(len(element))))
+		for _, value := range element {
+			pairs = append(pairs, NewDoubleCodePair(41, value))
+		}
+		pairs = append(pairs, NewShortCodePair(75, 0))
+	}
+	return pairs
+}
+
+func TestReadMLineElementParameters(t *testing.T) {
+	// the top element of the first segment is cut by MLEDIT: dash 3, gap 1, then the rest
+	pairs := []CodePair{
+		NewStringCodePair(100, "AcDbMline"),
+		NewShortCodePair(72, 2),
+		NewShortCodePair(73, 2),
+	}
+	pairs = append(pairs, mlineVertexPairs(0.0, []float64{0.5, 0.0, 3.0, 1.0}, []float64{-0.5, 0.0})...)
+	pairs = append(pairs, mlineVertexPairs(10.0, []float64{0.5, 0.0}, []float64{-0.5, 0.0})...)
+	mline := parseEntity(t, "MLINE", pairs...).(*MLine)
+
+	check := func(mline *MLine) {
+		assertEqInt(t, 2, len(mline.ElementParameters))
+		assertEqInt(t, 2, len(mline.ElementParameters[0]))
+		assertEqInt(t, 4, len(mline.ElementParameters[0][0].Line))
+		assertEqFloat64(t, 1.0, mline.ElementParameters[0][0].Line[3])
+		assertEqInt(t, 2, len(mline.ElementParameters[0][1].Line))
+		assertEqFloat64(t, -0.5, mline.ElementParameters[0][1].Line[0])
+		assertEqFloat64(t, -0.5, mline.ElementParameters[1][1].Line[0])
+		assertEqInt(t, 0, len(mline.ElementParameters[1][1].AreaFill))
+	}
+	check(mline)
+	// the flat values stay as read
+	assertEqInt(t, 10, len(mline.Parameters))
+
+	// written per vertex as read (11/12/13 then 74/41/75 per element), so it reads back the same
+	written := allCodePairs(mline, R2018)
+	assertContainsCodePairs(t, pairs[1:3], written)
+	assertContainsCodePairs(t, pairs[3:], written)
+	check(parseEntity(t, "MLINE", written[1:]...).(*MLine))
+}
+
 func TestReadLeaderWithWrongVertexCount(t *testing.T) {
 	leader := parseEntity(t, "LEADER",
 		NewShortCodePair(76, 3),

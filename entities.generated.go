@@ -10594,10 +10594,11 @@ type MLine struct {
 	miterDirectionX []float64
 	miterDirectionY []float64
 	miterDirectionZ []float64
-	parameterCount int
-	Parameters []float64
-	areaFillParameterCount int
-	AreaFillParameters []float64
+	ElementParameters [][]MLineElementParameters // [vertex][element]: the parametrization of each element along the segment that starts at the vertex; this is what is written
+	parameterCounts []int
+	Parameters []float64 // every element's 41 values in file order, as read; see ElementParameters
+	areaFillParameterCounts []int
+	AreaFillParameters []float64 // every element's 42 values in file order, as read; see ElementParameters
 	pointerOwner pointer
 	pointerPlotStyle pointer
 }
@@ -10642,9 +10643,10 @@ func NewMLine() *MLine {
 		miterDirectionX: []float64{},
 		miterDirectionY: []float64{},
 		miterDirectionZ: []float64{},
-		parameterCount: 0,
+		ElementParameters: [][]MLineElementParameters{},
+		parameterCounts: []int{},
 		Parameters: []float64{},
-		areaFillParameterCount: 0,
+		areaFillParameterCounts: []int{},
 		AreaFillParameters: []float64{},
 	}
 }
@@ -10995,12 +10997,36 @@ func (this *MLine) ClearmiterDirectionZ() {
 	this.miterDirectionZ = []float64{}
 }
 
+func (this *MLine) AddElementParameters(val []MLineElementParameters) {
+	this.ElementParameters = append(this.ElementParameters, val)
+}
+
+func (this *MLine) ClearElementParameters() {
+	this.ElementParameters = [][]MLineElementParameters{}
+}
+
+func (this *MLine) AddparameterCounts(val int) {
+	this.parameterCounts = append(this.parameterCounts, val)
+}
+
+func (this *MLine) ClearparameterCounts() {
+	this.parameterCounts = []int{}
+}
+
 func (this *MLine) AddParameters(val float64) {
 	this.Parameters = append(this.Parameters, val)
 }
 
 func (this *MLine) ClearParameters() {
 	this.Parameters = []float64{}
+}
+
+func (this *MLine) AddareaFillParameterCounts(val int) {
+	this.areaFillParameterCounts = append(this.areaFillParameterCounts, val)
+}
+
+func (this *MLine) ClearareaFillParameterCounts() {
+	this.areaFillParameterCounts = []int{}
 }
 
 func (this *MLine) AddAreaFillParameters(val float64) {
@@ -11070,11 +11096,11 @@ func (this *MLine) tryApplyCodePair(codePair CodePair) {
 	case 33:
 		this.miterDirectionZ = append(this.miterDirectionZ, codePair.Value.(DoubleCodePairValue).Value)
 	case 74:
-		this.parameterCount = int(codePair.Value.(ShortCodePairValue).Value)
+		this.parameterCounts = append(this.parameterCounts, int(codePair.Value.(ShortCodePairValue).Value))
 	case 41:
 		this.Parameters = append(this.Parameters, codePair.Value.(DoubleCodePairValue).Value)
 	case 75:
-		this.areaFillParameterCount = int(codePair.Value.(ShortCodePairValue).Value)
+		this.areaFillParameterCounts = append(this.areaFillParameterCounts, int(codePair.Value.(ShortCodePairValue).Value))
 	case 42:
 		this.AreaFillParameters = append(this.AreaFillParameters, codePair.Value.(DoubleCodePairValue).Value)
 	default:
@@ -11083,53 +11109,6 @@ func (this *MLine) tryApplyCodePair(codePair CodePair) {
 			appliedCodePair = tryApplyCodePairForEntity(this, codePair)
 		}
 	}
-}
-
-func (this *MLine) codePairs(version AcadVersion) (pairs []CodePair) {
-	pairs = append(pairs, NewStringCodePair(0, "MLINE"))
-	pairs = append(pairs, codePairsForEntity(this, version)...)
-	pairs = append(pairs, NewStringCodePair(100, "AcDbMline"))
-	pairs = append(pairs, NewStringCodePair(2, this.StyleName))
-	if this.styleHandle != "" {
-		pairs = append(pairs, NewStringCodePair(340, this.styleHandle))
-	}
-	pairs = append(pairs, NewDoubleCodePair(40, this.ScaleFactor))
-	pairs = append(pairs, NewShortCodePair(70, int16(this.Justification)))
-	pairs = append(pairs, NewShortCodePair(71, int16(this.Flags)))
-	pairs = append(pairs, NewShortCodePair(72, int16(len(this.Vertices))))
-	pairs = append(pairs, NewShortCodePair(73, int16(this.StyleElementCount)))
-	pairs = append(pairs, NewDoubleCodePair(10, this.StartPoint.X))
-	pairs = append(pairs, NewDoubleCodePair(20, this.StartPoint.Y))
-	pairs = append(pairs, NewDoubleCodePair(30, this.StartPoint.Z))
-	if this.Normal != *NewZAxis() {
-		pairs = append(pairs, NewDoubleCodePair(210, this.Normal.X))
-		pairs = append(pairs, NewDoubleCodePair(220, this.Normal.Y))
-		pairs = append(pairs, NewDoubleCodePair(230, this.Normal.Z))
-	}
-	for _, item := range this.Vertices {
-		pairs = append(pairs, NewDoubleCodePair(10, item.X))
-		pairs = append(pairs, NewDoubleCodePair(20, item.Y))
-		pairs = append(pairs, NewDoubleCodePair(30, item.Z))
-	}
-	for _, item := range this.SegmentDirections {
-		pairs = append(pairs, NewDoubleCodePair(11, item.X))
-		pairs = append(pairs, NewDoubleCodePair(21, item.Y))
-		pairs = append(pairs, NewDoubleCodePair(31, item.Z))
-	}
-	for _, item := range this.MiterDirections {
-		pairs = append(pairs, NewDoubleCodePair(12, item.X))
-		pairs = append(pairs, NewDoubleCodePair(22, item.Y))
-		pairs = append(pairs, NewDoubleCodePair(32, item.Z))
-	}
-	pairs = append(pairs, NewShortCodePair(74, int16(len(this.Parameters))))
-	for _, val := range this.Parameters {
-		pairs = append(pairs, NewDoubleCodePair(41, val))
-	}
-	pairs = append(pairs, NewShortCodePair(75, int16(len(this.AreaFillParameters))))
-	for _, val := range this.AreaFillParameters {
-		pairs = append(pairs, NewDoubleCodePair(42, val))
-	}
-	return
 }
 
 type MText struct {

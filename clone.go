@@ -125,6 +125,8 @@ func resetClonedEntity(e Entity) {
 		ent.miterDirectionX = cloneSlice(ent.miterDirectionX)
 		ent.miterDirectionY = cloneSlice(ent.miterDirectionY)
 		ent.miterDirectionZ = cloneSlice(ent.miterDirectionZ)
+		ent.parameterCounts = cloneSlice(ent.parameterCounts)
+		ent.areaFillParameterCounts = cloneSlice(ent.areaFillParameterCounts)
 	case *OleFrame:
 		ent.binaryDataStrings = cloneSlice(ent.binaryDataStrings)
 	case *Ole2Frame:
