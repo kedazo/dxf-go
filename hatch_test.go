@@ -1,6 +1,7 @@
 package dxf
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -410,4 +411,221 @@ func TestReadHatchWithTruncatedCounts(t *testing.T) {
 	assertEqInt(t, 1, len(hatch.Paths))
 	assertEqInt(t, 1, len(hatch.Paths[0].Vertices))
 	assertEqInt(t, int(HatchStyleOutermost), int(hatch.Style))
+}
+
+// hatchDataCodePairs returns the written pairs from the AcDbHatch subclass marker on.
+func hatchDataCodePairs(t *testing.T, hatch *Hatch, version AcadVersion) []CodePair {
+	written := allCodePairs(hatch, version)
+	for i, pair := range written {
+		if pair.Code == 100 && pair.Value.(StringCodePairValue).Value == "AcDbHatch" {
+			return written[i:]
+		}
+	}
+	t.Fatal("missing AcDbHatch subclass marker")
+	return nil
+}
+
+func TestWritePatternHatchWithPolylinePath(t *testing.T) {
+	hatch := NewHatch()
+	hatch.SetElevation(2.0)
+	hatch.PatternName = "ANSI31"
+	hatch.SolidFill = false
+	hatch.IsAssociative = true
+	hatch.PatternAngle = 45.0
+	hatch.PatternScale = 2.0
+	hatch.Paths = []HatchBoundaryPath{{
+		PathType:      3,
+		Vertices:      [][2]float64{{0, 0}, {10, 0}},
+		Bulges:        []float64{0.0, 1.0},
+		IsClosed:      true,
+		SourceHandles: []Handle{0x2B},
+	}}
+	hatch.PatternLines = []HatchPatternLine{{Angle: 45.0, OffsetX: -2.0, OffsetY: 2.0, Dashes: []float64{1.5, -0.5}}}
+
+	assertEqCodePairs(t, []CodePair{
+		NewStringCodePair(100, "AcDbHatch"),
+		NewDoubleCodePair(10, 0.0),
+		NewDoubleCodePair(20, 0.0),
+		NewDoubleCodePair(30, 2.0),
+		NewDoubleCodePair(210, 0.0),
+		NewDoubleCodePair(220, 0.0),
+		NewDoubleCodePair(230, 1.0),
+		NewStringCodePair(2, "ANSI31"),
+		NewShortCodePair(70, 0),
+		NewShortCodePair(71, 1),
+		NewIntCodePair(91, 1),
+		NewIntCodePair(92, 3),
+		NewShortCodePair(72, 1),
+		NewShortCodePair(73, 1),
+		NewIntCodePair(93, 2),
+		NewDoubleCodePair(10, 0.0),
+		NewDoubleCodePair(20, 0.0),
+		NewDoubleCodePair(42, 0.0),
+		NewDoubleCodePair(10, 10.0),
+		NewDoubleCodePair(20, 0.0),
+		NewDoubleCodePair(42, 1.0),
+		NewIntCodePair(97, 1),
+		NewStringCodePair(330, "2B"),
+		NewShortCodePair(75, 0),
+		NewShortCodePair(76, 1),
+		NewDoubleCodePair(52, 45.0),
+		NewDoubleCodePair(41, 2.0),
+		NewShortCodePair(77, 0),
+		NewShortCodePair(78, 1),
+		NewDoubleCodePair(53, 45.0),
+		NewDoubleCodePair(43, 0.0),
+		NewDoubleCodePair(44, 0.0),
+		NewDoubleCodePair(45, -2.0),
+		NewDoubleCodePair(46, 2.0),
+		NewShortCodePair(79, 2),
+		NewDoubleCodePair(49, 1.5),
+		NewDoubleCodePair(49, -0.5),
+		NewIntCodePair(98, 0),
+	}, hatchDataCodePairs(t, hatch, R2010))
+}
+
+func TestWriteSolidHatchGradientOnlyForR2004AndLater(t *testing.T) {
+	hatch := NewHatch()
+	hatch.SeedPoints = [][2]float64{{1.0, 2.0}}
+	hatch.Gradient = &HatchGradient{Name: "LINEAR", Colors: []HatchGradientColor{{Value: 0.0, Color: 5, TrueColor: 255}}}
+
+	written := hatchDataCodePairs(t, hatch, R2004)
+	styleIndex := 0
+	for written[styleIndex].Code != 75 {
+		styleIndex++
+	}
+	assertEqCodePairs(t, []CodePair{
+		NewShortCodePair(75, 0),
+		NewShortCodePair(76, 1),
+		NewIntCodePair(98, 1),
+		NewDoubleCodePair(10, 1.0),
+		NewDoubleCodePair(20, 2.0),
+		NewIntCodePair(450, 0),
+		NewIntCodePair(451, 0),
+		NewDoubleCodePair(460, 0.0),
+		NewDoubleCodePair(461, 0.0),
+		NewIntCodePair(452, 0),
+		NewDoubleCodePair(462, 0.0),
+		NewIntCodePair(453, 1),
+		NewDoubleCodePair(463, 0.0),
+		NewShortCodePair(63, 5),
+		NewIntCodePair(421, 255),
+		NewStringCodePair(470, "LINEAR"),
+	}, written[styleIndex:])
+
+	r2000 := hatchDataCodePairs(t, hatch, R2000)
+	assertNotContainsCodePairs(t, []CodePair{NewIntCodePair(450, 0)}, r2000)
+	// solid fills have no pattern definition
+	assertNotContainsCodePairs(t, []CodePair{NewShortCodePair(78, 0)}, r2000)
+}
+
+func TestWriteHatchSplineFitDataOnlyForR2010AndLater(t *testing.T) {
+	hatch := NewHatch()
+	hatch.Paths = []HatchBoundaryPath{{
+		PathType: 1,
+		Edges: []HatchEdge{&HatchSplineEdge{
+			Degree:        1,
+			Knots:         []float64{0, 0, 1, 1},
+			ControlPoints: [][2]float64{{0, 0}, {1, 1}},
+			FitPoints:     [][2]float64{{0, 0}, {1, 1}},
+			EndTangent:    [2]float64{1, 1},
+		}},
+	}}
+	fitData := []CodePair{
+		NewIntCodePair(97, 2),
+		NewDoubleCodePair(11, 0.0),
+		NewDoubleCodePair(21, 0.0),
+		NewDoubleCodePair(11, 1.0),
+		NewDoubleCodePair(21, 1.0),
+		NewDoubleCodePair(12, 0.0),
+		NewDoubleCodePair(22, 0.0),
+		NewDoubleCodePair(13, 1.0),
+		NewDoubleCodePair(23, 1.0),
+		NewIntCodePair(97, 0),
+	}
+	assertContainsCodePairs(t, fitData, hatchDataCodePairs(t, hatch, R2010))
+	assertNotContainsCodePairs(t, []CodePair{NewIntCodePair(97, 2)}, hatchDataCodePairs(t, hatch, R2007))
+}
+
+func TestWriteHatchOnlyForR14AndLater(t *testing.T) {
+	hatch := NewHatch()
+	assertNotContainsCodePairs(t, []CodePair{NewStringCodePair(0, "HATCH")}, drawingCodePairsFromEntity(t, hatch, R13))
+	assertContainsCodePairs(t, []CodePair{NewStringCodePair(0, "HATCH")}, drawingCodePairsFromEntity(t, hatch, R14))
+}
+
+func TestRoundTripHatch(t *testing.T) {
+	hatch := NewHatch()
+	hatch.SetLayer("FILL")
+	hatch.SetElevation(3.0)
+	hatch.ExtrusionDirection = Vector{0.0, 0.0, -1.0}
+	hatch.PatternName = "CUSTOM"
+	hatch.SolidFill = false
+	hatch.PatternType = HatchPatternTypeCustom
+	hatch.Style = HatchStyleEntire
+	hatch.PatternAngle = 30.0
+	hatch.PatternScale = 0.5
+	hatch.IsPatternDouble = true
+	hatch.PixelSize = 0.125
+	hatch.Paths = []HatchBoundaryPath{
+		{
+			PathType: 2,
+			Vertices: [][2]float64{{0, 0}, {4, 0}, {4, 4}},
+			Bulges:   []float64{0, 0.5, 0},
+			IsClosed: true,
+		},
+		{
+			PathType: 1,
+			Edges: []HatchEdge{
+				&HatchLineEdge{Start: [2]float64{0, 0}, End: [2]float64{2, 0}},
+				&HatchArcEdge{Center: [2]float64{1, 0}, Radius: 1, StartAngle: 0, EndAngle: 180, IsCounterClockwise: true},
+				&HatchEllipseEdge{Center: [2]float64{0, 0}, MajorAxis: [2]float64{3, 0}, MinorAxisRatio: 0.5, StartAngle: 90, EndAngle: 270},
+				&HatchSplineEdge{
+					Degree:        2,
+					IsRational:    true,
+					Knots:         []float64{0, 0, 0, 1, 1, 1},
+					ControlPoints: [][2]float64{{1, 0}, {1, 1}, {0, 1}},
+					Weights:       []float64{1, 0.5, 1},
+					FitPoints:     [][2]float64{{1, 0}, {0, 1}},
+					StartTangent:  [2]float64{0, 1},
+					EndTangent:    [2]float64{-1, 0},
+				},
+			},
+		},
+	}
+	hatch.PatternLines = []HatchPatternLine{
+		{Angle: 30, BaseX: 1, BaseY: 2, OffsetX: 3, OffsetY: 4, Dashes: []float64{1, -1}},
+		{Angle: 120, Dashes: nil},
+	}
+	hatch.SeedPoints = [][2]float64{{1, 1}, {2, 2}}
+	hatch.Gradient = &HatchGradient{
+		IsGradient: true,
+		Angle:      0.25,
+		Tint:       0.5,
+		Colors:     []HatchGradientColor{{Value: 0, TrueColor: 255}, {Value: 1, Color: 3, TrueColor: 65280}},
+		Name:       "SPHERICAL",
+	}
+
+	drawing := *NewDrawing()
+	drawing.Header.Version = R2018
+	drawing.Entities = append(drawing.Entities, hatch)
+	roundTripped := roundTripDrawing(t, &drawing)
+	assertEqInt(t, 1, len(roundTripped.Entities))
+	actual := roundTripped.Entities[0].(*Hatch)
+
+	assertEqString(t, "FILL", actual.Layer())
+	assertEqFloat64(t, 3.0, actual.Elevation())
+	assertEqVector(t, hatch.ExtrusionDirection, actual.ExtrusionDirection)
+	assertEqString(t, "CUSTOM", actual.PatternName)
+	assertEqBool(t, false, actual.SolidFill)
+	assertEqInt(t, int(HatchPatternTypeCustom), int(actual.PatternType))
+	assertEqInt(t, int(HatchStyleEntire), int(actual.Style))
+	assertEqFloat64(t, 30.0, actual.PatternAngle)
+	assertEqFloat64(t, 0.5, actual.PatternScale)
+	assertEqBool(t, true, actual.IsPatternDouble)
+	assertEqFloat64(t, 0.125, actual.PixelSize)
+	assert(t, reflect.DeepEqual(hatch.Paths, actual.Paths), "boundary paths differ after round trip")
+	assert(t, reflect.DeepEqual(hatch.PatternLines[0], actual.PatternLines[0]), "pattern lines differ after round trip")
+	assertEqInt(t, 0, len(actual.PatternLines[1].Dashes))
+	assert(t, reflect.DeepEqual(hatch.SeedPoints, actual.SeedPoints), "seed points differ after round trip")
+	assert(t, reflect.DeepEqual(hatch.Gradient, actual.Gradient), "gradient differs after round trip")
 }

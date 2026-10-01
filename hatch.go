@@ -581,7 +581,164 @@ func stringValue(pair CodePair) string {
 func (e *Hatch) codePairs(version AcadVersion) (pairs []CodePair) {
 	pairs = append(pairs, NewStringCodePair(0, "HATCH"))
 	pairs = append(pairs, codePairsForEntity(e, version)...)
+	pairs = append(pairs, NewStringCodePair(100, "AcDbHatch"))
+	// elevation point
+	pairs = append(pairs, NewDoubleCodePair(10, 0.0))
+	pairs = append(pairs, NewDoubleCodePair(20, 0.0))
+	pairs = append(pairs, NewDoubleCodePair(30, e.elevation))
+	pairs = append(pairs, NewDoubleCodePair(210, e.ExtrusionDirection.X))
+	pairs = append(pairs, NewDoubleCodePair(220, e.ExtrusionDirection.Y))
+	pairs = append(pairs, NewDoubleCodePair(230, e.ExtrusionDirection.Z))
+	pairs = append(pairs, NewStringCodePair(2, e.PatternName))
+	pairs = append(pairs, NewShortCodePair(70, shortFromBool(e.SolidFill)))
+	pairs = append(pairs, NewShortCodePair(71, shortFromBool(e.IsAssociative)))
+	pairs = append(pairs, NewIntCodePair(91, len(e.Paths)))
+	for i := range e.Paths {
+		pairs = append(pairs, e.Paths[i].codePairs(version)...)
+	}
+	pairs = append(pairs, NewShortCodePair(75, int16(e.Style)))
+	pairs = append(pairs, NewShortCodePair(76, int16(e.PatternType)))
+	if !e.SolidFill {
+		pairs = append(pairs, NewDoubleCodePair(52, e.PatternAngle))
+		pairs = append(pairs, NewDoubleCodePair(41, e.PatternScale))
+		pairs = append(pairs, NewShortCodePair(77, shortFromBool(e.IsPatternDouble)))
+		pairs = append(pairs, NewShortCodePair(78, int16(len(e.PatternLines))))
+		for _, line := range e.PatternLines {
+			pairs = append(pairs, NewDoubleCodePair(53, line.Angle))
+			pairs = append(pairs, NewDoubleCodePair(43, line.BaseX))
+			pairs = append(pairs, NewDoubleCodePair(44, line.BaseY))
+			pairs = append(pairs, NewDoubleCodePair(45, line.OffsetX))
+			pairs = append(pairs, NewDoubleCodePair(46, line.OffsetY))
+			pairs = append(pairs, NewShortCodePair(79, int16(len(line.Dashes))))
+			for _, dash := range line.Dashes {
+				pairs = append(pairs, NewDoubleCodePair(49, dash))
+			}
+		}
+	}
+	if e.PixelSize != 0.0 {
+		pairs = append(pairs, NewDoubleCodePair(47, e.PixelSize))
+	}
+	pairs = append(pairs, NewIntCodePair(98, len(e.SeedPoints)))
+	for _, seed := range e.SeedPoints {
+		pairs = append(pairs, hatchPointCodePairs(10, seed)...)
+	}
+	if version >= R2004 && e.Gradient != nil {
+		pairs = append(pairs, e.Gradient.codePairs()...)
+	}
 	return
+}
+
+func (p *HatchBoundaryPath) codePairs(version AcadVersion) (pairs []CodePair) {
+	pairs = append(pairs, NewIntCodePair(92, p.PathType))
+	if p.IsPolyline() {
+		hasBulge := len(p.Bulges) > 0
+		pairs = append(pairs, NewShortCodePair(72, shortFromBool(hasBulge)))
+		pairs = append(pairs, NewShortCodePair(73, shortFromBool(p.IsClosed)))
+		pairs = append(pairs, NewIntCodePair(93, len(p.Vertices)))
+		for i, vertex := range p.Vertices {
+			pairs = append(pairs, hatchPointCodePairs(10, vertex)...)
+			if hasBulge {
+				bulge := 0.0
+				if i < len(p.Bulges) {
+					bulge = p.Bulges[i]
+				}
+				pairs = append(pairs, NewDoubleCodePair(42, bulge))
+			}
+		}
+	} else {
+		pairs = append(pairs, NewIntCodePair(93, len(p.Edges)))
+		for _, edge := range p.Edges {
+			pairs = append(pairs, NewShortCodePair(72, edge.hatchEdgeType()))
+			pairs = append(pairs, hatchEdgeCodePairs(edge, version)...)
+		}
+	}
+	// source handles are written as they are; they go stale if the referenced entities get new handles on save
+	pairs = append(pairs, NewIntCodePair(97, len(p.SourceHandles)))
+	for _, handle := range p.SourceHandles {
+		pairs = append(pairs, NewStringCodePair(330, stringFromHandle(handle)))
+	}
+	return
+}
+
+func hatchEdgeCodePairs(edge HatchEdge, version AcadVersion) (pairs []CodePair) {
+	switch edge := edge.(type) {
+	case *HatchLineEdge:
+		pairs = append(pairs, hatchPointCodePairs(10, edge.Start)...)
+		pairs = append(pairs, hatchPointCodePairs(11, edge.End)...)
+	case *HatchArcEdge:
+		pairs = append(pairs, hatchPointCodePairs(10, edge.Center)...)
+		pairs = append(pairs, NewDoubleCodePair(40, edge.Radius))
+		pairs = append(pairs, NewDoubleCodePair(50, edge.StartAngle))
+		pairs = append(pairs, NewDoubleCodePair(51, edge.EndAngle))
+		pairs = append(pairs, NewShortCodePair(73, shortFromBool(edge.IsCounterClockwise)))
+	case *HatchEllipseEdge:
+		pairs = append(pairs, hatchPointCodePairs(10, edge.Center)...)
+		pairs = append(pairs, hatchPointCodePairs(11, edge.MajorAxis)...)
+		pairs = append(pairs, NewDoubleCodePair(40, edge.MinorAxisRatio))
+		pairs = append(pairs, NewDoubleCodePair(50, edge.StartAngle))
+		pairs = append(pairs, NewDoubleCodePair(51, edge.EndAngle))
+		pairs = append(pairs, NewShortCodePair(73, shortFromBool(edge.IsCounterClockwise)))
+	case *HatchSplineEdge:
+		pairs = append(pairs, NewIntCodePair(94, edge.Degree))
+		pairs = append(pairs, NewShortCodePair(73, shortFromBool(edge.IsRational)))
+		pairs = append(pairs, NewShortCodePair(74, shortFromBool(edge.IsPeriodic)))
+		pairs = append(pairs, NewIntCodePair(95, len(edge.Knots)))
+		pairs = append(pairs, NewIntCodePair(96, len(edge.ControlPoints)))
+		for _, knot := range edge.Knots {
+			pairs = append(pairs, NewDoubleCodePair(40, knot))
+		}
+		for i, point := range edge.ControlPoints {
+			pairs = append(pairs, hatchPointCodePairs(10, point)...)
+			if edge.IsRational {
+				weight := 1.0
+				if i < len(edge.Weights) {
+					weight = edge.Weights[i]
+				}
+				pairs = append(pairs, NewDoubleCodePair(42, weight))
+			}
+		}
+		if version >= R2010 {
+			pairs = append(pairs, NewIntCodePair(97, len(edge.FitPoints)))
+			for _, point := range edge.FitPoints {
+				pairs = append(pairs, hatchPointCodePairs(11, point)...)
+			}
+			if len(edge.FitPoints) > 0 {
+				pairs = append(pairs, hatchPointCodePairs(12, edge.StartTangent)...)
+				pairs = append(pairs, hatchPointCodePairs(13, edge.EndTangent)...)
+			}
+		}
+	}
+	return
+}
+
+func (g *HatchGradient) codePairs() (pairs []CodePair) {
+	pairs = append(pairs, NewIntCodePair(450, intFromBool(g.IsGradient)))
+	pairs = append(pairs, NewIntCodePair(451, g.Reserved))
+	pairs = append(pairs, NewDoubleCodePair(460, g.Angle))
+	pairs = append(pairs, NewDoubleCodePair(461, g.Shift))
+	pairs = append(pairs, NewIntCodePair(452, intFromBool(g.IsSingleColor)))
+	pairs = append(pairs, NewDoubleCodePair(462, g.Tint))
+	pairs = append(pairs, NewIntCodePair(453, len(g.Colors)))
+	for _, color := range g.Colors {
+		pairs = append(pairs, NewDoubleCodePair(463, color.Value))
+		if color.Color != 0 {
+			pairs = append(pairs, NewShortCodePair(63, int16(color.Color)))
+		}
+		pairs = append(pairs, NewIntCodePair(421, color.TrueColor))
+	}
+	pairs = append(pairs, NewStringCodePair(470, g.Name))
+	return
+}
+
+func hatchPointCodePairs(xCode int, point [2]float64) []CodePair {
+	return []CodePair{NewDoubleCodePair(xCode, point[0]), NewDoubleCodePair(xCode+10, point[1])}
+}
+
+func intFromBool(value bool) int {
+	if value {
+		return 1
+	}
+	return 0
 }
 
 // Entity interface boilerplate
