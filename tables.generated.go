@@ -137,6 +137,8 @@ func readViewPorts(drawing *Drawing, np CodePair, reader codePairReader) (nextPa
 
 func (this *ViewPort) tryApplyCodePair(codePair CodePair) {
 	switch codePair.Code {
+	case 5:
+		this.handle = handleFromString(codePair.Value.(StringCodePairValue).Value)
 	case 2:
 		this.Name = codePair.Value.(StringCodePairValue).Value
 	case 70:
@@ -486,6 +488,8 @@ func readLineTypes(drawing *Drawing, np CodePair, reader codePairReader) (nextPa
 
 func (this *LineType) tryApplyCodePair(codePair CodePair) {
 	switch codePair.Code {
+	case 5:
+		this.handle = handleFromString(codePair.Value.(StringCodePairValue).Value)
 	case 2:
 		this.Name = codePair.Value.(StringCodePairValue).Value
 	case 70:
@@ -651,6 +655,8 @@ func readLayers(drawing *Drawing, np CodePair, reader codePairReader) (nextPair 
 
 func (this *Layer) tryApplyCodePair(codePair CodePair) {
 	switch codePair.Code {
+	case 5:
+		this.handle = handleFromString(codePair.Value.(StringCodePairValue).Value)
 	case 2:
 		this.Name = codePair.Value.(StringCodePairValue).Value
 	case 70:
@@ -776,6 +782,8 @@ func readStyles(drawing *Drawing, np CodePair, reader codePairReader) (nextPair 
 
 func (this *Style) tryApplyCodePair(codePair CodePair) {
 	switch codePair.Code {
+	case 5:
+		this.handle = handleFromString(codePair.Value.(StringCodePairValue).Value)
 	case 2:
 		this.Name = codePair.Value.(StringCodePairValue).Value
 	case 70:
@@ -927,6 +935,8 @@ func readViews(drawing *Drawing, np CodePair, reader codePairReader) (nextPair C
 
 func (this *View) tryApplyCodePair(codePair CodePair) {
 	switch codePair.Code {
+	case 5:
+		this.handle = handleFromString(codePair.Value.(StringCodePairValue).Value)
 	case 2:
 		this.Name = codePair.Value.(StringCodePairValue).Value
 	case 70:
@@ -1153,6 +1163,8 @@ func readUcss(drawing *Drawing, np CodePair, reader codePairReader) (nextPair Co
 
 func (this *Ucs) tryApplyCodePair(codePair CodePair) {
 	switch codePair.Code {
+	case 5:
+		this.handle = handleFromString(codePair.Value.(StringCodePairValue).Value)
 	case 2:
 		this.Name = codePair.Value.(StringCodePairValue).Value
 	case 70:
@@ -1288,6 +1300,8 @@ func readAppIds(drawing *Drawing, np CodePair, reader codePairReader) (nextPair 
 
 func (this *AppId) tryApplyCodePair(codePair CodePair) {
 	switch codePair.Code {
+	case 5:
+		this.handle = handleFromString(codePair.Value.(StringCodePairValue).Value)
 	case 2:
 		this.Name = codePair.Value.(StringCodePairValue).Value
 	case 70:
@@ -1491,6 +1505,8 @@ func readDimStyles(drawing *Drawing, np CodePair, reader codePairReader) (nextPa
 
 func (this *DimStyle) tryApplyCodePair(codePair CodePair) {
 	switch codePair.Code {
+	case 105:
+		this.handle = handleFromString(codePair.Value.(StringCodePairValue).Value)
 	case 2:
 		this.Name = codePair.Value.(StringCodePairValue).Value
 	case 70:
@@ -1849,6 +1865,8 @@ func readBlockRecords(drawing *Drawing, np CodePair, reader codePairReader) (nex
 
 func (this *BlockRecord) tryApplyCodePair(codePair CodePair) {
 	switch codePair.Code {
+	case 5:
+		this.handle = handleFromString(codePair.Value.(StringCodePairValue).Value)
 	case 2:
 		this.Name = codePair.Value.(StringCodePairValue).Value
 	case 340:

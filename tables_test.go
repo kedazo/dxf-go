@@ -50,6 +50,45 @@ func TestRoundTripLayer(t *testing.T) {
 	}
 }
 
+func TestReadTableItemHandles(t *testing.T) {
+	layer := parseTableItem(t, "LAYER", NewStringCodePair(5, "2A"), NewStringCodePair(2, "layer")).Layers[0]
+	assertEqUInt64(t, 0x2A, uint64(layer.Handle()))
+	// DIMSTYLE uses 105 for its handle; 5 is its R14 arrow block name
+	dimStyle := parseTableItem(t, "DIMSTYLE", NewStringCodePair(105, "2B"), NewStringCodePair(2, "style")).DimStyles[0]
+	assertEqUInt64(t, 0x2B, uint64(dimStyle.Handle()))
+}
+
+func TestSavedHandlesDoNotCollideWithReadHandles(t *testing.T) {
+	d := NewDrawing()
+	d.Header.Version = R2004
+	d.Header.NextAvailableHandle = 0x100
+	layer := *NewLayer()
+	layer.Name = "read"
+	layer.SetHandle(0x2A)
+	d.Layers = append(d.Layers, layer)
+	read := NewLine()
+	read.SetHandle(0x180)
+	d.Entities = append(d.Entities, read, NewLine())
+
+	seen := map[string]bool{}
+	actual := drawingCodePairs(t, *d)
+	for _, pair := range actual {
+		if pair.Code != 5 && pair.Code != 105 {
+			continue
+		}
+		handle := pair.Value.(StringCodePairValue).Value
+		if seen[handle] {
+			t.Errorf("handle %s is used twice", handle)
+		}
+		seen[handle] = true
+		if value := handleFromString(handle); value != 0x2A && value != 0x180 && value <= 0x180 {
+			t.Errorf("new handle %s is not above the kept handles", handle)
+		}
+	}
+	assertEqBool(t, true, seen["2A"])
+	assertEqBool(t, true, seen["180"])
+}
+
 func TestReadAndWriteLayerTrueColor(t *testing.T) {
 	// 420 = 0 is true color black, not "no true color"
 	drawing := parseTableItem(t, "LAYER",

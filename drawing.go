@@ -485,7 +485,9 @@ func readBlocksSection(np CodePair, reader codePairReader) (blocks []Block, next
 }
 
 func assignHandles(d *Drawing) {
-	nextHandle := uint32(1)
+	// table items and top-level entities keep the handles they were read with; new handles start above them (and above
+	// $HANDSEED, which is above every handle of the file that was read) so they never collide
+	nextHandle := uint32(max(1, d.Header.NextAvailableHandle, maxKeptHandle(d)+1))
 	nextHandle = uint32(assignTableHandles(d, Handle(nextHandle)))
 
 	for i := range d.Blocks {
@@ -502,6 +504,42 @@ func assignHandles(d *Drawing) {
 	}
 
 	d.Header.NextAvailableHandle = Handle(nextHandle)
+}
+
+// maxKeptHandle returns the highest handle of the table items and top-level entities, which keep their handles on save.
+func maxKeptHandle(d *Drawing) (highest Handle) {
+	keep := func(h Handle) { highest = max(highest, h) }
+	for i := range d.AppIds {
+		keep(d.AppIds[i].Handle())
+	}
+	for i := range d.BlockRecords {
+		keep(d.BlockRecords[i].Handle())
+	}
+	for i := range d.DimStyles {
+		keep(d.DimStyles[i].Handle())
+	}
+	for i := range d.Layers {
+		keep(d.Layers[i].Handle())
+	}
+	for i := range d.LineTypes {
+		keep(d.LineTypes[i].Handle())
+	}
+	for i := range d.Styles {
+		keep(d.Styles[i].Handle())
+	}
+	for i := range d.Ucss {
+		keep(d.Ucss[i].Handle())
+	}
+	for i := range d.Views {
+		keep(d.Views[i].Handle())
+	}
+	for i := range d.ViewPorts {
+		keep(d.ViewPorts[i].Handle())
+	}
+	for _, e := range d.Entities {
+		keep(e.Handle())
+	}
+	return
 }
 
 func assignPointers(d *Drawing) {

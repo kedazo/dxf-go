@@ -116,6 +116,8 @@ func generateTables() {
 		if generateReader {
 			builder.WriteString(fmt.Sprintf("func (this *%s) tryApplyCodePair(codePair CodePair) {\n", tableItem.Name))
 			builder.WriteString("	switch codePair.Code {\n")
+			builder.WriteString(fmt.Sprintf("	case %d:\n", tableItemHandleCode(table)))
+			builder.WriteString("		this.handle = handleFromString(codePair.Value.(StringCodePairValue).Value)\n")
 			for _, field := range tableItem.Fields {
 				readField(&builder, field, false)
 			}
@@ -136,11 +138,7 @@ func generateTables() {
 		builder.WriteString(fmt.Sprintf("	pairs = append(pairs, NewShortCodePair(70, int16(len(items))))\n"))
 		builder.WriteString(fmt.Sprintf("	for _, item := range items {\n"))
 		builder.WriteString(fmt.Sprintf("		pairs = append(pairs, NewStringCodePair(0, \"%s\"))\n", table.TypeString))
-		handleCode := 5
-		if table.TypeString == "DIMSTYLE" {
-			handleCode = 105
-		}
-		builder.WriteString(fmt.Sprintf("		pairs = append(pairs, NewStringCodePair(%d, stringFromHandle(item.Handle())))\n", handleCode))
+		builder.WriteString(fmt.Sprintf("		pairs = append(pairs, NewStringCodePair(%d, stringFromHandle(item.Handle())))\n", tableItemHandleCode(table)))
 		builder.WriteString("		pairs = append(pairs, NewStringCodePair(100, \"AcDbSymbolTableRecord\"))\n")
 		builder.WriteString("		pairs = append(pairs, item.codePairs(version)...)\n")
 		builder.WriteString("	}\n")
@@ -221,6 +219,14 @@ func generateTables() {
 	builder.WriteString("\n")
 
 	writeFile("tables.generated.go", builder)
+}
+
+// tableItemHandleCode returns the group code of a table item's handle; DIMSTYLE uses 105 because 5 was taken.
+func tableItemHandleCode(table xmlTable) int {
+	if table.TypeString == "DIMSTYLE" {
+		return 105
+	}
+	return 5
 }
 
 func getHandleFieldName(table *xmlTable) string {
