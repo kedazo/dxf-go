@@ -32,6 +32,10 @@ func codePairReaderFromReader(reader io.Reader, e encoding.Encoding) (r codePair
 		buffered = bufio.NewReaderSize(reader, readerBufferSize)
 	}
 
+	if e == nil {
+		// no explicit encoding, like ReadFile
+		e = encoding.Nop
+	}
 	var decoder *encoding.Decoder
 	if e != encoding.Nop {
 		decoder = e.NewDecoder()

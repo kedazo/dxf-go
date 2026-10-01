@@ -156,6 +156,13 @@ func TestReadFileWithEncoding(t *testing.T) {
 	}
 	assertEqString(t, "Elõtér", drawing.Entities[0].(*Text).Value)
 
+	// no encoding is like ReadFile (it used to panic)
+	drawing, err = ReadFileWithEncoding(path, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertEqString(t, "Előtér", drawing.Entities[0].(*Text).Value)
+
 	_, err = ReadFile(filepath.Join(t.TempDir(), "missing.dxf"))
 	assert(t, err != nil, "expected an error for a missing file")
 }
