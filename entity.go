@@ -119,10 +119,6 @@ func writeEntitiesSection(entities []Entity, writer codePairWriter, version Acad
 
 func trailingCodePairs(entity Entity, version AcadVersion) (pairs []CodePair) {
 	switch ent := entity.(type) {
-	case *Attribute:
-		pairs = append(pairs, ent.MText.codePairs(version)...)
-	case *AttributeDefinition:
-		pairs = append(pairs, ent.MText.codePairs(version)...)
 	case *Insert:
 		for _, att := range ent.Attributes {
 			pairs = append(pairs, att.codePairs(version)...)
@@ -234,18 +230,6 @@ func collectEntities(entityBuffer *entityBufferReader) (result []Entity) {
 		ent := *entityBuffer.Peek()
 		entityBuffer.Advance()
 		switch entity := ent.(type) {
-		case *Attribute:
-			// ATTRIB should be followed by a single MTEXT
-			mtext, err := getNextMText(entityBuffer)
-			if err == nil {
-				entity.MText = mtext
-			}
-		case *AttributeDefinition:
-			// ATTDEF should be followed by a single MTEXT
-			mtext, err := getNextMText(entityBuffer)
-			if err == nil {
-				entity.MText = mtext
-			}
 		case *Insert:
 			// INSERT should be followed by multiple ATTRIB...
 			if entity.HasAttributes {
@@ -292,31 +276,8 @@ func getNextAttribute(entityBuffer *entityBufferReader) (att Attribute, error er
 		case *Attribute:
 			att = *next
 			entityBuffer.Advance()
-			if entityBuffer.ItemsRemain() {
-				switch next := (*entityBuffer.Peek()).(type) {
-				case *MText:
-					att.MText = *next
-					entityBuffer.Advance()
-				}
-			}
 		default:
 			error = errors.New("not an attribute")
-		}
-	} else {
-		error = errors.New("no more entities")
-	}
-
-	return
-}
-
-func getNextMText(entityBuffer *entityBufferReader) (mtext MText, error error) {
-	if entityBuffer.ItemsRemain() {
-		switch next := (*entityBuffer.Peek()).(type) {
-		case *MText:
-			mtext = *next
-			entityBuffer.Advance()
-		default:
-			error = errors.New("not an mtext")
 		}
 	} else {
 		error = errors.New("no more entities")

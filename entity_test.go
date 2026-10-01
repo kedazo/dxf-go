@@ -215,21 +215,44 @@ func TestWriteEntityWithBeforeWrite(t *testing.T) {
 	}, actual)
 }
 
-func TestReadCollectedEntities(t *testing.T) {
-	attdef := parseEntity(t, "ATTDEF",
+func TestReadAttributeDefinitionFollowedByStandaloneMText(t *testing.T) {
+	entities := parseEntities(t,
+		NewStringCodePair(0, "ATTDEF"),
+		NewStringCodePair(2, "TAG"),
 		NewStringCodePair(0, "MTEXT"),
-		NewStringCodePair(1, "mtext-value"),
-	).(*AttributeDefinition)
-	assertEqString(t, "mtext-value", attdef.MText.Text)
+		NewStringCodePair(1, "label"),
+	)
+	assertEqInt(t, 2, len(entities))
+	attdef := entities[0].(*AttributeDefinition)
+	assertEqString(t, "TAG", attdef.TextTag)
+	assertEqString(t, "", attdef.MText.Text)
+	assertEqString(t, "label", entities[1].(*MText).Text)
 }
 
-func TestWriteEntityWithTrailingEntities(t *testing.T) {
+func TestReadInsertAttributeFollowedByStandaloneMText(t *testing.T) {
+	entities := parseEntities(t,
+		NewStringCodePair(0, "INSERT"),
+		NewShortCodePair(66, 1),
+		NewStringCodePair(0, "ATTRIB"),
+		NewStringCodePair(2, "TAG"),
+		NewStringCodePair(0, "SEQEND"),
+		NewStringCodePair(0, "MTEXT"),
+		NewStringCodePair(1, "label"),
+	)
+	assertEqInt(t, 2, len(entities))
+	insert := entities[0].(*Insert)
+	assertEqInt(t, 1, len(insert.Attributes))
+	assertEqString(t, "TAG", insert.Attributes[0].AttributeTag)
+	assertEqString(t, "label", entities[1].(*MText).Text)
+}
+
+func TestWriteAttributeDefinitionWithoutTrailingMText(t *testing.T) {
 	attdef := NewAttributeDefinition()
 	actual := drawingCodePairsFromEntity(t, attdef, R14)
 	assertContainsCodePairs(t, []CodePair{
 		NewStringCodePair(0, "ATTDEF"),
 	}, actual)
-	assertContainsCodePairs(t, []CodePair{
+	assertNotContainsCodePairs(t, []CodePair{
 		NewStringCodePair(0, "MTEXT"),
 	}, actual)
 }
