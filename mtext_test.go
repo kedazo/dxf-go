@@ -20,7 +20,7 @@ func TestMTextPlainText(t *testing.T) {
 		// escapes and special characters
 		{"a\\\\b \\{c\\}", "a\\b {c}"},
 		{"no\\~break", "no break"},
-		{"%%c50 45%%d %%p0.5 100%%%", "⌀50 45° ±0.5 100%"},
+		{"%%c50 45%%d %%p0.5 100%%%", "Ø50 45° ±0.5 100%"},
 		{"tab^Iand^Jnewline^ caret", "tab\tand\nnewline^caret"},
 		// stacked fractions
 		{"1\\S1/2;\"", "11/2\""},
@@ -124,7 +124,7 @@ func TestMTextRunsFormattingToggles(t *testing.T) {
 func TestTextPlainText(t *testing.T) {
 	for _, testCase := range []struct{ value, plain string }{
 		{"plain", "plain"},
-		{"%%c100", "⌀100"},
+		{"%%c100", "Ø100"},
 		{"90%%D %%P1 %%%", "90° ±1 %"},
 		{"%%uunderlined%%u and %%ooverlined%%o", "underlined and overlined"},
 		{"%%065%%066", "AB"},

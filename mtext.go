@@ -402,7 +402,7 @@ func parseRelativeValue(argument string) (value float64, relative bool, ok bool)
 }
 
 var percentSpecialCharacters = map[byte]string{
-	'c': "⌀", // diameter
+	'c': "Ø", // diameter: CAD fonts draw Ø (U+00D8), and unlike ⌀ (U+2300) every Latin font has it
 	'd': "°", // degree
 	'p': "±", // plus-minus
 }
