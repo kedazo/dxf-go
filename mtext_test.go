@@ -159,6 +159,24 @@ func TestMTextRunsFormattingToggles(t *testing.T) {
 	assertEqBool(t, true, runs[2].Strike)
 }
 
+func TestAttributePlainText(t *testing.T) {
+	attribute := NewAttribute()
+	attribute.Value = "%%c50 \\U+0150r"
+	assertEqString(t, "Ø50 Őr", attribute.PlainText())
+
+	// a multiline attribute's text is its embedded MText
+	attribute.AttributeType = 2
+	attribute.MText.Text = "{\\fArial;first}\\Psecond"
+	assertEqString(t, "first\nsecond", attribute.PlainText())
+
+	definition := NewAttributeDefinition()
+	definition.Value = "%%uDefault%%u"
+	assertEqString(t, "Default", definition.PlainText())
+	definition.AttributeType = 4
+	definition.MText.Text = "a\\Pb"
+	assertEqString(t, "a\nb", definition.PlainText())
+}
+
 func TestTextPlainText(t *testing.T) {
 	for _, testCase := range []struct{ value, plain string }{
 		{"plain", "plain"},

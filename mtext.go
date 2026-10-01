@@ -76,6 +76,24 @@ func (t *Text) PlainText() string {
 	return decodePercentCodes(decodeCharacterEscapes(t.Value), true)
 }
 
+// PlainText returns the attribute's text without control codes: the embedded MText's plain text for a multiline
+// attribute, otherwise the value resolved like a TEXT value (see Text.PlainText).
+func (a *Attribute) PlainText() string {
+	return attributePlainText(a.Value, a.IsMultiline(), &a.MText)
+}
+
+// PlainText returns the attribute definition's default text without control codes, like Attribute.PlainText.
+func (ad *AttributeDefinition) PlainText() string {
+	return attributePlainText(ad.Value, ad.IsMultiline(), &ad.MText)
+}
+
+func attributePlainText(value string, isMultiline bool, mtext *MText) string {
+	if isMultiline && mtext.FormattedText() != "" {
+		return mtext.PlainText()
+	}
+	return decodePercentCodes(decodeCharacterEscapes(value), true)
+}
+
 // mbcsCodePages are the code pages of \M+nXXXX escapes, by n.
 var mbcsCodePages = map[byte]string{
 	'1': "ANSI_932", // Japanese (Shift-JIS)
