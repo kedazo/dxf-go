@@ -249,6 +249,17 @@ func TestReadUnknownCodeAsBinaryReturnsError(t *testing.T) {
 	}
 }
 
+func TestReadCaretEscapes(t *testing.T) {
+	assertEqString(t, "a\nb\tc", unescapeCarets("a^Jb^Ic"))
+	assertEqString(t, "x^2", unescapeCarets("x^ 2"))
+	assertEqString(t, "\x00\x1F", unescapeCarets("^@^_"))
+	// a caret before anything else, or at the end, is text
+	assertEqString(t, "x^2^", unescapeCarets("x^2^"))
+
+	actual := readCodePairsBinary(t, []byte{0x01, 0x00, 0x61, 0x5E, 0x4A, 0x62, 0x00}, true) // 1/a^Jb
+	assertEqCodePairs(t, []CodePair{NewStringCodePair(1, "a\nb")}, actual)
+}
+
 func TestReadUnknownCodeAsText(t *testing.T) {
 	actual := readCodePairsText(t, join(
 		"150", "abc",

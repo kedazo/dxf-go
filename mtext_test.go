@@ -21,7 +21,9 @@ func TestMTextPlainText(t *testing.T) {
 		{"a\\\\b \\{c\\}", "a\\b {c}"},
 		{"no\\~break", "no break"},
 		{"%%c50 45%%d %%p0.5 100%%%", "Ø50 45° ±0.5 100%"},
-		{"tab^Iand^Jnewline^ caret", "tab\tand\nnewline^caret"},
+		// caret escapes are decoded by the reader, so ^ and control characters arrive as themselves
+		{"tab\tand\nnewline x^2", "tab\tand\nnewline x^2"},
+		{"a\rb\r\nc", "a\nb\nc"},
 		// stacked fractions
 		{"1\\S1/2;\"", "11/2\""},
 		{"\\S+0.01^-0.02;", "+0.01/-0.02"},

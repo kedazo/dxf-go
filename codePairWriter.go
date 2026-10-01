@@ -91,7 +91,29 @@ func formatFloat64Text(val float64) string {
 	return display
 }
 
+// escapeCarets writes control characters as caret escapes (a newline as ^J, a tab as ^I) and the caret itself as
+// "^ ": a raw newline would end the value's line.
+func escapeCarets(val string) string {
+	if !strings.ContainsFunc(val, func(r rune) bool { return r < 0x20 || r == '^' }) {
+		return val
+	}
+	var builder strings.Builder
+	for _, r := range val {
+		switch {
+		case r < 0x20:
+			builder.WriteByte('^')
+			builder.WriteByte(byte(r) + '@')
+		case r == '^':
+			builder.WriteString("^ ")
+		default:
+			builder.WriteRune(r)
+		}
+	}
+	return builder.String()
+}
+
 func formatStringText(val string, version AcadVersion) string {
+	val = escapeCarets(val)
 	if version <= R2004 {
 		// escape unicode characters
 		var builder strings.Builder

@@ -122,6 +122,34 @@ func TestWriteStringAsBinary(t *testing.T) {
 	assertBinary(t, []byte("é\x00"), formatStringBinary("é", R2007))
 }
 
+func TestWriteCaretEscapes(t *testing.T) {
+	assertCodePairText(t, "  1\r\na^Jb^Ic^Mx^ 2\r\n", NewStringCodePair(1, "a\nb\tc\rx^2"))
+	assertText(t, "^@^_", escapeCarets("\x00\x1F"))
+	assertBinary(t, []byte("a^Jb\x00"), formatStringBinary("a\nb", R2004))
+}
+
+func TestRoundTripTextWithControlCharacters(t *testing.T) {
+	for _, version := range []AcadVersion{R12, R2004, R2018} {
+		drawing := *NewDrawing()
+		drawing.Header.Version = version
+		text := NewText()
+		text.Value = "line1\nline2\tx^2 ^J"
+		drawing.Entities = append(drawing.Entities, text)
+		reread := roundTripDrawing(t, &drawing)
+		assertEqString(t, text.Value, reread.Entities[0].(*Text).Value)
+
+		buf := new(bytes.Buffer)
+		if err := drawing.SaveToWriterBinary(buf); err != nil {
+			t.Fatal(err)
+		}
+		reread, err := ReadFromReader(bytes.NewReader(buf.Bytes()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		assertEqString(t, text.Value, reread.Entities[0].(*Text).Value)
+	}
+}
+
 func TestWriteBinaryChunksAsBinary(t *testing.T) {
 	assertCodePairBinary(t, []byte{0x36, 0x01, 0x03, 0xDE, 0xAD, 0x01}, NewStringCodePair(310, "dead01"), R2004)
 	assertCodePairBinary(t, []byte{0x36, 0x01, 0x00}, NewStringCodePair(310, ""), R2004)

@@ -211,11 +211,15 @@ func (p *mtextParser) parse() {
 				p.state = p.stack[len(p.stack)-1]
 				p.stack = p.stack[:len(p.stack)-1]
 			}
-		case c == '^' && p.position+1 < len(p.input):
-			p.parseCaret(p.input[p.position+1])
-			p.position += 2
 		case c == '%' && strings.HasPrefix(p.input[p.position:], "%%"):
 			p.parsePercent()
+		case c == '\r':
+			// ^M (alone or as ^M^J) is a line break like ^J
+			p.text.WriteByte('\n')
+			p.position++
+			if p.position < len(p.input) && p.input[p.position] == '\n' {
+				p.position++
+			}
 		default:
 			p.text.WriteByte(c)
 			p.position++
@@ -376,20 +380,6 @@ func (p *mtextParser) parseStack(argument string) {
 		run.Text = numerator + "/" + denominator
 	}
 	p.appendRun(run)
-}
-
-func (p *mtextParser) parseCaret(next byte) {
-	switch next {
-	case 'I':
-		p.text.WriteByte('\t')
-	case 'J', 'M':
-		p.text.WriteByte('\n')
-	case ' ':
-		p.text.WriteByte('^')
-	default:
-		p.text.WriteByte('^')
-		p.text.WriteByte(next)
-	}
 }
 
 func (p *mtextParser) parsePercent() {

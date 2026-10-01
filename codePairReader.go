@@ -145,7 +145,33 @@ func (s *stringDecoder) decodeString(raw []byte) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return readStringText(value, s.readAsUtf8)
+	return readStringText(unescapeCarets(value), s.readAsUtf8)
+}
+
+// unescapeCarets decodes the caret escapes of control characters (^J is a newline, ^I a tab, ^@ to ^_ are 0x00 to
+// 0x1F) and of the caret itself (^ followed by a space). A caret before anything else is kept as it is.
+func unescapeCarets(s string) string {
+	if !strings.Contains(s, "^") {
+		return s
+	}
+	var builder strings.Builder
+	for i := 0; i < len(s); i++ {
+		if s[i] == '^' && i+1 < len(s) {
+			next := s[i+1]
+			switch {
+			case next >= '@' && next <= '_':
+				builder.WriteByte(next - '@')
+				i++
+				continue
+			case next == ' ':
+				builder.WriteByte('^')
+				i++
+				continue
+			}
+		}
+		builder.WriteByte(s[i])
+	}
+	return builder.String()
 }
 
 func (s *stringDecoder) setUtf8Reader() {
