@@ -746,10 +746,13 @@ func (mt *MText) tryApplyCodePair(codePair CodePair) {
 		mt.ExtrusionDirection.Z = codePair.Value.(DoubleCodePairValue).Value
 	case 11:
 		mt.XAxisDirection.X = codePair.Value.(DoubleCodePairValue).Value
+		mt.HasXAxisDirection = true
 	case 21:
 		mt.XAxisDirection.Y = codePair.Value.(DoubleCodePairValue).Value
+		mt.HasXAxisDirection = true
 	case 31:
 		mt.XAxisDirection.Z = codePair.Value.(DoubleCodePairValue).Value
+		mt.HasXAxisDirection = true
 	case 42:
 		mt.HorizontalWidth = codePair.Value.(DoubleCodePairValue).Value
 	case 43:

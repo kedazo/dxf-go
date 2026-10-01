@@ -794,10 +794,11 @@
     <Field Name="Text" Code="1" Type="string" DefaultValue='""' />
     <Field Name="TextStyleName" Code="7" Type="string" DefaultValue='"STANDARD"' DisableWritingDefault="true" />
     <Field Name="ExtrusionDirection" Code="210" Type="Vector" DefaultValue="*NewZAxis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
-    <Field Name="XAxisDirection" Code="11" Type="Vector" DefaultValue="*NewXAxis()" CodeOverrides="11,21,31" />
+    <Field Name="XAxisDirection" Code="11" Type="Vector" DefaultValue="*NewXAxis()" CodeOverrides="11,21,31" Comment="In WCS; wins over RotationAngle, see Direction()" />
+    <Field Name="HasXAxisDirection" Code="-1" Type="bool" DefaultValue="false" Comment="Set when the file had code 11" />
     <Field Name="HorizontalWidth" Code="42" Type="float64" DefaultValue="1.0" />
     <Field Name="VerticalHeight" Code="43" Type="float64" DefaultValue="1.0" />
-    <Field Name="RotationAngle" Code="50" Type="float64" DefaultValue="0.0" />
+    <Field Name="RotationAngle" Code="50" Type="float64" DefaultValue="0.0" Comment="Degrees in OCS (the DXF reference says radians, but writers use degrees); only used without XAxisDirection, never written" />
     <Field Name="LineSpacingStyle" Code="73" Type="MTextLineSpacingStyle" DefaultValue="MTextLineSpacingStyleAtLeast" ReadConverter="MTextLineSpacingStyle(%v)" WriteConverter="int16(%v)" />
     <Field Name="LineSpacingFactor" Code="44" Type="float64" DefaultValue="1.0" />
     <Field Name="BackgroundFillSetting" Code="90" Type="BackgroundFillSetting" DefaultValue="BackgroundFillSettingOff" ReadConverter="BackgroundFillSetting(%v)" WriteConverter="int(%v)" />
@@ -828,10 +829,12 @@
       <WriteField Field="Text" />
       <WriteField Field="TextStyleName" />
       <WriteField Field="ExtrusionDirection" />
-      <WriteField Field="XAxisDirection" />
+      <!-- the direction is always written as a vector, like AutoCAD does; a 50 after it would override it -->
+      <WriteSpecificValue Code="11" Value="this.Direction().X" />
+      <WriteSpecificValue Code="21" Value="this.Direction().Y" />
+      <WriteSpecificValue Code="31" Value="this.Direction().Z" />
       <WriteField Field="HorizontalWidth" />
       <WriteField Field="VerticalHeight" />
-      <WriteField Field="RotationAngle" />
       <WriteField Field="LineSpacingStyle" />
       <WriteField Field="LineSpacingFactor" />
       <WriteField Field="BackgroundFillSetting" />

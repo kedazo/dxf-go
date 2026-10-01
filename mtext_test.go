@@ -93,6 +93,44 @@ func TestMTextRuns(t *testing.T) {
 	assertEqFloat64(t, 0.5, runs[4].HeightFactor)
 }
 
+func TestMTextDirection(t *testing.T) {
+	// a direction vector wins over the rotation
+	withVector := parseEntity(t, "MTEXT",
+		NewDoubleCodePair(11, 0), NewDoubleCodePair(21, 1), NewDoubleCodePair(31, 0),
+		NewDoubleCodePair(50, 45),
+	).(*MText)
+	assertEqBool(t, true, withVector.HasXAxisDirection)
+	assertNearVector(t, Vector{0, 1, 0}, withVector.Direction())
+
+	// without one, group 50 is the rotation in degrees
+	rotated := parseEntity(t, "MTEXT", NewDoubleCodePair(50, 90)).(*MText)
+	assertEqBool(t, false, rotated.HasXAxisDirection)
+	assertEqFloat64(t, 90, rotated.RotationAngle)
+	assertNearVector(t, Vector{0, 1, 0}, rotated.Direction())
+
+	// the rotation is in the object coordinate system: seen from below, OCS X is WCS -X
+	mirrored := parseEntity(t, "MTEXT", NewDoubleCodePair(210, 0), NewDoubleCodePair(220, 0), NewDoubleCodePair(230, -1)).(*MText)
+	assertNearVector(t, Vector{-1, 0, 0}, mirrored.Direction())
+
+	assertNearVector(t, Vector{1, 0, 0}, NewMText().Direction())
+}
+
+func TestWriteMTextDirectionAsVector(t *testing.T) {
+	// a 50 after 11 would override the direction vector, so the direction is only written as the vector
+	rotated := NewMText()
+	rotated.RotationAngle = 30
+	actual := drawingCodePairsFromEntity(t, rotated, R2018)
+	assertContainsCodePairs(t, []CodePair{
+		NewDoubleCodePair(11, rotated.Direction().X),
+		NewDoubleCodePair(21, rotated.Direction().Y),
+		NewDoubleCodePair(31, 0),
+	}, actual)
+	assertNotContainsCodePairs(t, []CodePair{NewDoubleCodePair(50, 30)}, actual)
+
+	reloaded := parseEntity(t, "MTEXT", NewDoubleCodePair(11, rotated.Direction().X), NewDoubleCodePair(21, rotated.Direction().Y)).(*MText)
+	assertNearVector(t, rotated.Direction(), reloaded.Direction())
+}
+
 func TestMTextRunsSuperscriptAndSubscript(t *testing.T) {
 	runs := ParseMTextRuns("m\\S2^ ;\\S^ ;H\\S^2;")
 	assertEqInt(t, 4, len(runs))

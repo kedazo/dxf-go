@@ -349,7 +349,8 @@ func TestTransformMText(t *testing.T) {
 	assertNearFloat64(t, 4, transformed.InitialTextHeight)
 	assertNearFloat64(t, 20, transformed.ReferenceRectangleWidth)
 	assertNearVector(t, Vector{math.Cos(math.Pi / 6), math.Sin(math.Pi / 6), 0}, transformed.XAxisDirection)
-	assertNearFloat64(t, math.Pi/6, transformed.RotationAngle)
+	assertNearFloat64(t, 30, transformed.RotationAngle)
+	assertEqBool(t, true, transformed.HasXAxisDirection)
 
 	// mirrored MTEXT is seen from the back
 	mirrored := transformSingle(t, mtext, ScaleMatrix(-1, 1, 1)).(*MText)

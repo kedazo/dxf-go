@@ -10545,10 +10545,11 @@ type MText struct {
 	Text string
 	TextStyleName string
 	ExtrusionDirection Vector
-	XAxisDirection Vector
+	XAxisDirection Vector // In WCS; wins over RotationAngle, see Direction()
+	HasXAxisDirection bool // Set when the file had code 11
 	HorizontalWidth float64
 	VerticalHeight float64
-	RotationAngle float64
+	RotationAngle float64 // Degrees in OCS (the DXF reference says radians, but writers use degrees); only used without XAxisDirection, never written
 	LineSpacingStyle MTextLineSpacingStyle
 	LineSpacingFactor float64
 	BackgroundFillSetting BackgroundFillSetting
@@ -10599,6 +10600,7 @@ func NewMText() *MText {
 		TextStyleName: "STANDARD",
 		ExtrusionDirection: *NewZAxis(),
 		XAxisDirection: *NewXAxis(),
+		HasXAxisDirection: false,
 		HorizontalWidth: 1.0,
 		VerticalHeight: 1.0,
 		RotationAngle: 0.0,
@@ -10850,12 +10852,11 @@ func (this *MText) codePairs(version AcadVersion) (pairs []CodePair) {
 		pairs = append(pairs, NewDoubleCodePair(220, this.ExtrusionDirection.Y))
 		pairs = append(pairs, NewDoubleCodePair(230, this.ExtrusionDirection.Z))
 	}
-	pairs = append(pairs, NewDoubleCodePair(11, this.XAxisDirection.X))
-	pairs = append(pairs, NewDoubleCodePair(21, this.XAxisDirection.Y))
-	pairs = append(pairs, NewDoubleCodePair(31, this.XAxisDirection.Z))
+	pairs = append(pairs, NewDoubleCodePair(11, this.Direction().X))
+	pairs = append(pairs, NewDoubleCodePair(21, this.Direction().Y))
+	pairs = append(pairs, NewDoubleCodePair(31, this.Direction().Z))
 	pairs = append(pairs, NewDoubleCodePair(42, this.HorizontalWidth))
 	pairs = append(pairs, NewDoubleCodePair(43, this.VerticalHeight))
-	pairs = append(pairs, NewDoubleCodePair(50, this.RotationAngle))
 	pairs = append(pairs, NewShortCodePair(73, int16(this.LineSpacingStyle)))
 	pairs = append(pairs, NewDoubleCodePair(44, this.LineSpacingFactor))
 	pairs = append(pairs, NewIntCodePair(90, int(this.BackgroundFillSetting)))

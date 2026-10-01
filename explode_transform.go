@@ -769,11 +769,7 @@ func (t *entityTransformer) transformMTextInPlace(mtext *MText, e Entity) bool {
 	if normal.IsZero(0) {
 		normal = *NewZAxis()
 	}
-	xAxis := mtext.XAxisDirection.Normalize()
-	if xAxis.IsZero(0) {
-		sin, cos := math.Sincos(mtext.RotationAngle)
-		xAxis = OCSToWCSMatrix(normal).TransformVector(Vector{cos, sin, 0})
-	}
+	xAxis := mtext.Direction()
 	yAxis := normal.Cross(xAxis)
 
 	newX := t.m.TransformVector(xAxis)
@@ -792,7 +788,8 @@ func (t *entityTransformer) transformMTextInPlace(mtext *MText, e Entity) bool {
 	mtext.InsertionPoint = t.m.TransformPoint(mtext.InsertionPoint)
 	mtext.ExtrusionDirection = newNormal
 	mtext.XAxisDirection = newXDirection
-	mtext.RotationAngle = math.Atan2(ocsX.Y, ocsX.X)
+	mtext.HasXAxisDirection = true
+	mtext.RotationAngle = math.Atan2(ocsX.Y, ocsX.X) * 180 / math.Pi
 	mtext.InitialTextHeight *= heightScale
 	mtext.VerticalHeight *= heightScale
 	mtext.ReferenceRectangleWidth *= widthScale

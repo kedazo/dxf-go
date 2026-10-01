@@ -1,6 +1,7 @@
 package dxf
 
 import (
+	"math"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -39,6 +40,23 @@ type MTextRun struct {
 // followed by the text (code 1).
 func (m *MText) FormattedText() string {
 	return strings.Join(m.ExtendedText, "") + m.Text
+}
+
+// Direction returns the direction of the text's baseline in world coordinates. It is XAxisDirection when the file had
+// one (HasXAxisDirection) or it was changed from the default; otherwise it is RotationAngle (degrees) in the MTEXT's
+// object coordinate system. The writer writes it as the direction vector.
+func (m *MText) Direction() Vector {
+	if m.HasXAxisDirection || m.XAxisDirection != *NewXAxis() {
+		if direction := m.XAxisDirection.Normalize(); !direction.IsZero(0) {
+			return direction
+		}
+	}
+	normal := m.ExtrusionDirection
+	if normal.IsZero(0) {
+		normal = *NewZAxis()
+	}
+	sin, cos := math.Sincos(m.RotationAngle * math.Pi / 180)
+	return OCSToWCSMatrix(normal).TransformVector(Vector{cos, sin, 0})
 }
 
 // Runs returns the MTEXT content split into formatted runs.
