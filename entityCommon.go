@@ -19,6 +19,7 @@ type entityCommon struct {
 	colorName        string
 	transparency     int
 	shadowMode       ShadowMode
+	xData            XData
 	pointerOwner     pointer
 	pointerPlotStyle pointer
 }
@@ -40,6 +41,8 @@ func newEntityCommon() entityCommon {
 func (e *entityCommon) pointers() []*pointer {
 	return []*pointer{&e.pointerOwner, &e.pointerPlotStyle}
 }
+func (e *entityCommon) XData() XData                       { return e.xData }
+func (e *entityCommon) SetXData(val XData)                 { e.xData = val }
 func (e *entityCommon) OwnerHandle() Handle                { return e.pointerOwner.handle }
 func (e *entityCommon) PlotStyleHandle() Handle            { return e.pointerPlotStyle.handle }
 func (e *entityCommon) getOwnerPointer() pointer           { return e.pointerOwner }

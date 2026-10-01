@@ -64,6 +64,8 @@ func generateTables() {
 				}
 			}
 		}
+		builder.WriteString("	// XData is the extended data (1001…); it is read, not written.\n")
+		builder.WriteString("	XData XData\n")
 		builder.WriteString("}\n")
 		builder.WriteString("\n")
 
@@ -100,11 +102,14 @@ func generateTables() {
 		builder.WriteString("			return\n")
 		builder.WriteString("		}\n")
 		builder.WriteString(fmt.Sprintf("		item := *New%s()\n", tableItem.Name))
+		builder.WriteString("		var xdata xdataReader\n")
 		builder.WriteString("		nextPair, error = reader.readCodePair()\n")
 		builder.WriteString("		for error == nil && nextPair.Code != 0 {\n")
+		builder.WriteString("			xdata.add(nextPair)\n")
 		builder.WriteString("			item.tryApplyCodePair(nextPair)\n")
 		builder.WriteString("			nextPair, error = reader.readCodePair()\n")
 		builder.WriteString("		}\n")
+		builder.WriteString("		item.XData = xdata.result()\n")
 		builder.WriteString(fmt.Sprintf("		drawing.%s = append(drawing.%s, item)\n", table.Collection, table.Collection))
 		builder.WriteString("	}\n")
 		builder.WriteString("	return\n")

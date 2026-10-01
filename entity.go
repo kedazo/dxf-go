@@ -52,8 +52,11 @@ func readEntity(np CodePair, reader codePairReader) (entity Entity, nextPair Cod
 	}
 
 	created = true
+	var xdata xdataReader
 	nextPair, error = reader.readCodePair()
 	for error == nil && nextPair.Code != 0 {
+		// extended data still reaches the entity: e.g. UnknownEntity keeps it to write it back
+		xdata.add(nextPair)
 		entity.tryApplyCodePair(nextPair)
 		nextPair, error = reader.readCodePair()
 	}
@@ -73,6 +76,7 @@ func readEntity(np CodePair, reader codePairReader) (entity Entity, nextPair Cod
 		entity = dimension
 	}
 	splitDimensionFlags(entity)
+	entity.SetXData(xdata.result())
 	return
 }
 

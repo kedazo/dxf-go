@@ -9,6 +9,7 @@ type RasterVariables struct {
 	ImageFrame           int16
 	IsHighDisplayQuality bool  // code 71
 	ImageUnits           int16 // code 72: 0 = none, 1 = mm, 2 = cm, 3 = m, 4 = km, 5 = in, 6 = ft, 7 = yd, 8 = mi
+	XData                XData // extended data (1001…)
 }
 
 // IsFramePlotted reports whether the outlines of images are plotted.
@@ -21,6 +22,7 @@ type WipeoutVariables struct {
 	// Frame is the WIPEOUTFRAME setting, code 70: 0 = no frame, 1 = frame shown and plotted, 2 = frame shown but not
 	// plotted.
 	Frame int16
+	XData XData // extended data (1001…)
 }
 
 // IsFramePlotted reports whether the outlines of wipeouts are plotted.
@@ -93,6 +95,7 @@ type MLeaderStyle struct {
 	TextAttachmentDirection       int16   // code 271: 0 = horizontal, 1 = vertical
 	BottomTextAttachment          int16   // code 272
 	TopTextAttachment             int16   // code 273
+	XData                         XData   // extended data (1001…), e.g. ACAD_MLEADERVER
 }
 
 // TableStyle is a TABLESTYLE object: the defaults of the ACAD_TABLE entities that use it. Its name is the key of its
@@ -109,6 +112,7 @@ type TableStyle struct {
 	IsColumnHeadingSuppressed bool    // code 281
 	// CellStyles are the data, column header and title cell styles, in that order.
 	CellStyles []TableCellStyle
+	XData      XData // extended data (1001…)
 }
 
 // TableCellStyle is one of a TABLESTYLE's cell styles.
@@ -149,7 +153,7 @@ func (d *Drawing) TableStyle(table *Table) *TableStyle {
 }
 
 func parseRasterVariables(pairs []CodePair) *RasterVariables {
-	variables := &RasterVariables{}
+	variables := &RasterVariables{XData: xdataFromPairs(pairs)}
 	for _, pair := range pairs {
 		switch pair.Code {
 		case 5:
@@ -168,7 +172,7 @@ func parseRasterVariables(pairs []CodePair) *RasterVariables {
 }
 
 func parseWipeoutVariables(pairs []CodePair) *WipeoutVariables {
-	variables := &WipeoutVariables{}
+	variables := &WipeoutVariables{XData: xdataFromPairs(pairs)}
 	for _, pair := range pairs {
 		switch pair.Code {
 		case 5:
@@ -183,6 +187,7 @@ func parseWipeoutVariables(pairs []CodePair) *WipeoutVariables {
 }
 
 func parseMLeaderStyle(pairs []CodePair) (style MLeaderStyle) {
+	style.XData = xdataFromPairs(pairs)
 	for _, pair := range pairs {
 		switch pair.Code {
 		case 5:
@@ -281,6 +286,7 @@ func parseMLeaderStyle(pairs []CodePair) (style MLeaderStyle) {
 }
 
 func parseTableStyle(pairs []CodePair) (style TableStyle) {
+	style.XData = xdataFromPairs(pairs)
 	afterHeader := false // the second 280 (title suppressed) comes after the margins, the first (version) before
 	var cell *TableCellStyle
 	for _, pair := range pairs {

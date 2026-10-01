@@ -29,6 +29,8 @@
     <Field Name="Transparency" Code="440" Type="int" DefaultValue="0" MinVersion="R2004" />
     <Pointer Name="PlotStyle" Code="390" Type="DrawingItem" MinVersion="R2007" />
     <Field Name="ShadowMode" Code="284" Type="ShadowMode" DefaultValue="ShadowModeCastsAndReceivesShadows" ReadConverter="ShadowMode(%v)" WriteConverter="int16(%v)" MinVersion="R2007" />
+    <!-- extended data (1001…): collected by readEntity, not written -->
+    <Field Name="XData" Code="-1" Type="XData" DefaultValue="nil" />
     <WriteOrder>
       <WriteField Field="Handle" />
       <WriteExtensionData />

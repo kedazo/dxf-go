@@ -145,6 +145,7 @@ func resetCommonEntityFields(e Entity) {
 	e.SetOwner(nil)
 	e.setOwnerPointerHandle(0)
 	e.SetPreviewImageData(cloneSlice(e.PreviewImageData()))
+	e.SetXData(e.XData().clone())
 }
 
 func cloneSlice[T any](s []T) []T {

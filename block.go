@@ -11,6 +11,8 @@ type Block struct {
 	XrefName       string
 	Entities       []Entity
 	Description    string
+	// XData is the BLOCK's extended data (1001…); it is read, not written.
+	XData XData
 }
 
 func NewBlock() *Block {

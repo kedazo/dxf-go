@@ -55,6 +55,8 @@ type ViewPort struct {
 	AmbientColor Color
 	AmbientColorInt int
 	AmbientColorName string
+	// XData is the extended data (1001…); it is read, not written.
+	XData XData
 }
 
 func NewViewPort() *ViewPort {
@@ -125,11 +127,14 @@ func readViewPorts(drawing *Drawing, np CodePair, reader codePairReader) (nextPa
 			return
 		}
 		item := *NewViewPort()
+		var xdata xdataReader
 		nextPair, error = reader.readCodePair()
 		for error == nil && nextPair.Code != 0 {
+			xdata.add(nextPair)
 			item.tryApplyCodePair(nextPair)
 			nextPair, error = reader.readCodePair()
 		}
+		item.XData = xdata.result()
 		drawing.ViewPorts = append(drawing.ViewPorts, item)
 	}
 	return
@@ -438,6 +443,8 @@ type LineType struct {
 	XOffsets []float64
 	YOffsets []float64
 	TextStrings []string
+	// XData is the extended data (1001…); it is read, not written.
+	XData XData
 }
 
 func NewLineType() *LineType {
@@ -476,11 +483,14 @@ func readLineTypes(drawing *Drawing, np CodePair, reader codePairReader) (nextPa
 			return
 		}
 		item := *NewLineType()
+		var xdata xdataReader
 		nextPair, error = reader.readCodePair()
 		for error == nil && nextPair.Code != 0 {
+			xdata.add(nextPair)
 			item.tryApplyCodePair(nextPair)
 			nextPair, error = reader.readCodePair()
 		}
+		item.XData = xdata.result()
 		drawing.LineTypes = append(drawing.LineTypes, item)
 	}
 	return
@@ -611,6 +621,8 @@ type Layer struct {
 	LineWeight LineWeight
 	PlotStyleHandle string
 	MaterialHandle string
+	// XData is the extended data (1001…); it is read, not written.
+	XData XData
 }
 
 func NewLayer() *Layer {
@@ -643,11 +655,14 @@ func readLayers(drawing *Drawing, np CodePair, reader codePairReader) (nextPair 
 			return
 		}
 		item := *NewLayer()
+		var xdata xdataReader
 		nextPair, error = reader.readCodePair()
 		for error == nil && nextPair.Code != 0 {
+			xdata.add(nextPair)
 			item.tryApplyCodePair(nextPair)
 			nextPair, error = reader.readCodePair()
 		}
+		item.XData = xdata.result()
 		drawing.Layers = append(drawing.Layers, item)
 	}
 	return
@@ -737,6 +752,8 @@ type Style struct {
 	PrimaryFontFileName string
 	BigFontFileName string
 	FontFlags int
+	// XData is the extended data (1001…); it is read, not written.
+	XData XData
 }
 
 func NewStyle() *Style {
@@ -770,11 +787,14 @@ func readStyles(drawing *Drawing, np CodePair, reader codePairReader) (nextPair 
 			return
 		}
 		item := *NewStyle()
+		var xdata xdataReader
 		nextPair, error = reader.readCodePair()
 		for error == nil && nextPair.Code != 0 {
+			xdata.add(nextPair)
 			item.tryApplyCodePair(nextPair)
 			nextPair, error = reader.readCodePair()
 		}
+		item.XData = xdata.result()
 		drawing.Styles = append(drawing.Styles, item)
 	}
 	return
@@ -874,6 +894,8 @@ type View struct {
 	UCSElevation float64
 	UCSHandle string
 	BaseUCSHandle string
+	// XData is the extended data (1001…); it is read, not written.
+	XData XData
 }
 
 func NewView() *View {
@@ -923,11 +945,14 @@ func readViews(drawing *Drawing, np CodePair, reader codePairReader) (nextPair C
 			return
 		}
 		item := *NewView()
+		var xdata xdataReader
 		nextPair, error = reader.readCodePair()
 		for error == nil && nextPair.Code != 0 {
+			xdata.add(nextPair)
 			item.tryApplyCodePair(nextPair)
 			nextPair, error = reader.readCodePair()
 		}
+		item.XData = xdata.result()
 		drawing.Views = append(drawing.Views, item)
 	}
 	return
@@ -1118,6 +1143,8 @@ type Ucs struct {
 	BaseUcsHandle string
 	OrthographicType OrthographicViewType
 	OrthographicOrigin Point
+	// XData is the extended data (1001…); it is read, not written.
+	XData XData
 }
 
 func NewUcs() *Ucs {
@@ -1151,11 +1178,14 @@ func readUcss(drawing *Drawing, np CodePair, reader codePairReader) (nextPair Co
 			return
 		}
 		item := *NewUcs()
+		var xdata xdataReader
 		nextPair, error = reader.readCodePair()
 		for error == nil && nextPair.Code != 0 {
+			xdata.add(nextPair)
 			item.tryApplyCodePair(nextPair)
 			nextPair, error = reader.readCodePair()
 		}
+		item.XData = xdata.result()
 		drawing.Ucss = append(drawing.Ucss, item)
 	}
 	return
@@ -1263,6 +1293,8 @@ type AppId struct {
 	handle Handle
 	Name string
 	Flags int
+	// XData is the extended data (1001…); it is read, not written.
+	XData XData
 }
 
 func NewAppId() *AppId {
@@ -1288,11 +1320,14 @@ func readAppIds(drawing *Drawing, np CodePair, reader codePairReader) (nextPair 
 			return
 		}
 		item := *NewAppId()
+		var xdata xdataReader
 		nextPair, error = reader.readCodePair()
 		for error == nil && nextPair.Code != 0 {
+			xdata.add(nextPair)
 			item.tryApplyCodePair(nextPair)
 			nextPair, error = reader.readCodePair()
 		}
+		item.XData = xdata.result()
 		drawing.AppIds = append(drawing.AppIds, item)
 	}
 	return
@@ -1405,6 +1440,8 @@ type DimStyle struct {
 	DimensionLeaderBlockName string
 	DimensionLineWeight LineWeight
 	DimensionExtensionLineWeight LineWeight
+	// XData is the extended data (1001…); it is read, not written.
+	XData XData
 }
 
 func NewDimStyle() *DimStyle {
@@ -1493,11 +1530,14 @@ func readDimStyles(drawing *Drawing, np CodePair, reader codePairReader) (nextPa
 			return
 		}
 		item := *NewDimStyle()
+		var xdata xdataReader
 		nextPair, error = reader.readCodePair()
 		for error == nil && nextPair.Code != 0 {
+			xdata.add(nextPair)
 			item.tryApplyCodePair(nextPair)
 			nextPair, error = reader.readCodePair()
 		}
+		item.XData = xdata.result()
 		drawing.DimStyles = append(drawing.DimStyles, item)
 	}
 	return
@@ -1824,6 +1864,8 @@ type BlockRecord struct {
 	Explodability bool
 	Scalability bool
 	bitmapPreviewData []string
+	// XData is the extended data (1001…); it is read, not written.
+	XData XData
 }
 
 func NewBlockRecord() *BlockRecord {
@@ -1853,11 +1895,14 @@ func readBlockRecords(drawing *Drawing, np CodePair, reader codePairReader) (nex
 			return
 		}
 		item := *NewBlockRecord()
+		var xdata xdataReader
 		nextPair, error = reader.readCodePair()
 		for error == nil && nextPair.Code != 0 {
+			xdata.add(nextPair)
 			item.tryApplyCodePair(nextPair)
 			nextPair, error = reader.readCodePair()
 		}
+		item.XData = xdata.result()
 		drawing.BlockRecords = append(drawing.BlockRecords, item)
 	}
 	return

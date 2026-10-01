@@ -454,9 +454,11 @@ func readBlocksSection(np CodePair, reader codePairReader) (blocks []Block, next
 		entityType := nextPair.Value.(StringCodePairValue).Value
 		if entityType == "BLOCK" {
 			var block Block
+			var xdata xdataReader
 			// Read block header fields
 			nextPair, err = reader.readCodePair()
 			for err == nil && nextPair.Code != 0 {
+				xdata.add(nextPair)
 				switch nextPair.Code {
 				case 2, 3:
 					block.Name = nextPair.Value.(StringCodePairValue).Value
@@ -481,6 +483,7 @@ func readBlocksSection(np CodePair, reader codePairReader) (blocks []Block, next
 				}
 				nextPair, err = reader.readCodePair()
 			}
+			block.XData = xdata.result()
 			// Read block entities until ENDBLK; a missing ENDBLK must not swallow the following sections
 			for err == nil && !nextPair.isEndSection() && !nextPair.isEOF() {
 				if nextPair.Code == 0 {

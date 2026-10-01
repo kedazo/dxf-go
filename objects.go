@@ -45,6 +45,8 @@ type Layout struct {
 	Elevation                float64
 	BlockRecordHandle        Handle // code 330 of the layout: the BLOCK_RECORD of its *Model_Space or *Paper_Space block
 	LastActiveViewportHandle Handle // code 331
+
+	XData XData // extended data (1001…)
 }
 
 // ImageDefinition is an IMAGEDEF object: the image file that IMAGE entities show. Image definitions are read from the
@@ -57,6 +59,7 @@ type ImageDefinition struct {
 	PixelSize       Vector // codes 11/21, the size of one pixel in drawing units
 	IsLoaded        bool   // code 280
 	ResolutionUnits int16  // code 281: 0 = none, 2 = centimeters, 5 = inches
+	XData           XData  // extended data (1001…)
 }
 
 // objectParsers read the objects this library models from their group codes; other objects are skipped.
@@ -98,6 +101,7 @@ func readObjectsSection(drawing *Drawing, np CodePair, reader codePairReader) (n
 }
 
 func parseLayout(pairs []CodePair) (layout Layout) {
+	layout.XData = xdataFromPairs(pairs)
 	subclass := ""
 	inApplicationGroup := false
 	for _, pair := range pairs {
@@ -216,6 +220,7 @@ func parseLayout(pairs []CodePair) (layout Layout) {
 }
 
 func parseImageDefinition(pairs []CodePair) (definition ImageDefinition) {
+	definition.XData = xdataFromPairs(pairs)
 	inApplicationGroup := false
 	for _, pair := range pairs {
 		switch {

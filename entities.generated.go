@@ -49,6 +49,8 @@ type Entity interface {
 	SetTransparency(val int)
 	ShadowMode() ShadowMode
 	SetShadowMode(val ShadowMode)
+	XData() XData
+	SetXData(val XData)
 	Owner() *DrawingItem
 	SetOwner(val *DrawingItem)
 	OwnerHandle() Handle
@@ -589,6 +591,7 @@ type Face struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	FirstCorner Point
 	SecondCorner Point
 	ThirdCorner Point
@@ -616,6 +619,7 @@ func NewFace() *Face {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		FirstCorner: *NewOrigin(),
 		SecondCorner: *NewOrigin(),
 		ThirdCorner: *NewOrigin(),
@@ -810,6 +814,14 @@ func (this *Face) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Face) XData() XData {
+	return this.xData
+}
+
+func (this *Face) SetXData(val XData) {
+	this.xData = val
+}
+
 // FirstEdgeInvisible status flag.
 func (this *Face) FirstEdgeInvisible() bool {
 	return this.EdgeFlags & 1 != 0
@@ -957,6 +969,7 @@ type Solid3D struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	FormatVersionNumber int16
 	CustomData []string
 	CustomData2 []string
@@ -983,6 +996,7 @@ func NewSolid3D() *Solid3D {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		FormatVersionNumber: 1,
 		CustomData: []string{},
 		CustomData2: []string{},
@@ -1189,6 +1203,14 @@ func (this *Solid3D) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Solid3D) XData() XData {
+	return this.xData
+}
+
+func (this *Solid3D) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *Solid3D) AddCustomData(val string) {
 	this.CustomData = append(this.CustomData, val)
 }
@@ -1274,6 +1296,7 @@ type ProxyEntity struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	readingGraphicsData bool
 	ProxyEntityClassId int
 	ApplicationEntityClassId int
@@ -1312,6 +1335,7 @@ func NewProxyEntity() *ProxyEntity {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		readingGraphicsData: true,
 		ProxyEntityClassId: 498,
 		ApplicationEntityClassId: 500,
@@ -1517,6 +1541,14 @@ func (this *ProxyEntity) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *ProxyEntity) XData() XData {
+	return this.xData
+}
+
+func (this *ProxyEntity) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *ProxyEntity) AddgraphicsDataString(val string) {
 	this.graphicsDataString = append(this.graphicsDataString, val)
 }
@@ -1632,6 +1664,7 @@ type Arc struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	Thickness float64
 	Center Point
 	Radius float64
@@ -1660,6 +1693,7 @@ func NewArc() *Arc {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		Thickness: 0.0,
 		Center: *NewOrigin(),
 		Radius: 0.0,
@@ -1855,6 +1889,14 @@ func (this *Arc) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Arc) XData() XData {
+	return this.xData
+}
+
+func (this *Arc) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *Arc) typeString() string {
 	return "ARC"
 }
@@ -1938,6 +1980,7 @@ type ArcAlignedText struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	Text string
 	FontName string
 	BigfontName string
@@ -1987,6 +2030,7 @@ func NewArcAlignedText() *ArcAlignedText {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		Text: "",
 		FontName: "",
 		BigfontName: "",
@@ -2203,6 +2247,14 @@ func (this *ArcAlignedText) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *ArcAlignedText) XData() XData {
+	return this.xData
+}
+
+func (this *ArcAlignedText) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *ArcAlignedText) typeString() string {
 	return "ARCALIGNEDTEXT"
 }
@@ -2348,6 +2400,7 @@ type AttributeDefinition struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	Thickness float64
 	Location Point
 	TextHeight float64
@@ -2405,6 +2458,7 @@ func NewAttributeDefinition() *AttributeDefinition {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		Thickness: 0.0,
 		Location: *NewOrigin(),
 		TextHeight: 1.0,
@@ -2627,6 +2681,14 @@ func (this *AttributeDefinition) ShadowMode() ShadowMode {
 
 func (this *AttributeDefinition) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
+}
+
+func (this *AttributeDefinition) XData() XData {
+	return this.xData
+}
+
+func (this *AttributeDefinition) SetXData(val XData) {
+	this.xData = val
 }
 
 // IsTextBackward status flag.
@@ -2853,6 +2915,7 @@ type Attribute struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	Thickness float64
 	Location Point
 	TextHeight float64
@@ -2909,6 +2972,7 @@ func NewAttribute() *Attribute {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		Thickness: 0.0,
 		Location: *NewOrigin(),
 		TextHeight: 1.0,
@@ -3132,6 +3196,14 @@ func (this *Attribute) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Attribute) XData() XData {
+	return this.xData
+}
+
+func (this *Attribute) SetXData(val XData) {
+	this.xData = val
+}
+
 // IsInvisible status flag.
 func (this *Attribute) IsInvisible() bool {
 	return this.Flags & 1 != 0
@@ -3352,6 +3424,7 @@ type Body struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	FormatVersionNumber int16
 	CustomData []string
 	CustomData2 []string
@@ -3377,6 +3450,7 @@ func NewBody() *Body {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		FormatVersionNumber: 1,
 		CustomData: []string{},
 		CustomData2: []string{},
@@ -3569,6 +3643,14 @@ func (this *Body) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Body) XData() XData {
+	return this.xData
+}
+
+func (this *Body) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *Body) AddCustomData(val string) {
 	this.CustomData = append(this.CustomData, val)
 }
@@ -3648,6 +3730,7 @@ type Circle struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	Thickness float64
 	Center Point
 	Radius float64
@@ -3674,6 +3757,7 @@ func NewCircle() *Circle {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		Thickness: 0.0,
 		Center: *NewOrigin(),
 		Radius: 0.0,
@@ -3867,6 +3951,14 @@ func (this *Circle) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Circle) XData() XData {
+	return this.xData
+}
+
+func (this *Circle) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *Circle) typeString() string {
 	return "CIRCLE"
 }
@@ -3945,6 +4037,7 @@ type dimensionHelper struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	// fields for Dimension interface
 	version Version
 	blockName string
@@ -3984,6 +4077,7 @@ func NewdimensionHelper() *dimensionHelper {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		version: VersionR2010,
 		blockName: "*MODEL_SPACE",
 		definitionPoint1: *NewOrigin(),
@@ -4189,6 +4283,14 @@ func (this *dimensionHelper) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *dimensionHelper) XData() XData {
+	return this.xData
+}
+
+func (this *dimensionHelper) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *dimensionHelper) Version() Version {
 	return this.version
 }
@@ -4348,6 +4450,7 @@ type AlignedDimension struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	// fields for Dimension interface
 	version Version
 	blockName string
@@ -4388,6 +4491,7 @@ func NewAlignedDimension() *AlignedDimension {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		version: VersionR2010,
 		blockName: "*MODEL_SPACE",
 		definitionPoint1: *NewOrigin(),
@@ -4594,6 +4698,14 @@ func (this *AlignedDimension) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *AlignedDimension) XData() XData {
+	return this.xData
+}
+
+func (this *AlignedDimension) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *AlignedDimension) Version() Version {
 	return this.version
 }
@@ -4786,6 +4898,7 @@ type RotatedDimension struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	// fields for Dimension interface
 	version Version
 	blockName string
@@ -4829,6 +4942,7 @@ func NewRotatedDimension() *RotatedDimension {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		version: VersionR2010,
 		blockName: "*MODEL_SPACE",
 		definitionPoint1: *NewOrigin(),
@@ -5036,6 +5150,14 @@ func (this *RotatedDimension) ShadowMode() ShadowMode {
 
 func (this *RotatedDimension) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
+}
+
+func (this *RotatedDimension) XData() XData {
+	return this.xData
+}
+
+func (this *RotatedDimension) SetXData(val XData) {
+	this.xData = val
 }
 
 func (this *RotatedDimension) Version() Version {
@@ -5252,6 +5374,7 @@ type RadialDimension struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	// fields for Dimension interface
 	version Version
 	blockName string
@@ -5292,6 +5415,7 @@ func NewRadialDimension() *RadialDimension {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		version: VersionR2010,
 		blockName: "*MODEL_SPACE",
 		definitionPoint1: *NewOrigin(),
@@ -5498,6 +5622,14 @@ func (this *RadialDimension) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *RadialDimension) XData() XData {
+	return this.xData
+}
+
+func (this *RadialDimension) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *RadialDimension) Version() Version {
 	return this.version
 }
@@ -5684,6 +5816,7 @@ type DiameterDimension struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	// fields for Dimension interface
 	version Version
 	blockName string
@@ -5724,6 +5857,7 @@ func NewDiameterDimension() *DiameterDimension {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		version: VersionR2010,
 		blockName: "*MODEL_SPACE",
 		definitionPoint1: *NewOrigin(),
@@ -5930,6 +6064,14 @@ func (this *DiameterDimension) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *DiameterDimension) XData() XData {
+	return this.xData
+}
+
+func (this *DiameterDimension) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *DiameterDimension) Version() Version {
 	return this.version
 }
@@ -6116,6 +6258,7 @@ type AngularThreePointDimension struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	// fields for Dimension interface
 	version Version
 	blockName string
@@ -6158,6 +6301,7 @@ func NewAngularThreePointDimension() *AngularThreePointDimension {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		version: VersionR2010,
 		blockName: "*MODEL_SPACE",
 		definitionPoint1: *NewOrigin(),
@@ -6364,6 +6508,14 @@ func (this *AngularThreePointDimension) ShadowMode() ShadowMode {
 
 func (this *AngularThreePointDimension) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
+}
+
+func (this *AngularThreePointDimension) XData() XData {
+	return this.xData
+}
+
+func (this *AngularThreePointDimension) SetXData(val XData) {
+	this.xData = val
 }
 
 func (this *AngularThreePointDimension) Version() Version {
@@ -6576,6 +6728,7 @@ type OrdinateDimension struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	// fields for Dimension interface
 	version Version
 	blockName string
@@ -6616,6 +6769,7 @@ func NewOrdinateDimension() *OrdinateDimension {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		version: VersionR2010,
 		blockName: "*MODEL_SPACE",
 		definitionPoint1: *NewOrigin(),
@@ -6822,6 +6976,14 @@ func (this *OrdinateDimension) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *OrdinateDimension) XData() XData {
+	return this.xData
+}
+
+func (this *OrdinateDimension) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *OrdinateDimension) Version() Version {
 	return this.version
 }
@@ -7014,6 +7176,7 @@ type ArcDimension struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	// fields for Dimension interface
 	version Version
 	blockName string
@@ -7062,6 +7225,7 @@ func NewArcDimension() *ArcDimension {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		version: VersionR2010,
 		blockName: "*MODEL_SPACE",
 		definitionPoint1: *NewOrigin(),
@@ -7276,6 +7440,14 @@ func (this *ArcDimension) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *ArcDimension) XData() XData {
+	return this.xData
+}
+
+func (this *ArcDimension) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *ArcDimension) Version() Version {
 	return this.version
 }
@@ -7456,6 +7628,7 @@ type Ellipse struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	Center Point
 	MajorAxis Vector
 	Normal Vector
@@ -7484,6 +7657,7 @@ func NewEllipse() *Ellipse {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		Center: *NewOrigin(),
 		MajorAxis: *NewXAxis(),
 		Normal: *NewZAxis(),
@@ -7679,6 +7853,14 @@ func (this *Ellipse) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Ellipse) XData() XData {
+	return this.xData
+}
+
+func (this *Ellipse) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *Ellipse) typeString() string {
 	return "ELLIPSE"
 }
@@ -7767,6 +7949,7 @@ type Helix struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	MajorReleaseNumber int
 	MaintainenceReleaseNumber int
 	AxisBasePoint Point
@@ -7799,6 +7982,7 @@ func NewHelix() *Helix {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		MajorReleaseNumber: 0,
 		MaintainenceReleaseNumber: 0,
 		AxisBasePoint: *NewOrigin(),
@@ -7998,6 +8182,14 @@ func (this *Helix) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Helix) XData() XData {
+	return this.xData
+}
+
+func (this *Helix) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *Helix) typeString() string {
 	return "HELIX"
 }
@@ -8096,6 +8288,7 @@ type Image struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	// fields for RasterImage interface
 	_subclassMarker string
 	classVersion int
@@ -8138,6 +8331,7 @@ func NewImage() *Image {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		_subclassMarker: "",
 		classVersion: 0,
 		location: *NewOrigin(),
@@ -8346,6 +8540,14 @@ func (this *Image) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Image) XData() XData {
+	return this.xData
+}
+
+func (this *Image) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *Image) subclassMarker() string {
 	return this._subclassMarker
 }
@@ -8549,6 +8751,7 @@ type Insert struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	HasAttributes bool
 	Name string
 	Location Point
@@ -8585,6 +8788,7 @@ func NewInsert() *Insert {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		HasAttributes: false,
 		Name: "",
 		Location: *NewOrigin(),
@@ -8788,6 +8992,14 @@ func (this *Insert) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Insert) XData() XData {
+	return this.xData
+}
+
+func (this *Insert) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *Insert) AddAttributes(val Attribute) {
 	this.Attributes = append(this.Attributes, val)
 }
@@ -8912,6 +9124,7 @@ type Leader struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	DimensionStyleName string
 	UseArrowheads bool
 	PathType LeaderPathType
@@ -8953,6 +9166,7 @@ func NewLeader() *Leader {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		DimensionStyleName: "",
 		UseArrowheads: true,
 		PathType: LeaderPathTypeStraightLineSegments,
@@ -9161,6 +9375,14 @@ func (this *Leader) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Leader) XData() XData {
+	return this.xData
+}
+
+func (this *Leader) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *Leader) AddVertices(val Point) {
 	this.Vertices = append(this.Vertices, val)
 }
@@ -9325,6 +9547,7 @@ type Light struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	VersionNumber int
 	Name string
 	LightType LightType
@@ -9365,6 +9588,7 @@ func NewLight() *Light {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		VersionNumber: 0,
 		Name: "",
 		LightType: LightTypeDistant,
@@ -9572,6 +9796,14 @@ func (this *Light) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Light) XData() XData {
+	return this.xData
+}
+
+func (this *Light) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *Light) typeString() string {
 	return "LIGHT"
 }
@@ -9688,6 +9920,7 @@ type Line struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	Thickness float64
 	P1 Point
 	P2 Point
@@ -9714,6 +9947,7 @@ func NewLine() *Line {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		Thickness: 0.0,
 		P1: *NewOrigin(),
 		P2: *NewOrigin(),
@@ -9907,6 +10141,14 @@ func (this *Line) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Line) XData() XData {
+	return this.xData
+}
+
+func (this *Line) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *Line) typeString() string {
 	return "LINE"
 }
@@ -9991,6 +10233,7 @@ type LWPolyline struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	flags int
 	ConstantWidth float64
 	Thickness float64
@@ -10019,6 +10262,7 @@ func NewLWPolyline() *LWPolyline {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		flags: 0,
 		ConstantWidth: 0.0,
 		Thickness: 0.0,
@@ -10214,6 +10458,14 @@ func (this *LWPolyline) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *LWPolyline) XData() XData {
+	return this.xData
+}
+
+func (this *LWPolyline) SetXData(val XData) {
+	this.xData = val
+}
+
 // IsClosed status flag.
 func (this *LWPolyline) IsClosed() bool {
 	return this.flags & 1 != 0
@@ -10320,6 +10572,7 @@ type MLine struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	StyleName string
 	styleHandle string
 	ScaleFactor float64
@@ -10367,6 +10620,7 @@ func NewMLine() *MLine {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		StyleName: "",
 		styleHandle: "",
 		ScaleFactor: 1.0,
@@ -10579,6 +10833,14 @@ func (this *MLine) ShadowMode() ShadowMode {
 
 func (this *MLine) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
+}
+
+func (this *MLine) XData() XData {
+	return this.xData
+}
+
+func (this *MLine) SetXData(val XData) {
+	this.xData = val
 }
 
 // HasAtLeastOneVertex status flag.
@@ -10889,6 +11151,7 @@ type MText struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	InsertionPoint Point
 	InitialTextHeight float64
 	ReferenceRectangleWidth float64
@@ -10943,6 +11206,7 @@ func NewMText() *MText {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		InsertionPoint: *NewOrigin(),
 		InitialTextHeight: 1.0,
 		ReferenceRectangleWidth: 1.0,
@@ -11164,6 +11428,14 @@ func (this *MText) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *MText) XData() XData {
+	return this.xData
+}
+
+func (this *MText) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *MText) AddExtendedText(val string) {
 	this.ExtendedText = append(this.ExtendedText, val)
 }
@@ -11262,6 +11534,7 @@ type OleFrame struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	VersionNumber int
 	binaryDataLength int
 	binaryDataStrings []string
@@ -11288,6 +11561,7 @@ func NewOleFrame() *OleFrame {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		VersionNumber: 0,
 		binaryDataLength: 0,
 		binaryDataStrings: []string{},
@@ -11481,6 +11755,14 @@ func (this *OleFrame) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *OleFrame) XData() XData {
+	return this.xData
+}
+
+func (this *OleFrame) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *OleFrame) AddbinaryDataStrings(val string) {
 	this.binaryDataStrings = append(this.binaryDataStrings, val)
 }
@@ -11557,6 +11839,7 @@ type Ole2Frame struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	VersionNumber int
 	Description string
 	UpperLeftCorner Point
@@ -11588,6 +11871,7 @@ func NewOle2Frame() *Ole2Frame {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		VersionNumber: 0,
 		Description: "",
 		UpperLeftCorner: *NewOrigin(),
@@ -11786,6 +12070,14 @@ func (this *Ole2Frame) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Ole2Frame) XData() XData {
+	return this.xData
+}
+
+func (this *Ole2Frame) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *Ole2Frame) AddbinaryDataStrings(val string) {
 	this.binaryDataStrings = append(this.binaryDataStrings, val)
 }
@@ -11889,6 +12181,7 @@ type ModelPoint struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	Location Point
 	Thickness float64
 	ExtrusionDirection Vector
@@ -11915,6 +12208,7 @@ func NewModelPoint() *ModelPoint {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		Location: *NewOrigin(),
 		Thickness: 0.0,
 		ExtrusionDirection: *NewZAxis(),
@@ -12108,6 +12402,14 @@ func (this *ModelPoint) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *ModelPoint) XData() XData {
+	return this.xData
+}
+
+func (this *ModelPoint) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *ModelPoint) typeString() string {
 	return "POINT"
 }
@@ -12188,6 +12490,7 @@ type Polyline struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	Location Point
 	Thickness float64
 	Flags int
@@ -12224,6 +12527,7 @@ func NewPolyline() *Polyline {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		Location: *NewOrigin(),
 		Thickness: 0.0,
 		Flags: 0,
@@ -12427,6 +12731,14 @@ func (this *Polyline) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Polyline) XData() XData {
+	return this.xData
+}
+
+func (this *Polyline) SetXData(val XData) {
+	this.xData = val
+}
+
 // IsClosed status flag.
 func (this *Polyline) IsClosed() bool {
 	return this.Flags & 1 != 0
@@ -12578,6 +12890,7 @@ type Ray struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	StartPoint Point
 	UnitDirectionVector Vector
 	pointerOwner pointer
@@ -12602,6 +12915,7 @@ func NewRay() *Ray {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		StartPoint: *NewOrigin(),
 		UnitDirectionVector: *NewXAxis(),
 	}
@@ -12793,6 +13107,14 @@ func (this *Ray) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Ray) XData() XData {
+	return this.xData
+}
+
+func (this *Ray) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *Ray) typeString() string {
 	return "RAY"
 }
@@ -12861,6 +13183,7 @@ type Region struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	FormatVersionNumber int16
 	CustomData []string
 	CustomData2 []string
@@ -12886,6 +13209,7 @@ func NewRegion() *Region {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		FormatVersionNumber: 1,
 		CustomData: []string{},
 		CustomData2: []string{},
@@ -13078,6 +13402,14 @@ func (this *Region) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Region) XData() XData {
+	return this.xData
+}
+
+func (this *Region) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *Region) AddCustomData(val string) {
 	this.CustomData = append(this.CustomData, val)
 }
@@ -13157,6 +13489,7 @@ type RText struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	InsertionPoint Point
 	ExtrusionDirection Vector
 	RotationAngle float64
@@ -13186,6 +13519,7 @@ func NewRText() *RText {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		InsertionPoint: *NewOrigin(),
 		ExtrusionDirection: *NewZAxis(),
 		RotationAngle: 0.0,
@@ -13382,6 +13716,14 @@ func (this *RText) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *RText) XData() XData {
+	return this.xData
+}
+
+func (this *RText) SetXData(val XData) {
+	this.xData = val
+}
+
 // IsExpression status flag.
 func (this *RText) IsExpression() bool {
 	return this.TypeFlags & 1 != 0
@@ -13495,6 +13837,7 @@ type Section struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	State int
 	Flags int
 	Name string
@@ -13531,6 +13874,7 @@ func NewSection() *Section {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		State: 0,
 		Flags: 0,
 		Name: "",
@@ -13734,6 +14078,14 @@ func (this *Section) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Section) XData() XData {
+	return this.xData
+}
+
+func (this *Section) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *Section) AddVertices(val Point) {
 	this.Vertices = append(this.Vertices, val)
 }
@@ -13814,6 +14166,7 @@ type Seqend struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	pointerOwner pointer
 	pointerPlotStyle pointer
 }
@@ -13836,6 +14189,7 @@ func NewSeqend() *Seqend {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 	}
 }
 
@@ -14025,6 +14379,14 @@ func (this *Seqend) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Seqend) XData() XData {
+	return this.xData
+}
+
+func (this *Seqend) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *Seqend) typeString() string {
 	return "SEQEND"
 }
@@ -14062,6 +14424,7 @@ type Shape struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	Thickness float64
 	Location Point
 	Size float64
@@ -14092,6 +14455,7 @@ func NewShape() *Shape {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		Thickness: 0.0,
 		Location: *NewOrigin(),
 		Size: 0.0,
@@ -14289,6 +14653,14 @@ func (this *Shape) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Shape) XData() XData {
+	return this.xData
+}
+
+func (this *Shape) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *Shape) typeString() string {
 	return "SHAPE"
 }
@@ -14385,6 +14757,7 @@ type Solid struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	FirstCorner Point
 	SecondCorner Point
 	ThirdCorner Point
@@ -14413,6 +14786,7 @@ func NewSolid() *Solid {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		FirstCorner: *NewOrigin(),
 		SecondCorner: *NewOrigin(),
 		ThirdCorner: *NewOrigin(),
@@ -14608,6 +14982,14 @@ func (this *Solid) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Solid) XData() XData {
+	return this.xData
+}
+
+func (this *Solid) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *Solid) typeString() string {
 	return "SOLID"
 }
@@ -14710,6 +15092,7 @@ type Spline struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	Normal Vector
 	Flags int
 	DegreeOfCurve int
@@ -14747,6 +15130,7 @@ func NewSpline() *Spline {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		Normal: *NewZAxis(),
 		Flags: 0,
 		DegreeOfCurve: 1,
@@ -14951,6 +15335,14 @@ func (this *Spline) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Spline) XData() XData {
+	return this.xData
+}
+
+func (this *Spline) SetXData(val XData) {
+	this.xData = val
+}
+
 // IsClosed status flag.
 func (this *Spline) IsClosed() bool {
 	return this.Flags & 1 != 0
@@ -15132,6 +15524,7 @@ type Text struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	Thickness float64
 	Location Point
 	Height float64
@@ -15167,6 +15560,7 @@ func NewText() *Text {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		Thickness: 0.0,
 		Location: *NewOrigin(),
 		Height: 1.0,
@@ -15369,6 +15763,14 @@ func (this *Text) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Text) XData() XData {
+	return this.xData
+}
+
+func (this *Text) SetXData(val XData) {
+	this.xData = val
+}
+
 // IsTextBackwards status flag.
 func (this *Text) IsTextBackwards() bool {
 	return this.TextGenerationFlags & 2 != 0
@@ -15523,6 +15925,7 @@ type Tolerance struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	DimensionStyleName string
 	InsertionPoint Point
 	DisplayText string
@@ -15550,6 +15953,7 @@ func NewTolerance() *Tolerance {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		DimensionStyleName: "",
 		InsertionPoint: *NewOrigin(),
 		DisplayText: "",
@@ -15744,6 +16148,14 @@ func (this *Tolerance) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Tolerance) XData() XData {
+	return this.xData
+}
+
+func (this *Tolerance) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *Tolerance) typeString() string {
 	return "TOLERANCE"
 }
@@ -15831,6 +16243,7 @@ type Trace struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	FirstCorner Point
 	SecondCorner Point
 	ThirdCorner Point
@@ -15859,6 +16272,7 @@ func NewTrace() *Trace {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		FirstCorner: *NewOrigin(),
 		SecondCorner: *NewOrigin(),
 		ThirdCorner: *NewOrigin(),
@@ -16054,6 +16468,14 @@ func (this *Trace) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Trace) XData() XData {
+	return this.xData
+}
+
+func (this *Trace) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *Trace) typeString() string {
 	return "TRACE"
 }
@@ -16156,6 +16578,7 @@ type DgnUnderlay struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	// fields for Underlay interface
 	objectHandle string
 	insertionPoint Point
@@ -16192,6 +16615,7 @@ func NewDgnUnderlay() *DgnUnderlay {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		objectHandle: "",
 		insertionPoint: *NewOrigin(),
 		xScale: 1.0,
@@ -16394,6 +16818,14 @@ func (this *DgnUnderlay) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *DgnUnderlay) XData() XData {
+	return this.xData
+}
+
+func (this *DgnUnderlay) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *DgnUnderlay) ObjectHandle() string {
 	return this.objectHandle
 }
@@ -16549,6 +16981,7 @@ type DwfUnderlay struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	// fields for Underlay interface
 	objectHandle string
 	insertionPoint Point
@@ -16585,6 +17018,7 @@ func NewDwfUnderlay() *DwfUnderlay {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		objectHandle: "",
 		insertionPoint: *NewOrigin(),
 		xScale: 1.0,
@@ -16787,6 +17221,14 @@ func (this *DwfUnderlay) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *DwfUnderlay) XData() XData {
+	return this.xData
+}
+
+func (this *DwfUnderlay) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *DwfUnderlay) ObjectHandle() string {
 	return this.objectHandle
 }
@@ -16942,6 +17384,7 @@ type PdfUnderlay struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	// fields for Underlay interface
 	objectHandle string
 	insertionPoint Point
@@ -16978,6 +17421,7 @@ func NewPdfUnderlay() *PdfUnderlay {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		objectHandle: "",
 		insertionPoint: *NewOrigin(),
 		xScale: 1.0,
@@ -17180,6 +17624,14 @@ func (this *PdfUnderlay) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *PdfUnderlay) XData() XData {
+	return this.xData
+}
+
+func (this *PdfUnderlay) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *PdfUnderlay) ObjectHandle() string {
 	return this.objectHandle
 }
@@ -17335,6 +17787,7 @@ type Vertex struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	Location Point
 	StartingWidth float64
 	EndingWidth float64
@@ -17368,6 +17821,7 @@ func NewVertex() *Vertex {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		Location: *NewOrigin(),
 		StartingWidth: 0.0,
 		EndingWidth: 0.0,
@@ -17568,6 +18022,14 @@ func (this *Vertex) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Vertex) XData() XData {
+	return this.xData
+}
+
+func (this *Vertex) SetXData(val XData) {
+	this.xData = val
+}
+
 // IsExtraCreatedByCurveFit status flag.
 func (this *Vertex) IsExtraCreatedByCurveFit() bool {
 	return this.Flags & 1 != 0
@@ -17733,6 +18195,7 @@ type Viewport struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	Center Point // Center in paper space
 	Width float64 // Width in paper space
 	Height float64 // Height in paper space
@@ -17793,6 +18256,7 @@ func NewViewport() *Viewport {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		Center: *NewOrigin(),
 		Width: 0.0,
 		Height: 0.0,
@@ -18031,6 +18495,14 @@ func (this *Viewport) ShadowMode() ShadowMode {
 
 func (this *Viewport) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
+}
+
+func (this *Viewport) XData() XData {
+	return this.xData
+}
+
+func (this *Viewport) SetXData(val XData) {
+	this.xData = val
 }
 
 // IsPerspective status flag.  Minimum AutoCAD version R2000.
@@ -18561,6 +19033,7 @@ type Wipeout struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	// fields for RasterImage interface
 	_subclassMarker string
 	classVersion int
@@ -18603,6 +19076,7 @@ func NewWipeout() *Wipeout {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		_subclassMarker: "",
 		classVersion: 0,
 		location: *NewOrigin(),
@@ -18811,6 +19285,14 @@ func (this *Wipeout) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
 }
 
+func (this *Wipeout) XData() XData {
+	return this.xData
+}
+
+func (this *Wipeout) SetXData(val XData) {
+	this.xData = val
+}
+
 func (this *Wipeout) subclassMarker() string {
 	return this._subclassMarker
 }
@@ -19014,6 +19496,7 @@ type XLine struct {
 	colorName string
 	transparency int
 	shadowMode ShadowMode
+	xData XData
 	FirstPoint Point
 	UnitDirectionVector Vector
 	pointerOwner pointer
@@ -19038,6 +19521,7 @@ func NewXLine() *XLine {
 		colorName: "",
 		transparency: 0,
 		shadowMode: ShadowModeCastsAndReceivesShadows,
+		xData: nil,
 		FirstPoint: *NewOrigin(),
 		UnitDirectionVector: *NewXAxis(),
 	}
@@ -19227,6 +19711,14 @@ func (this *XLine) ShadowMode() ShadowMode {
 
 func (this *XLine) SetShadowMode(val ShadowMode) {
 	this.shadowMode = val
+}
+
+func (this *XLine) XData() XData {
+	return this.xData
+}
+
+func (this *XLine) SetXData(val XData) {
+	this.xData = val
 }
 
 func (this *XLine) typeString() string {
