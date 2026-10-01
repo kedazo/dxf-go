@@ -97,6 +97,9 @@ func resetClonedEntity(e Entity) {
 		resetCommonEntityFields(&ent.MText)
 	case *Hatch:
 		ent.hatchData = nil
+	case *Mesh:
+		ent.meshData = nil
+		ent.overrideData = cloneSlice(ent.overrideData)
 	case *ProxyEntity:
 		ent.graphicsDataString = cloneSlice(ent.graphicsDataString)
 		ent.entityDataString = cloneSlice(ent.entityDataString)

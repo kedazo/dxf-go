@@ -92,6 +92,8 @@ func createCustomEntity(entityType string) (entity Entity, ok bool) {
 	switch entityType {
 	case "HATCH":
 		entity = NewHatch()
+	case "MESH":
+		entity = NewMesh()
 	default:
 		ok = false
 	}
@@ -259,6 +261,8 @@ func afterRead(entity *Entity) {
 		ent.weights = []float64{}
 	case *Hatch:
 		ent.parseHatchData()
+	case *Mesh:
+		ent.parseMeshData()
 	case *DgnUnderlay:
 		afterReadUnderlay(ent)
 	case *DwfUnderlay:

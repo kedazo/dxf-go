@@ -114,6 +114,12 @@ func (t *entityTransformer) transform(e Entity) []Entity {
 		return t.transformLeader(ent)
 	case *Hatch:
 		return t.transformHatch(ent)
+	case *Mesh:
+		c := CloneEntity(ent).(*Mesh)
+		for i, vertex := range ent.Vertices {
+			c.Vertices[i] = t.m.TransformPoint(vertex)
+		}
+		return []Entity{c}
 	case *Insert:
 		return t.transformInsert(ent)
 	case Dimension:
