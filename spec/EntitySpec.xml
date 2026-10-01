@@ -386,7 +386,9 @@
     <Field Name="BlockName" Code="2" Type="string" DefaultValue='"*MODEL_SPACE"' />
     <Field Name="DefinitionPoint1" Code="10" Type="Point" DefaultValue="*NewOrigin()" CodeOverrides="10,20,30" />
     <Field Name="TextMidPoint" Code="11" Type="Point" DefaultValue="*NewOrigin()" CodeOverrides="11,21,31" />
-    <Field Name="DimensionType" Code="70" Type="DimensionType" DefaultValue="DimensionTypeAligned" ReadConverter="DimensionType(%v)" WriteConverter="int16(%v)" />
+    <!-- code 70 holds the type (low 4 bits) and DimensionFlags: readEntity splits them, the writer combines them -->
+    <Field Name="DimensionType" Code="70" Type="DimensionType" DefaultValue="DimensionTypeAligned" ReadConverter="DimensionType(%v)" WriteConverter="int16(%v) | int16(this.DimensionFlags())" />
+    <Field Name="DimensionFlags" Code="-1" Type="DimensionFlags" DefaultValue="0" />
     <Field Name="AttachmentPoint" Code="71" Type="AttachmentPoint" DefaultValue="AttachmentPointTopLeft" ReadConverter="AttachmentPoint(%v)" WriteConverter="int16(%v)" MinVersion="R2000" />
     <Field Name="TextLineSpacingStyle" Code="72" Type="TextLineSpacingStyle" DefaultValue="TextLineSpacingStyleAtLeast" ReadConverter="TextLineSpacingStyle(%v)" WriteConverter="int16(%v)" DisableWritingDefault="true" MinVersion="R2000" />
     <Field Name="TextLineSpacingFactor" Code="41" Type="float64" DefaultValue="1.0" DisableWritingDefault="true" MinVersion="R2000" />

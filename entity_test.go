@@ -492,8 +492,22 @@ func TestReadDimensionTypeWithFlags(t *testing.T) {
 	assertEqFloat64(t, 90.0, rotated.RotationAngle)
 	assertEqFloat64(t, 5.0, rotated.InsertionPoint.X)
 	assertEqString(t, "*D1", rotated.BlockName())
-	// the flags are kept for writing
-	assertEqInt(t, 160, int(rotated.DimensionType()))
+	// the type and the flags are split, and combined again when writing
+	assertEqInt(t, int(DimensionTypeRotatedHorizontalOrVertical), int(rotated.DimensionType()))
+	assertEqInt(t, 160, int(rotated.DimensionFlags()))
+	assertEqBool(t, true, rotated.DimensionFlags().IsTextAtUserDefinedLocation())
+	assertEqBool(t, true, rotated.DimensionFlags().IsBlockReferencedByThisDimensionOnly())
+	assertEqBool(t, false, rotated.DimensionFlags().IsOrdinateXType())
+	assertContainsCodePairs(t, []CodePair{
+		NewStringCodePair(2, "*D1"),
+		NewDoubleCodePair(10, 0.0),
+		NewDoubleCodePair(20, 0.0),
+		NewDoubleCodePair(30, 0.0),
+		NewDoubleCodePair(11, 0.0),
+		NewDoubleCodePair(21, 0.0),
+		NewDoubleCodePair(31, 0.0),
+		NewShortCodePair(70, 160),
+	}, allCodePairs(rotated, R2004))
 
 	radial := parseEntity(t, "DIMENSION",
 		NewShortCodePair(70, 4|32),
@@ -502,6 +516,13 @@ func TestReadDimensionTypeWithFlags(t *testing.T) {
 	).(*RadialDimension)
 	assertEqFloat64(t, 3.0, radial.DefinitionPoint2.X)
 	assertEqFloat64(t, 1.5, radial.LeaderLength)
+	assertEqInt(t, int(DimensionTypeRadius), int(radial.DimensionType()))
+	assertEqInt(t, 32, int(radial.DimensionFlags()))
+
+	ordinate := parseEntity(t, "DIMENSION",
+		NewShortCodePair(70, int16(DimensionTypeOrdinate)|64),
+	).(*OrdinateDimension)
+	assertEqBool(t, true, ordinate.DimensionFlags().IsOrdinateXType())
 }
 
 func TestReadArcDimension(t *testing.T) {
@@ -529,7 +550,8 @@ func TestReadArcDimension(t *testing.T) {
 	assertEqString(t, "DIMS", dimension.Layer())
 	assertEqString(t, "*D7", dimension.BlockName())
 	// the dimension data and the arc data use the same codes
-	assertEqInt(t, 5|32, int(dimension.DimensionType()))
+	assertEqInt(t, int(DimensionTypeAngularThreePoint), int(dimension.DimensionType()))
+	assertEqInt(t, 32, int(dimension.DimensionFlags()))
 	assertEqInt(t, 5, int(dimension.AttachmentPoint()))
 	assertEqFloat64(t, 1.25, dimension.TextLineSpacingFactor())
 	assertEqFloat64(t, 0.5, dimension.StartAngle)

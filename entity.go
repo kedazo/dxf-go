@@ -72,7 +72,48 @@ func readEntity(np CodePair, reader codePairReader) (entity Entity, nextPair Cod
 		}
 		entity = dimension
 	}
+	splitDimensionFlags(entity)
 	return
+}
+
+// DimensionFlags are the flags a dimension's group code 70 holds above its type.
+type DimensionFlags int16
+
+const (
+	// DimensionFlagBlockReferencedByThisDimensionOnly marks a dimension whose block isn't used by any other one.
+	DimensionFlagBlockReferencedByThisDimensionOnly DimensionFlags = 32
+	// DimensionFlagOrdinateXType marks an ordinate dimension measuring X; without it it measures Y.
+	DimensionFlagOrdinateXType DimensionFlags = 64
+	// DimensionFlagUserDefinedTextLocation marks a dimension whose text was moved away from its default position.
+	DimensionFlagUserDefinedTextLocation DimensionFlags = 128
+)
+
+// dimensionTypeMask selects the dimension type from group code 70; the bits above it are DimensionFlags.
+const dimensionTypeMask = 0x0F
+
+// IsBlockReferencedByThisDimensionOnly reports whether the dimension's block isn't used by any other dimension.
+func (f DimensionFlags) IsBlockReferencedByThisDimensionOnly() bool {
+	return f&DimensionFlagBlockReferencedByThisDimensionOnly != 0
+}
+
+// IsOrdinateXType reports whether an ordinate dimension measures X rather than Y.
+func (f DimensionFlags) IsOrdinateXType() bool {
+	return f&DimensionFlagOrdinateXType != 0
+}
+
+// IsTextAtUserDefinedLocation reports whether the dimension text was moved away from its default position.
+func (f DimensionFlags) IsTextAtUserDefinedLocation() bool {
+	return f&DimensionFlagUserDefinedTextLocation != 0
+}
+
+// splitDimensionFlags moves the flags read with a dimension's type (group code 70) to its DimensionFlags; they are
+// combined again when writing.
+func splitDimensionFlags(entity Entity) {
+	if dimension, ok := entity.(Dimension); ok {
+		code70 := int16(dimension.DimensionType()) | int16(dimension.DimensionFlags())
+		dimension.SetDimensionType(DimensionType(code70 & dimensionTypeMask))
+		dimension.SetDimensionFlags(DimensionFlags(code70 &^ dimensionTypeMask))
+	}
 }
 
 // dimensionTypeOf returns the type of a DIMENSION from its group code 70 without the flags (32 = the block is only
@@ -80,7 +121,7 @@ func readEntity(np CodePair, reader codePairReader) (entity Entity, nextPair Cod
 func dimensionTypeOf(pairs []CodePair) DimensionType {
 	for _, pair := range pairs {
 		if pair.Code == 70 {
-			return DimensionType(shortValue(pair) & 0x0F)
+			return DimensionType(shortValue(pair) & dimensionTypeMask)
 		}
 	}
 	return DimensionTypeRotatedHorizontalOrVertical

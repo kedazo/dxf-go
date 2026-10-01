@@ -175,6 +175,8 @@ type Dimension interface {
 	SetTextMidPoint(val Point)
 	DimensionType() DimensionType
 	SetDimensionType(val DimensionType)
+	DimensionFlags() DimensionFlags
+	SetDimensionFlags(val DimensionFlags)
 	AttachmentPoint() AttachmentPoint
 	SetAttachmentPoint(val AttachmentPoint)
 	TextLineSpacingStyle() TextLineSpacingStyle
@@ -273,7 +275,7 @@ func codePairsForDimension(this Dimension, version AcadVersion) (pairs []CodePai
 	pairs = append(pairs, NewDoubleCodePair(11, this.TextMidPoint().X))
 	pairs = append(pairs, NewDoubleCodePair(21, this.TextMidPoint().Y))
 	pairs = append(pairs, NewDoubleCodePair(31, this.TextMidPoint().Z))
-	pairs = append(pairs, NewShortCodePair(70, int16(this.DimensionType())))
+	pairs = append(pairs, NewShortCodePair(70, int16(this.DimensionType()) | int16(this.DimensionFlags())))
 	if version >= R2000 {
 		pairs = append(pairs, NewShortCodePair(71, int16(this.AttachmentPoint())))
 	}
@@ -3852,6 +3854,7 @@ type dimensionHelper struct {
 	definitionPoint1 Point
 	textMidPoint Point
 	dimensionType DimensionType
+	dimensionFlags DimensionFlags
 	attachmentPoint AttachmentPoint
 	textLineSpacingStyle TextLineSpacingStyle
 	textLineSpacingFactor float64
@@ -3889,6 +3892,7 @@ func NewdimensionHelper() *dimensionHelper {
 		definitionPoint1: *NewOrigin(),
 		textMidPoint: *NewOrigin(),
 		dimensionType: DimensionTypeAligned,
+		dimensionFlags: 0,
 		attachmentPoint: AttachmentPointTopLeft,
 		textLineSpacingStyle: TextLineSpacingStyleAtLeast,
 		textLineSpacingFactor: 1.0,
@@ -4118,6 +4122,14 @@ func (this *dimensionHelper) SetDimensionType(val DimensionType) {
 	this.dimensionType = val
 }
 
+func (this *dimensionHelper) DimensionFlags() DimensionFlags {
+	return this.dimensionFlags
+}
+
+func (this *dimensionHelper) SetDimensionFlags(val DimensionFlags) {
+	this.dimensionFlags = val
+}
+
 func (this *dimensionHelper) AttachmentPoint() AttachmentPoint {
 	return this.attachmentPoint
 }
@@ -4235,6 +4247,7 @@ type AlignedDimension struct {
 	definitionPoint1 Point
 	textMidPoint Point
 	dimensionType DimensionType
+	dimensionFlags DimensionFlags
 	attachmentPoint AttachmentPoint
 	textLineSpacingStyle TextLineSpacingStyle
 	textLineSpacingFactor float64
@@ -4273,6 +4286,7 @@ func NewAlignedDimension() *AlignedDimension {
 		definitionPoint1: *NewOrigin(),
 		textMidPoint: *NewOrigin(),
 		dimensionType: DimensionTypeAligned,
+		dimensionFlags: 0,
 		attachmentPoint: AttachmentPointTopLeft,
 		textLineSpacingStyle: TextLineSpacingStyleAtLeast,
 		textLineSpacingFactor: 1.0,
@@ -4503,6 +4517,14 @@ func (this *AlignedDimension) SetDimensionType(val DimensionType) {
 	this.dimensionType = val
 }
 
+func (this *AlignedDimension) DimensionFlags() DimensionFlags {
+	return this.dimensionFlags
+}
+
+func (this *AlignedDimension) SetDimensionFlags(val DimensionFlags) {
+	this.dimensionFlags = val
+}
+
 func (this *AlignedDimension) AttachmentPoint() AttachmentPoint {
 	return this.attachmentPoint
 }
@@ -4653,6 +4675,7 @@ type RotatedDimension struct {
 	definitionPoint1 Point
 	textMidPoint Point
 	dimensionType DimensionType
+	dimensionFlags DimensionFlags
 	attachmentPoint AttachmentPoint
 	textLineSpacingStyle TextLineSpacingStyle
 	textLineSpacingFactor float64
@@ -4694,6 +4717,7 @@ func NewRotatedDimension() *RotatedDimension {
 		definitionPoint1: *NewOrigin(),
 		textMidPoint: *NewOrigin(),
 		dimensionType: DimensionTypeAligned,
+		dimensionFlags: 0,
 		attachmentPoint: AttachmentPointTopLeft,
 		textLineSpacingStyle: TextLineSpacingStyleAtLeast,
 		textLineSpacingFactor: 1.0,
@@ -4927,6 +4951,14 @@ func (this *RotatedDimension) SetDimensionType(val DimensionType) {
 	this.dimensionType = val
 }
 
+func (this *RotatedDimension) DimensionFlags() DimensionFlags {
+	return this.dimensionFlags
+}
+
+func (this *RotatedDimension) SetDimensionFlags(val DimensionFlags) {
+	this.dimensionFlags = val
+}
+
 func (this *RotatedDimension) AttachmentPoint() AttachmentPoint {
 	return this.attachmentPoint
 }
@@ -5099,6 +5131,7 @@ type RadialDimension struct {
 	definitionPoint1 Point
 	textMidPoint Point
 	dimensionType DimensionType
+	dimensionFlags DimensionFlags
 	attachmentPoint AttachmentPoint
 	textLineSpacingStyle TextLineSpacingStyle
 	textLineSpacingFactor float64
@@ -5137,6 +5170,7 @@ func NewRadialDimension() *RadialDimension {
 		definitionPoint1: *NewOrigin(),
 		textMidPoint: *NewOrigin(),
 		dimensionType: DimensionTypeAligned,
+		dimensionFlags: 0,
 		attachmentPoint: AttachmentPointTopLeft,
 		textLineSpacingStyle: TextLineSpacingStyleAtLeast,
 		textLineSpacingFactor: 1.0,
@@ -5367,6 +5401,14 @@ func (this *RadialDimension) SetDimensionType(val DimensionType) {
 	this.dimensionType = val
 }
 
+func (this *RadialDimension) DimensionFlags() DimensionFlags {
+	return this.dimensionFlags
+}
+
+func (this *RadialDimension) SetDimensionFlags(val DimensionFlags) {
+	this.dimensionFlags = val
+}
+
 func (this *RadialDimension) AttachmentPoint() AttachmentPoint {
 	return this.attachmentPoint
 }
@@ -5511,6 +5553,7 @@ type DiameterDimension struct {
 	definitionPoint1 Point
 	textMidPoint Point
 	dimensionType DimensionType
+	dimensionFlags DimensionFlags
 	attachmentPoint AttachmentPoint
 	textLineSpacingStyle TextLineSpacingStyle
 	textLineSpacingFactor float64
@@ -5549,6 +5592,7 @@ func NewDiameterDimension() *DiameterDimension {
 		definitionPoint1: *NewOrigin(),
 		textMidPoint: *NewOrigin(),
 		dimensionType: DimensionTypeAligned,
+		dimensionFlags: 0,
 		attachmentPoint: AttachmentPointTopLeft,
 		textLineSpacingStyle: TextLineSpacingStyleAtLeast,
 		textLineSpacingFactor: 1.0,
@@ -5779,6 +5823,14 @@ func (this *DiameterDimension) SetDimensionType(val DimensionType) {
 	this.dimensionType = val
 }
 
+func (this *DiameterDimension) DimensionFlags() DimensionFlags {
+	return this.dimensionFlags
+}
+
+func (this *DiameterDimension) SetDimensionFlags(val DimensionFlags) {
+	this.dimensionFlags = val
+}
+
 func (this *DiameterDimension) AttachmentPoint() AttachmentPoint {
 	return this.attachmentPoint
 }
@@ -5923,6 +5975,7 @@ type AngularThreePointDimension struct {
 	definitionPoint1 Point
 	textMidPoint Point
 	dimensionType DimensionType
+	dimensionFlags DimensionFlags
 	attachmentPoint AttachmentPoint
 	textLineSpacingStyle TextLineSpacingStyle
 	textLineSpacingFactor float64
@@ -5963,6 +6016,7 @@ func NewAngularThreePointDimension() *AngularThreePointDimension {
 		definitionPoint1: *NewOrigin(),
 		textMidPoint: *NewOrigin(),
 		dimensionType: DimensionTypeAligned,
+		dimensionFlags: 0,
 		attachmentPoint: AttachmentPointTopLeft,
 		textLineSpacingStyle: TextLineSpacingStyleAtLeast,
 		textLineSpacingFactor: 1.0,
@@ -6195,6 +6249,14 @@ func (this *AngularThreePointDimension) SetDimensionType(val DimensionType) {
 	this.dimensionType = val
 }
 
+func (this *AngularThreePointDimension) DimensionFlags() DimensionFlags {
+	return this.dimensionFlags
+}
+
+func (this *AngularThreePointDimension) SetDimensionFlags(val DimensionFlags) {
+	this.dimensionFlags = val
+}
+
 func (this *AngularThreePointDimension) AttachmentPoint() AttachmentPoint {
 	return this.attachmentPoint
 }
@@ -6363,6 +6425,7 @@ type OrdinateDimension struct {
 	definitionPoint1 Point
 	textMidPoint Point
 	dimensionType DimensionType
+	dimensionFlags DimensionFlags
 	attachmentPoint AttachmentPoint
 	textLineSpacingStyle TextLineSpacingStyle
 	textLineSpacingFactor float64
@@ -6401,6 +6464,7 @@ func NewOrdinateDimension() *OrdinateDimension {
 		definitionPoint1: *NewOrigin(),
 		textMidPoint: *NewOrigin(),
 		dimensionType: DimensionTypeAligned,
+		dimensionFlags: 0,
 		attachmentPoint: AttachmentPointTopLeft,
 		textLineSpacingStyle: TextLineSpacingStyleAtLeast,
 		textLineSpacingFactor: 1.0,
@@ -6631,6 +6695,14 @@ func (this *OrdinateDimension) SetDimensionType(val DimensionType) {
 	this.dimensionType = val
 }
 
+func (this *OrdinateDimension) DimensionFlags() DimensionFlags {
+	return this.dimensionFlags
+}
+
+func (this *OrdinateDimension) SetDimensionFlags(val DimensionFlags) {
+	this.dimensionFlags = val
+}
+
 func (this *OrdinateDimension) AttachmentPoint() AttachmentPoint {
 	return this.attachmentPoint
 }
@@ -6781,6 +6853,7 @@ type ArcDimension struct {
 	definitionPoint1 Point
 	textMidPoint Point
 	dimensionType DimensionType
+	dimensionFlags DimensionFlags
 	attachmentPoint AttachmentPoint
 	textLineSpacingStyle TextLineSpacingStyle
 	textLineSpacingFactor float64
@@ -6827,6 +6900,7 @@ func NewArcDimension() *ArcDimension {
 		definitionPoint1: *NewOrigin(),
 		textMidPoint: *NewOrigin(),
 		dimensionType: DimensionTypeAligned,
+		dimensionFlags: 0,
 		attachmentPoint: AttachmentPointTopLeft,
 		textLineSpacingStyle: TextLineSpacingStyleAtLeast,
 		textLineSpacingFactor: 1.0,
@@ -7063,6 +7137,14 @@ func (this *ArcDimension) DimensionType() DimensionType {
 
 func (this *ArcDimension) SetDimensionType(val DimensionType) {
 	this.dimensionType = val
+}
+
+func (this *ArcDimension) DimensionFlags() DimensionFlags {
+	return this.dimensionFlags
+}
+
+func (this *ArcDimension) SetDimensionFlags(val DimensionFlags) {
+	this.dimensionFlags = val
 }
 
 func (this *ArcDimension) AttachmentPoint() AttachmentPoint {
