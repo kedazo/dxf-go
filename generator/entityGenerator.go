@@ -451,7 +451,7 @@ func generateEntities() {
 
 	// dimension creator
 	builder.WriteString("func createAndPopulateDimension(temp *dimensionHelper) (dimension Entity, error error) {\n")
-	builder.WriteString("	switch temp.DimensionType() {\n")
+	builder.WriteString("	switch dimensionTypeOf(temp.collectedPairs) {\n")
 	for _, dim := range spec.Entities {
 		if dim.implementsInterface("Dimension") && dim.Name != "dimensionHelper" {
 			builder.WriteString(fmt.Sprintf("	case DimensionType%s:\n", dim.Tag))

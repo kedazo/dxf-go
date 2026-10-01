@@ -61,9 +61,29 @@ func readEntity(np CodePair, reader codePairReader) (entity Entity, nextPair Cod
 	afterRead(&entity)
 	switch dim := entity.(type) {
 	case *dimensionHelper:
-		entity, error = createAndPopulateDimension(dim)
+		dimension, err := createAndPopulateDimension(dim)
+		if err != nil {
+			// a dimension type this library doesn't model (e.g. 2-line angular): keep its group codes
+			unknown := NewUnknownEntity(entityType)
+			for _, pair := range dim.collectedPairs {
+				unknown.tryApplyCodePair(pair)
+			}
+			dimension = unknown
+		}
+		entity = dimension
 	}
 	return
+}
+
+// dimensionTypeOf returns the type of a DIMENSION from its group code 70 without the flags (32 = the block is only
+// used by this dimension, 64 = ordinate type, 128 = user-positioned text).
+func dimensionTypeOf(pairs []CodePair) DimensionType {
+	for _, pair := range pairs {
+		if pair.Code == 70 {
+			return DimensionType(shortValue(pair) & 0x0F)
+		}
+	}
+	return DimensionTypeRotatedHorizontalOrVertical
 }
 
 // createCustomEntity creates entities that are hand-written instead of generated from spec/EntitySpec.xml.

@@ -478,6 +478,48 @@ func TestReadLeaderWithWrongVertexCount(t *testing.T) {
 	assertEqPoint(t, Point{3.0, 4.0, 0.0}, leader.Vertices[1])
 }
 
+func TestReadDimensionTypeWithFlags(t *testing.T) {
+	// ArchiCAD writes 160: a rotated dimension (0) with user-positioned text (128) and its own block (32)
+	rotated := parseEntity(t, "DIMENSION",
+		NewStringCodePair(100, "AcDbDimension"),
+		NewStringCodePair(2, "*D1"),
+		NewShortCodePair(70, 160),
+		NewStringCodePair(100, "AcDbAlignedDimension"),
+		NewDoubleCodePair(12, 5.0),
+		NewDoubleCodePair(13, 1.0),
+		NewDoubleCodePair(14, 2.0),
+		NewDoubleCodePair(50, 90.0),
+		NewStringCodePair(100, "AcDbRotatedDimension"),
+	).(*RotatedDimension)
+	assertEqFloat64(t, 90.0, rotated.RotationAngle)
+	assertEqFloat64(t, 5.0, rotated.InsertionPoint.X)
+	assertEqString(t, "*D1", rotated.BlockName())
+	// the flags are kept for writing
+	assertEqInt(t, 160, int(rotated.DimensionType()))
+
+	radial := parseEntity(t, "DIMENSION",
+		NewShortCodePair(70, 4|32),
+		NewDoubleCodePair(15, 3.0),
+		NewDoubleCodePair(40, 1.5),
+	).(*RadialDimension)
+	assertEqFloat64(t, 3.0, radial.DefinitionPoint2.X)
+	assertEqFloat64(t, 1.5, radial.LeaderLength)
+}
+
+func TestReadUnsupportedDimensionTypeKeepsReading(t *testing.T) {
+	entities := parseEntities(t,
+		NewStringCodePair(0, "DIMENSION"),
+		NewStringCodePair(8, "DIMS"),
+		NewShortCodePair(70, 2), // 2-line angular dimension
+		NewStringCodePair(0, "LINE"),
+	)
+	assertEqInt(t, 2, len(entities))
+	unknown := entities[0].(*UnknownEntity)
+	assertEqString(t, "DIMENSION", unknown.Type)
+	assertEqString(t, "DIMS", unknown.Layer())
+	_ = entities[1].(*Line)
+}
+
 func TestReadDimension(t *testing.T) {
 	dim := parseEntity(t, "DIMENSION",
 		NewStringCodePair(1, "text"),

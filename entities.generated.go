@@ -16934,7 +16934,7 @@ func (this *XLine) codePairs(version AcadVersion) (pairs []CodePair) {
 }
 
 func createAndPopulateDimension(temp *dimensionHelper) (dimension Entity, error error) {
-	switch temp.DimensionType() {
+	switch dimensionTypeOf(temp.collectedPairs) {
 	case DimensionTypeAligned:
 		dimension = NewAlignedDimension()
 	case DimensionTypeRotatedHorizontalOrVertical:
