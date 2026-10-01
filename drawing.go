@@ -29,6 +29,10 @@ type Drawing struct {
 
 	Entities []Entity
 
+	// Layouts and ImageDefinitions are read from the OBJECTS section, which is not written.
+	Layouts          []Layout
+	ImageDefinitions []ImageDefinition
+
 	// Warnings lists what was skipped while reading because it was malformed.
 	Warnings []string
 
@@ -380,6 +384,8 @@ func readFromCodePairReader(reader codePairReader) (Drawing, error) {
 				nextPair, err = readTables(&drawing, nextPair, reader)
 			case "BLOCKS":
 				drawing.Blocks, nextPair, err = readBlocksSection(nextPair, reader)
+			case "OBJECTS":
+				nextPair, err = readObjectsSection(&drawing, nextPair, reader)
 			default:
 				// swallow unsupported section
 				for err == nil && !nextPair.isEndSection() {
