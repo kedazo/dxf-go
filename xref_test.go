@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"golang.org/x/text/encoding/charmap"
 )
 
 // xrefDrawings returns a host drawing with two INSERTs of the xref block "XR" and the drawing that "XR" points to:
@@ -173,6 +175,59 @@ func TestXrefFileResolverConvertsDWG(t *testing.T) {
 	failing := XrefFileResolverWith(dir, XrefFileResolverOptions{ConvertDWG: func(string) (string, error) { return "", errors.New("broken") }})
 	_, err = failing(&Block{Name: "XR", XrefName: "plan.dwg"})
 	assertContains(t, "broken", err.Error())
+}
+
+func TestFindXrefFile(t *testing.T) {
+	dir := t.TempDir()
+	writeXrefFile(t, filepath.Join(dir, "xrefs", "Р-01 FЩLDSZINT.dxf"))
+	if err := os.WriteFile(filepath.Join(dir, "xrefs", "title.dwg"), []byte("DWG"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// a DXF next to the DWG, found through its garbled name
+	path, err := FindXrefFile(dir, `xrefs\É-01 FÖLDSZINT.dwg`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertEqString(t, filepath.Join(dir, "xrefs", "Р-01 FЩLDSZINT.dxf"), path)
+
+	// a DWG without a DXF: the DWG itself, to be converted by the caller
+	path, err = FindXrefFile(dir, "xrefs/title.dwg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertEqString(t, filepath.Join(dir, "xrefs", "title.dwg"), path)
+
+	// absolute references ignore dir
+	path, err = FindXrefFile("/nowhere", filepath.Join(dir, "xrefs", "title.dwg"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertEqString(t, filepath.Join(dir, "xrefs", "title.dwg"), path)
+
+	_, err = FindXrefFile(dir, "xrefs/missing.dxf")
+	assert(t, err != nil, "expected an error for a missing file")
+	_, err = FindXrefFile(dir, "")
+	assert(t, err != nil, "expected an error for an empty reference")
+}
+
+func TestXrefFileResolverUsesReadOption(t *testing.T) {
+	dir := t.TempDir()
+	writeXrefFile(t, filepath.Join(dir, "sub.dxf"))
+	var readPaths []string
+	// e.g. a fallback encoding for files without a usable $DWGCODEPAGE
+	resolve := XrefFileResolverWith(dir, XrefFileResolverOptions{Read: func(path string) (*Drawing, error) {
+		readPaths = append(readPaths, path)
+		drawing, err := ReadFileWithEncoding(path, charmap.Windows1250)
+		return &drawing, err
+	}})
+	for i := 0; i < 2; i++ {
+		if _, err := resolve(&Block{Name: "XR", XrefName: "sub.dwg"}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	assertEqInt(t, 1, len(readPaths))
+	assertEqString(t, filepath.Join(dir, "sub.dxf"), readPaths[0])
 }
 
 func TestExplodeXrefLayerOverridesAndSources(t *testing.T) {

@@ -499,19 +499,7 @@ func checkLayouts(d *dxf.Drawing, all []dxf.Entity, dir string) {
 			fmt.Printf("  layout %q: no paper size, %d entities, %d viewports onto model space\n", layout.Name, len(entities), viewports)
 		}
 	}
-	for _, e := range all {
-		if image, ok := e.(*dxf.Image); ok {
-			definition := d.ImageDefinition(image)
-			switch {
-			case definition == nil:
-				problem("IMAGE without an image definition")
-			case !fileExists(dir, definition.FileName):
-				problem("image file %q is missing", definition.FileName)
-			default:
-				fmt.Printf("  image %q found\n", definition.FileName)
-			}
-		}
-	}
+	checkImages(d, all, dir, "")
 	for _, block := range d.Blocks {
 		if block.IsXref() || block.XrefName != "" {
 			fmt.Printf("  external reference %q -> %q\n", block.Name, block.XrefName)
@@ -519,28 +507,61 @@ func checkLayouts(d *dxf.Drawing, all []dxf.Entity, dir string) {
 	}
 }
 
-func fileExists(dir, name string) bool {
-	name = strings.ReplaceAll(name, `\`, "/")
-	if !filepath.IsAbs(name) {
-		name = filepath.Join(dir, name)
+// checkImages checks that the image files of a drawing's IMAGEs exist; their names are relative to the drawing's
+// folder dir (garbled names are found too).
+func checkImages(d *dxf.Drawing, entities []dxf.Entity, dir, xref string) {
+	where := ""
+	if xref != "" {
+		where = fmt.Sprintf(" (in xref %q)", xref)
 	}
-	_, err := os.Stat(name)
-	return err == nil
+	for _, e := range entities {
+		if image, ok := e.(*dxf.Image); ok {
+			definition := d.ImageDefinition(image)
+			if definition == nil {
+				problem("IMAGE without an image definition%s", where)
+			} else if path, err := dxf.FindXrefFile(dir, definition.FileName); err != nil {
+				problem("image file %q is missing%s", definition.FileName, where)
+			} else {
+				fmt.Printf("  image %q%s found as %s\n", definition.FileName, where, path)
+			}
+		}
+	}
 }
 
 // xrefResolver resolves external references next to the drawing (garbled names included): DXF files are read as they
 // are, DWG files are read from a DXF next to them or else converted with dwg2dxf (and checked) into the conversion
-// directory.
+// directory. The images of every xref are checked relative to the xref's own folder.
 func xrefResolver(dir string) func(block *dxf.Block) (*dxf.Drawing, error) {
 	conversions := 0
-	return dxf.XrefFileResolverWith(dir, dxf.XrefFileResolverOptions{ConvertDWG: func(dwgPath string) (string, error) {
-		conversions++
-		dxfPath := filepath.Join(conversionDir, fmt.Sprintf("xref%d-%s.dxf", conversions, strings.TrimSuffix(filepath.Base(dwgPath), filepath.Ext(dwgPath))))
-		if !convertDWG(dwgPath, dxfPath) {
-			return "", fmt.Errorf("dwg2dxf failed")
-		}
-		return dxfPath, nil
-	}})
+	originals := map[string]string{} // converted DXF -> the DWG it came from
+	return dxf.XrefFileResolverWith(dir, dxf.XrefFileResolverOptions{
+		ConvertDWG: func(dwgPath string) (string, error) {
+			conversions++
+			dxfPath := filepath.Join(conversionDir, fmt.Sprintf("xref%d-%s.dxf", conversions, strings.TrimSuffix(filepath.Base(dwgPath), filepath.Ext(dwgPath))))
+			if !convertDWG(dwgPath, dxfPath) {
+				return "", fmt.Errorf("dwg2dxf failed")
+			}
+			originals[dxfPath] = dwgPath
+			return dxfPath, nil
+		},
+		Read: func(path string) (*dxf.Drawing, error) {
+			drawing, err := dxf.ReadFile(path)
+			if err != nil {
+				return nil, err
+			}
+			original := path
+			if dwgPath, ok := originals[path]; ok {
+				original = dwgPath
+			}
+			var all []dxf.Entity
+			all = append(all, drawing.Entities...)
+			for _, block := range drawing.Blocks {
+				all = append(all, block.Entities...)
+			}
+			checkImages(&drawing, all, filepath.Dir(original), filepath.Base(original))
+			return &drawing, nil
+		},
+	})
 }
 
 // checkExplode explodes the drawing, resolving external references next to it, and reports the issues.

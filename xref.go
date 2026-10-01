@@ -16,74 +16,97 @@ type XrefFileResolverOptions struct {
 	// ConvertDWG converts a DWG file to DXF and returns the DXF file's path. It is used for DWG references that have
 	// no DXF file next to them; without it such references can't be resolved. See DWG2DXF.
 	ConvertDWG func(dwgPath string) (dxfPath string, err error)
+	// Read reads a DXF file; ReadFile is used if it is nil. It allows e.g. a fallback encoding.
+	Read func(path string) (*Drawing, error)
 }
 
-// XrefFileResolver returns a WalkOptions.ResolveXref function that reads external references from DXF files. An
-// xref's path (Block.XrefName) is taken relative to dir unless it is absolute, and backslashes count as separators.
-// If the path names a DWG file, which this package can't read, a DXF file with the same name is read instead (for
-// example one converted with LibreDWG's dwg2dxf). Every file is read once.
+// FindXrefFile finds the file an external reference (Block.XrefName) points to. The reference is taken relative to
+// dir unless it is absolute, and backslashes count as separators. For a DWG reference, a DXF file with the same name
+// next to it is preferred (e.g. one converted with LibreDWG's dwg2dxf); the DWG's own path is returned if there is
+// none, so the result ends in ".dwg" when the caller has to convert it.
 //
 // Files and folders whose names were garbled by extracting an archive with the wrong code page are found too: a name
-// matches if it only differs in its non-ASCII characters (e.g. "Р-01 FЩLDSZINT" for "É-01 FÖLDSZINT").
+// matches if it only differs in its non-ASCII characters (e.g. "Р-01 FЩLDSZINT" for "É-01 FÖLDSZINT"). A name
+// matching more than one file is not found.
+func FindXrefFile(dir, reference string) (string, error) {
+	name := strings.ReplaceAll(reference, `\`, "/")
+	if name == "" {
+		return "", fmt.Errorf("empty external drawing path")
+	}
+	if !filepath.IsAbs(name) {
+		name = filepath.Join(dir, name)
+	}
+
+	extension := filepath.Ext(name)
+	if strings.EqualFold(extension, ".dwg") {
+		base := strings.TrimSuffix(name, extension)
+		for _, candidate := range []string{base + ".dxf", base + ".DXF"} {
+			if path, ok := findFile(candidate); ok {
+				return path, nil
+			}
+		}
+	}
+	if path, ok := findFile(name); ok {
+		return path, nil
+	}
+	if strings.EqualFold(extension, ".dwg") {
+		return "", fmt.Errorf("neither %s nor a DXF file next to it found", name)
+	}
+	return "", fmt.Errorf("%s not found", name)
+}
+
+// XrefFileResolver returns a WalkOptions.ResolveXref function that reads external references from the DXF files that
+// FindXrefFile finds next to dir. DWG references without a DXF file next to them can't be resolved; see
+// XrefFileResolverWith. Every file is read once.
 func XrefFileResolver(dir string) func(block *Block) (*Drawing, error) {
 	return XrefFileResolverWith(dir, XrefFileResolverOptions{})
 }
 
-// XrefFileResolverWith is XrefFileResolver with options, e.g. to convert DWG references on the fly.
+// XrefFileResolverWith is XrefFileResolver with options, e.g. to convert DWG references on the fly or to read files
+// differently.
 func XrefFileResolverWith(dir string, options XrefFileResolverOptions) func(block *Block) (*Drawing, error) {
+	readFile := options.Read
+	if readFile == nil {
+		readFile = func(path string) (*Drawing, error) {
+			drawing, err := ReadFile(path)
+			return &drawing, err
+		}
+	}
 	drawings := map[string]*Drawing{}
 	read := func(path string) (*Drawing, error) {
 		if drawing, ok := drawings[path]; ok {
 			return drawing, nil
 		}
-		drawing, err := ReadFile(path)
+		drawing, err := readFile(path)
 		if err != nil {
 			return nil, err
 		}
-		drawings[path] = &drawing
-		return &drawing, nil
+		drawings[path] = drawing
+		return drawing, nil
 	}
 
 	return func(block *Block) (*Drawing, error) {
-		name := strings.ReplaceAll(block.XrefName, `\`, "/")
-		if name == "" {
-			return nil, fmt.Errorf("block %q has no external drawing path", block.Name)
+		path, err := FindXrefFile(dir, block.XrefName)
+		if err != nil {
+			return nil, err
 		}
-		if !filepath.IsAbs(name) {
-			name = filepath.Join(dir, name)
-		}
-
-		extension := filepath.Ext(name)
-		if !strings.EqualFold(extension, ".dwg") {
-			if path, ok := findFile(name); ok {
-				return read(path)
-			}
-			return nil, fmt.Errorf("%s not found", name)
+		if !strings.EqualFold(filepath.Ext(path), ".dwg") {
+			return read(path)
 		}
 
-		base := strings.TrimSuffix(name, extension)
-		for _, candidate := range []string{base + ".dxf", base + ".DXF"} {
-			if path, ok := findFile(candidate); ok {
-				return read(path)
-			}
+		if options.ConvertDWG == nil {
+			return nil, fmt.Errorf("%s is a DWG file and there is no DXF file next to it", path)
 		}
-		dwgPath, found := findFile(name)
-		switch {
-		case !found:
-			return nil, fmt.Errorf("neither %s nor a DXF file next to it found", name)
-		case options.ConvertDWG == nil:
-			return nil, fmt.Errorf("%s is a DWG file and there is no DXF file next to it", dwgPath)
-		}
-		if drawing, ok := drawings[dwgPath]; ok {
+		if drawing, ok := drawings[path]; ok {
 			return drawing, nil
 		}
-		dxfPath, err := options.ConvertDWG(dwgPath)
+		dxfPath, err := options.ConvertDWG(path)
 		if err != nil {
-			return nil, fmt.Errorf("converting %s: %w", dwgPath, err)
+			return nil, fmt.Errorf("converting %s: %w", path, err)
 		}
 		drawing, err := read(dxfPath)
 		if err == nil {
-			drawings[dwgPath] = drawing
+			drawings[path] = drawing
 		}
 		return drawing, err
 	}
