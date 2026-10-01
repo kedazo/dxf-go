@@ -1,6 +1,8 @@
 package dxf
 
 import (
+	"bytes"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -76,6 +78,62 @@ func TestReadExplicitEncodingWinsOverCodePage(t *testing.T) {
 func TestReadPre2007TextWithUnknownCodePage(t *testing.T) {
 	drawing := readCodePageDrawing(t, "AC1015", "ANSI_9999", "El\xF5t\xE9r")
 	assertEqString(t, "El�t�r", drawing.Entities[0].(*Text).Value)
+}
+
+// binaryStringDrawing builds a post-R13 binary DXF from string-valued code pairs, keeping the value bytes as they are.
+func binaryStringDrawing(pairs ...string) []byte {
+	data := []byte("AutoCAD Binary DXF\r\n\x1A\x00")
+	for i := 0; i < len(pairs); i += 2 {
+		var code int
+		fmt.Sscan(pairs[i], &code)
+		data = append(data, byte(code), byte(code>>8))
+		data = append(data, pairs[i+1]...)
+		data = append(data, 0x00)
+	}
+	return data
+}
+
+func binaryCodePageDrawing(version, codePage, rawText string) []byte {
+	return binaryStringDrawing(
+		"0", "SECTION",
+		"2", "HEADER",
+		"9", "$ACADVER",
+		"1", version,
+		"9", "$DWGCODEPAGE",
+		"3", codePage,
+		"0", "ENDSEC",
+		"0", "SECTION",
+		"2", "ENTITIES",
+		"0", "TEXT",
+		"1", rawText,
+		"0", "ENDSEC",
+		"0", "EOF",
+	)
+}
+
+func TestReadBinaryPre2007TextInDrawingCodePage(t *testing.T) {
+	drawing, err := ReadFromReader(bytes.NewReader(binaryCodePageDrawing("AC1015", "ANSI_1250", "El\xF5t\xE9r \\U+0150r")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertEqString(t, "Előtér Őr", drawing.Entities[0].(*Text).Value)
+}
+
+func TestReadBinaryR2007TextAsUtf8(t *testing.T) {
+	drawing, err := ReadFromReader(bytes.NewReader(binaryCodePageDrawing("AC1021", "ANSI_1250", "Előtér")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertEqString(t, "Előtér", drawing.Entities[0].(*Text).Value)
+}
+
+func TestReadBinaryWithExplicitEncoding(t *testing.T) {
+	data := binaryCodePageDrawing("AC1015", "ANSI_1250", "El\xF5t\xE9r")
+	drawing, err := ReadFromReaderWithEncoding(bytes.NewReader(data), charmap.Windows1252)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertEqString(t, "Elõtér", drawing.Entities[0].(*Text).Value)
 }
 
 func TestEncodingFromCodePage(t *testing.T) {

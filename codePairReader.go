@@ -52,7 +52,7 @@ func codePairReaderFromReader(reader io.Reader, e encoding.Encoding) (r codePair
 	}
 
 	if firstLine == "AutoCAD Binary DXF" {
-		r, err = newBinaryCodePairReader(buffered)
+		r, err = newBinaryCodePairReader(buffered, decoder)
 		if err != nil {
 			return nil, err
 		}
@@ -118,27 +118,63 @@ func (d *directCodePairReader) setCodePage(name string) {
 }
 
 // text
-type textCodePairReader struct {
-	reader           *bufio.Reader
+// stringDecoder turns raw string values into Go strings for both text and binary files: pre-2007 values are in the
+// caller's encoding or the `$DWGCODEPAGE` one with `\U+XXXX` escapes, 2007+ values are UTF-8.
+type stringDecoder struct {
 	decoder          *encoding.Decoder // nil when no decoding is needed
 	explicitEncoding bool              // the caller chose the encoding; the header must not override it
-	preferUtf8       bool              // keep lines that are valid UTF-8 as they are
-	firstLine        string
-	firstLineRead    bool
+	preferUtf8       bool              // keep values that are valid UTF-8 as they are
 	readAsUtf8       bool
-	scratch          []byte
+}
+
+func newStringDecoder(decoder *encoding.Decoder) stringDecoder {
+	return stringDecoder{
+		decoder:          decoder,
+		explicitEncoding: decoder != nil,
+	}
+}
+
+func (s *stringDecoder) decodeString(raw []byte) (string, error) {
+	value, err := decodeLine(raw, s.decoder, s.readAsUtf8 || s.preferUtf8)
+	if err != nil {
+		return "", err
+	}
+	return readStringText(value, s.readAsUtf8)
+}
+
+func (s *stringDecoder) setUtf8Reader() {
+	s.decoder = unicode.UTF8.NewDecoder()
+	s.readAsUtf8 = true
+}
+
+func (s *stringDecoder) setCodePage(name string) {
+	if s.readAsUtf8 || s.explicitEncoding {
+		return
+	}
+	if e := encodingFromCodePage(name); e != nil {
+		s.decoder = e.NewDecoder()
+		// the code page is only a hint: some writers put UTF-8 into pre-2007 files, which no Windows code page text
+		// is likely to be valid as
+		s.preferUtf8 = true
+	}
+}
+
+type textCodePairReader struct {
+	stringDecoder
+	reader        *bufio.Reader
+	firstLine     string
+	firstLineRead bool
+	scratch       []byte
 }
 
 var utf8ByteOrderMark = []byte{0xEF, 0xBB, 0xBF}
 
 func newTextCodePairReader(reader *bufio.Reader, decoder *encoding.Decoder, firstLine string) codePairReader {
 	return &textCodePairReader{
-		reader:           reader,
-		decoder:          decoder,
-		explicitEncoding: decoder != nil,
-		firstLine:        firstLine,
-		firstLineRead:    false,
-		readAsUtf8:       false,
+		stringDecoder: newStringDecoder(decoder),
+		reader:        reader,
+		firstLine:     firstLine,
+		firstLineRead: false,
 	}
 }
 
@@ -279,12 +315,19 @@ func (a *textCodePairReader) readCodePair() (CodePair, error) {
 	if err != nil {
 		return codePair, err
 	}
-	stringValue, err := decodeLine(rawValue, a.decoder, a.readAsUtf8 || a.preferUtf8)
-	if err != nil {
-		return codePair, err
+
+	typeName := codeTypeName(code)
+	if typeName == "String" {
+		value, err := a.decodeString(rawValue)
+		if err != nil {
+			return codePair, err
+		}
+		return NewStringCodePair(code, value), nil
 	}
 
-	switch codeTypeName(code) {
+	// numbers are plain ASCII
+	stringValue := string(rawValue)
+	switch typeName {
 	case "Bool":
 		value, err := readBoolText(stringValue)
 		if err != nil {
@@ -315,42 +358,20 @@ func (a *textCodePairReader) readCodePair() (CodePair, error) {
 			return codePair, err
 		}
 		codePair = NewShortCodePair(code, value)
-	case "String":
-		value, err := readStringText(stringValue, a.readAsUtf8)
-		if err != nil {
-			return codePair, err
-		}
-		codePair = NewStringCodePair(code, value)
 	}
 
 	return codePair, nil
 }
 
-func (a *textCodePairReader) setUtf8Reader() {
-	a.decoder = unicode.UTF8.NewDecoder()
-	a.readAsUtf8 = true
-}
-
-func (a *textCodePairReader) setCodePage(name string) {
-	if a.readAsUtf8 || a.explicitEncoding {
-		return
-	}
-	if e := encodingFromCodePage(name); e != nil {
-		a.decoder = e.NewDecoder()
-		// the code page is only a hint: some writers put UTF-8 into pre-2007 files, which no Windows code page text
-		// is likely to be valid as
-		a.preferUtf8 = true
-	}
-}
-
 // binary
 type binaryCodePairReader struct {
+	stringDecoder
 	reader          *bufio.Reader
 	hasReturnedPair bool
 	isPostR13       bool
 }
 
-func newBinaryCodePairReader(r *bufio.Reader) (rdr codePairReader, err error) {
+func newBinaryCodePairReader(r *bufio.Reader, decoder *encoding.Decoder) (rdr codePairReader, err error) {
 	buf, err := readBytes(r, 2)
 	if err != nil {
 		return
@@ -360,6 +381,7 @@ func newBinaryCodePairReader(r *bufio.Reader) (rdr codePairReader, err error) {
 		return
 	}
 	rdr = &binaryCodePairReader{
+		stringDecoder:   newStringDecoder(decoder),
 		reader:          r,
 		hasReturnedPair: false,
 		isPostR13:       false,
@@ -443,13 +465,19 @@ func readDoubleBinary(data []byte) (val float64, err error) {
 }
 
 func readStringBinary(reader *bufio.Reader) (val string, err error) {
+	raw, err := readRawStringBinary(reader)
+	val = string(raw)
+	return
+}
+
+// readRawStringBinary reads a NUL-terminated string without decoding it.
+func readRawStringBinary(reader *bufio.Reader) ([]byte, error) {
 	buf, err := reader.ReadBytes(0x00)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	val = string(buf[:len(buf)-1])
-	return
+	return buf[:len(buf)-1], nil
 }
 
 func (b *binaryCodePairReader) readCodePair() (CodePair, error) {
@@ -516,7 +544,11 @@ func (b *binaryCodePairReader) readCodePair() (CodePair, error) {
 		}
 		pair = NewShortCodePair(code, value)
 	case "String":
-		value, err := readStringBinary(b.reader)
+		raw, err := readRawStringBinary(b.reader)
+		if err != nil {
+			return pair, err
+		}
+		value, err := b.decodeString(raw)
 		if err != nil {
 			return pair, err
 		}
@@ -579,14 +611,6 @@ func (b *binaryCodePairReader) readByte() (byte, error) {
 
 func createShort(b1, b2 byte) int16 {
 	return int16(b2)<<8 + int16(b1)
-}
-
-func (b *binaryCodePairReader) setUtf8Reader() {
-	// noop
-}
-
-func (b *binaryCodePairReader) setCodePage(name string) {
-	// noop
 }
 
 // parseUtf8 decodes the `\U+XXXX` escapes that pre-2007 files use for characters outside their code page. Other

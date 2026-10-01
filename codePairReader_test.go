@@ -499,10 +499,8 @@ func readCodePairsText(t *testing.T, content string) (codePairs []CodePair) {
 	stringReader := bufio.NewReader(strings.NewReader(content))
 	reader := textCodePairReader{
 		reader:        stringReader,
-		decoder:       nil,
 		firstLine:     "",
 		firstLineRead: true,
-		readAsUtf8:    false,
 	}
 
 	nextPair, err := reader.readCodePair()
