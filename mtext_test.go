@@ -232,6 +232,30 @@ func TestMTextRunsRelativeValuesMultiply(t *testing.T) {
 	assertEqFloat64(t, 1.0, runs[0].WidthFactor)
 }
 
+func TestMTextRunsWidthFactorAndObliqueAnglePresence(t *testing.T) {
+	// a style with width factor 0.8 and a 15° slant
+	runs := ParseMTextRuns("a{\\W1;\\Q0;b}{\\W0.5x;c}{\\W2;\\W0.5x;\\Q-10;d}e")
+	assertEqInt(t, 5, len(runs))
+	expected := []struct {
+		text           string
+		hasWidth       bool
+		width, oblique float64
+	}{
+		{"a", false, 0.8, 15}, // no codes: the style's values
+		{"b", true, 1, 0},     // explicit \W1; \Q0; cancel the style
+		{"c", false, 0.4, 15}, // relative to the style's factor
+		{"d", true, 1, -10},   // absolute, then relative to that
+		{"e", false, 0.8, 15}, // the braces ended the scope
+	}
+	for i, e := range expected {
+		run := runs[i]
+		assertEqString(t, e.text, run.Text)
+		assertEqBool(t, e.hasWidth, run.HasWidthFactor)
+		assertEqFloat64(t, e.width, run.EffectiveWidthFactor(0.8))
+		assertEqFloat64(t, e.oblique, run.EffectiveObliqueAngle(15))
+	}
+}
+
 func TestMTextRunsFormattingToggles(t *testing.T) {
 	runs := ParseMTextRuns("\\Lu\\l\\Oo\\o\\Ks\\k")
 	assertEqInt(t, 3, len(runs))

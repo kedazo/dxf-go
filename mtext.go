@@ -22,12 +22,18 @@ type MTextRun struct {
 	HeightFactor float64
 	Color        Color // \C, ByLayer() when not set
 	TrueColor    int   // \c as 0xRRGGBB, -1 when not set
-	WidthFactor  float64
-	ObliqueAngle float64 // degrees
-	Tracking     float64
-	Underline    bool
-	Overline     bool
-	Strike       bool
+	// WidthFactor is absolute if HasWidthFactor (an absolute \W is in effect, possibly multiplied by later \W…x);
+	// otherwise it is the product of the relative \W…x codes (1 without any) and multiplies the text style's width
+	// factor. See EffectiveWidthFactor.
+	WidthFactor    float64
+	HasWidthFactor bool
+	// ObliqueAngle (\Q, degrees) replaces the text style's oblique angle if HasObliqueAngle. See EffectiveObliqueAngle.
+	ObliqueAngle    float64
+	HasObliqueAngle bool
+	Tracking        float64
+	Underline       bool
+	Overline        bool
+	Strike          bool
 	// Stacked is set for stacked fractions (\S); Text is then "numerator/denominator", or only the part that is not
 	// blank. Stacks with both parts blank (ArchiCAD uses them as spacers) produce no run.
 	Stacked bool
@@ -245,6 +251,24 @@ func superscriptDigits(text string) string {
 	return builder.String()
 }
 
+// EffectiveWidthFactor returns the run's width factor given the text style's (Style.WidthFactor): an explicit \W1;
+// cancels a condensed style, a relative \W0.8x; condenses it further.
+func (r *MTextRun) EffectiveWidthFactor(styleWidthFactor float64) float64 {
+	if r.HasWidthFactor {
+		return r.WidthFactor
+	}
+	return styleWidthFactor * r.WidthFactor
+}
+
+// EffectiveObliqueAngle returns the run's oblique angle in degrees given the text style's (Style.ObliqueAngle): an
+// explicit \Q0; cancels a slanted style.
+func (r *MTextRun) EffectiveObliqueAngle(styleObliqueAngle float64) float64 {
+	if r.HasObliqueAngle {
+		return r.ObliqueAngle
+	}
+	return styleObliqueAngle
+}
+
 // ParseMTextRuns splits MTEXT content into runs of equally formatted text, resolving escapes, special characters and
 // stacked fractions.
 func ParseMTextRuns(text string) []MTextRun {
@@ -363,6 +387,7 @@ func (p *mtextParser) parseCode(code byte) {
 				p.state.WidthFactor *= value
 			} else {
 				p.state.WidthFactor = value
+				p.state.HasWidthFactor = true
 			}
 		}
 	case 'T':
@@ -378,6 +403,7 @@ func (p *mtextParser) parseCode(code byte) {
 		p.flush()
 		if value, err := strconv.ParseFloat(strings.TrimSpace(p.readArgument()), 64); err == nil {
 			p.state.ObliqueAngle = value
+			p.state.HasObliqueAngle = true
 		}
 	case 'C':
 		p.flush()
