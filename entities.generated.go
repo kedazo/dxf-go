@@ -5053,9 +5053,11 @@ func (this *RotatedDimension) codePairs(version AcadVersion) (pairs []CodePair) 
 	if version >= R13 {
 		pairs = append(pairs, NewStringCodePair(100, "AcDbAlignedDimension"))
 	}
-	pairs = append(pairs, NewDoubleCodePair(12, this.InsertionPoint.X))
-	pairs = append(pairs, NewDoubleCodePair(22, this.InsertionPoint.Y))
-	pairs = append(pairs, NewDoubleCodePair(32, this.InsertionPoint.Z))
+	if this.InsertionPoint != *NewOrigin() {
+		pairs = append(pairs, NewDoubleCodePair(12, this.InsertionPoint.X))
+		pairs = append(pairs, NewDoubleCodePair(22, this.InsertionPoint.Y))
+		pairs = append(pairs, NewDoubleCodePair(32, this.InsertionPoint.Z))
+	}
 	pairs = append(pairs, NewDoubleCodePair(13, this.DefinitionPoint2.X))
 	pairs = append(pairs, NewDoubleCodePair(23, this.DefinitionPoint2.Y))
 	pairs = append(pairs, NewDoubleCodePair(33, this.DefinitionPoint2.Z))
@@ -5063,7 +5065,9 @@ func (this *RotatedDimension) codePairs(version AcadVersion) (pairs []CodePair) 
 	pairs = append(pairs, NewDoubleCodePair(24, this.DefinitionPoint3.Y))
 	pairs = append(pairs, NewDoubleCodePair(34, this.DefinitionPoint3.Z))
 	pairs = append(pairs, NewDoubleCodePair(50, this.RotationAngle))
-	pairs = append(pairs, NewDoubleCodePair(52, this.ExtensionLineAngle))
+	if this.ExtensionLineAngle != 0.0 {
+		pairs = append(pairs, NewDoubleCodePair(52, this.ExtensionLineAngle))
+	}
 	if version >= R13 {
 		pairs = append(pairs, NewStringCodePair(100, "AcDbRotatedDimension"))
 	}

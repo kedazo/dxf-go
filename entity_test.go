@@ -619,6 +619,37 @@ func TestWriteDimension(t *testing.T) {
 	}, actual)
 }
 
+func TestWriteRotatedDimensionSkipsDefaultOptionalFields(t *testing.T) {
+	// AutoCAD discards the whole drawing when 12 or 52 is written with its default value
+	dim := NewRotatedDimension()
+	dim.DefinitionPoint2 = Point{1.0, 2.0, 0.0}
+	actual := allCodePairs(dim, R2004)
+	assertContainsCodePairs(t, []CodePair{
+		NewStringCodePair(100, "AcDbAlignedDimension"),
+		NewDoubleCodePair(13, 1.0),
+	}, actual)
+	assertContainsCodePairs(t, []CodePair{
+		NewDoubleCodePair(50, 0.0),
+		NewStringCodePair(100, "AcDbRotatedDimension"),
+	}, actual)
+
+	dim.InsertionPoint = Point{3.0, 4.0, 0.0}
+	dim.ExtensionLineAngle = 15.0
+	actual = allCodePairs(dim, R2004)
+	assertContainsCodePairs(t, []CodePair{
+		NewStringCodePair(100, "AcDbAlignedDimension"),
+		NewDoubleCodePair(12, 3.0),
+		NewDoubleCodePair(22, 4.0),
+		NewDoubleCodePair(32, 0.0),
+		NewDoubleCodePair(13, 1.0),
+	}, actual)
+	assertContainsCodePairs(t, []CodePair{
+		NewDoubleCodePair(50, 0.0),
+		NewDoubleCodePair(52, 15.0),
+		NewStringCodePair(100, "AcDbRotatedDimension"),
+	}, actual)
+}
+
 func TestReadImage(t *testing.T) {
 	img := parseEntity(t, "IMAGE",
 		NewIntCodePair(91, 2),

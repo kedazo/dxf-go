@@ -422,11 +422,12 @@
     <Field Name="DefinitionPoint3" Code="14" Type="Point" DefaultValue="*NewOrigin()" CodeOverrides="14,24,34" />
   </Entity>
   <Entity Name="RotatedDimension" SubclassMarker="AcDbAlignedDimension" TypeString="DIMENSION" Tag="RotatedHorizontalOrVertical" ImplementInterfaces="Entity,Dimension">
-    <Field Name="InsertionPoint" Code="12" Type="Point" DefaultValue="*NewOrigin()" CodeOverrides="12,22,32" />
+    <!-- AutoCAD discards the whole drawing when 12 or 52 is written with its default value -->
+    <Field Name="InsertionPoint" Code="12" Type="Point" DefaultValue="*NewOrigin()" DisableWritingDefault="true" CodeOverrides="12,22,32" />
     <Field Name="DefinitionPoint2" Code="13" Type="Point" DefaultValue="*NewOrigin()" CodeOverrides="13,23,33" />
     <Field Name="DefinitionPoint3" Code="14" Type="Point" DefaultValue="*NewOrigin()" CodeOverrides="14,24,34" />
     <Field Name="RotationAngle" Code="50" Type="float64" DefaultValue="0.0" />
-    <Field Name="ExtensionLineAngle" Code="52" Type="float64" DefaultValue="0.0" />
+    <Field Name="ExtensionLineAngle" Code="52" Type="float64" DefaultValue="0.0" DisableWritingDefault="true" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='"AcDbAlignedDimension"' MinVersion="R13" />
       <WriteField Field="InsertionPoint" />
