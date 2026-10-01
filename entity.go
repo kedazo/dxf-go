@@ -215,19 +215,11 @@ func afterRead(entity *Entity) {
 			ent.SetClippingVertices(append(ent.ClippingVertices(), Point{ent.clippingVerticesX()[i], ent.clippingVerticesY()[i], 0.0}))
 		}
 	case *Leader:
-		for i := 0; i < ent.vertexCount; i++ {
-			ent.Vertices = append(ent.Vertices, Point{ent.verticesX[i], ent.verticesY[i], ent.verticesZ[i]})
-		}
+		ent.Vertices = append(ent.Vertices, pointsFromCoordinates(ent.vertexCount, ent.verticesX, ent.verticesY, ent.verticesZ)...)
 	case *MLine:
-		for i := 0; i < ent.vertexCount; i++ {
-			ent.Vertices = append(ent.Vertices, Point{ent.vertexX[i], ent.vertexY[i], ent.vertexZ[i]})
-		}
-		for i := 0; i < ent.vertexCount; i++ {
-			ent.SegmentDirections = append(ent.Vertices, Point{ent.segmentDirectionX[i], ent.segmentDirectionY[i], ent.segmentDirectionZ[i]})
-		}
-		for i := 0; i < ent.vertexCount; i++ {
-			ent.MiterDirections = append(ent.Vertices, Point{ent.miterDirectionX[i], ent.miterDirectionY[i], ent.miterDirectionZ[i]})
-		}
+		ent.Vertices = append(ent.Vertices, pointsFromCoordinates(ent.vertexCount, ent.vertexX, ent.vertexY, ent.vertexZ)...)
+		ent.SegmentDirections = append(ent.SegmentDirections, pointsFromCoordinates(ent.vertexCount, ent.segmentDirectionX, ent.segmentDirectionY, ent.segmentDirectionZ)...)
+		ent.MiterDirections = append(ent.MiterDirections, pointsFromCoordinates(ent.vertexCount, ent.miterDirectionX, ent.miterDirectionY, ent.miterDirectionZ)...)
 	case *OleFrame:
 		ent.BinaryData = stringsToBytes(ent.binaryDataStrings)
 	case *Ole2Frame:
@@ -253,6 +245,21 @@ func afterRead(entity *Entity) {
 	case *PdfUnderlay:
 		afterReadUnderlay(ent)
 	}
+}
+
+// pointsFromCoordinates zips separately read coordinates into points. The declared count is capped by the available X
+// and Y values, so a file with a wrong count can't cause a panic; a missing Z is 0.
+func pointsFromCoordinates(count int, xs, ys, zs []float64) []Point {
+	count = min(count, len(xs), len(ys))
+	points := make([]Point, 0, max(count, 0))
+	for i := 0; i < count; i++ {
+		z := 0.0
+		if i < len(zs) {
+			z = zs[i]
+		}
+		points = append(points, Point{xs[i], ys[i], z})
+	}
+	return points
 }
 
 func afterReadUnderlay(underlay Underlay) {

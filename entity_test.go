@@ -364,6 +364,48 @@ func TestWriteAttributeDefinitionWithoutTrailingMText(t *testing.T) {
 	}, actual)
 }
 
+func TestReadMLineDirections(t *testing.T) {
+	mline := parseEntity(t, "MLINE",
+		NewShortCodePair(72, 2),
+		NewDoubleCodePair(11, 1.0),
+		NewDoubleCodePair(21, 2.0),
+		NewDoubleCodePair(31, 0.0),
+		NewDoubleCodePair(12, 1.0),
+		NewDoubleCodePair(22, 0.0),
+		NewDoubleCodePair(32, 0.0),
+		NewDoubleCodePair(13, 0.0),
+		NewDoubleCodePair(23, 1.0),
+		NewDoubleCodePair(33, 0.0),
+		NewDoubleCodePair(11, 3.0),
+		NewDoubleCodePair(21, 4.0),
+		NewDoubleCodePair(31, 0.0),
+		NewDoubleCodePair(12, 0.0),
+		NewDoubleCodePair(22, 1.0),
+		NewDoubleCodePair(32, 0.0),
+		NewDoubleCodePair(13, -1.0),
+		NewDoubleCodePair(23, 0.0),
+		NewDoubleCodePair(33, 0.0),
+	).(*MLine)
+	assertEqInt(t, 2, len(mline.Vertices))
+	assertEqInt(t, 2, len(mline.SegmentDirections))
+	assertEqInt(t, 2, len(mline.MiterDirections))
+	assertEqPoint(t, Point{3.0, 4.0, 0.0}, mline.Vertices[1])
+	assertEqPoint(t, Point{0.0, 1.0, 0.0}, mline.SegmentDirections[1])
+	assertEqPoint(t, Point{-1.0, 0.0, 0.0}, mline.MiterDirections[1])
+}
+
+func TestReadLeaderWithWrongVertexCount(t *testing.T) {
+	leader := parseEntity(t, "LEADER",
+		NewShortCodePair(76, 3),
+		NewDoubleCodePair(10, 1.0),
+		NewDoubleCodePair(20, 2.0),
+		NewDoubleCodePair(10, 3.0),
+		NewDoubleCodePair(20, 4.0),
+	).(*Leader)
+	assertEqInt(t, 2, len(leader.Vertices))
+	assertEqPoint(t, Point{3.0, 4.0, 0.0}, leader.Vertices[1])
+}
+
 func TestReadDimension(t *testing.T) {
 	dim := parseEntity(t, "DIMENSION",
 		NewStringCodePair(1, "text"),
