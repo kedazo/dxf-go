@@ -426,6 +426,7 @@ func readBlocksSection(np CodePair, reader codePairReader) (blocks []Block, next
 					block.Entities = append(block.Entities, entity)
 				}
 			}
+			block.Entities = collectEntities(&entityBufferReader{entities: block.Entities})
 			blocks = append(blocks, block)
 		} else {
 			// Skip non-BLOCK entity type
