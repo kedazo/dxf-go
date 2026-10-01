@@ -2,16 +2,17 @@ package dxf
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"io"
 	"math"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/unicode"
-	"golang.org/x/text/transform"
 )
 
 type codePairReader interface {
@@ -19,24 +20,38 @@ type codePairReader interface {
 	setUtf8Reader()
 }
 
-func codePairReaderFromReader(reader io.Reader, e encoding.Encoding) (r codePairReader, err error) {
-	decoder := *e.NewDecoder()
-	firstLine, err := readSingleLine(reader, decoder)
-	if err != nil {
-		r = newDirectCodePairReader()
-		if firstLine == "" {
-			// empty file is valid
-			err = nil
-			return
-		}
+const readerBufferSize = 64 * 1024
 
-		return
+func codePairReaderFromReader(reader io.Reader, e encoding.Encoding) (r codePairReader, err error) {
+	// one buffered reader is shared by the format sniffing below and the actual code pair reader
+	buffered, ok := reader.(*bufio.Reader)
+	if !ok {
+		buffered = bufio.NewReaderSize(reader, readerBufferSize)
+	}
+
+	var decoder *encoding.Decoder
+	if e != encoding.Nop {
+		decoder = e.NewDecoder()
+	}
+
+	var scratch []byte
+	firstLineBytes, err := readLineBytes(buffered, &scratch)
+	if err == io.EOF {
+		// empty file is valid
+		return newDirectCodePairReader(), nil
+	}
+	if err != nil {
+		return newDirectCodePairReader(), err
+	}
+	firstLine, err := decodeLine(bytes.TrimPrefix(firstLineBytes, utf8ByteOrderMark), decoder, false)
+	if err != nil {
+		return newDirectCodePairReader(), err
 	}
 
 	if firstLine == "AutoCAD Binary DXF" {
-		r, err = newBinaryCodePairReader(reader)
+		r, err = newBinaryCodePairReader(buffered)
 	} else {
-		r = newTextCodePairReader(reader, decoder, firstLine)
+		r = newTextCodePairReader(buffered, decoder, firstLine)
 	}
 
 	return &commentFilteringReader{inner: r}, err
@@ -90,14 +105,17 @@ func (d *directCodePairReader) setUtf8Reader() {
 
 // text
 type textCodePairReader struct {
-	reader        io.Reader
-	decoder       encoding.Decoder
+	reader        *bufio.Reader
+	decoder       *encoding.Decoder // nil when no decoding is needed
 	firstLine     string
 	firstLineRead bool
 	readAsUtf8    bool
+	scratch       []byte
 }
 
-func newTextCodePairReader(reader io.Reader, decoder encoding.Decoder, firstLine string) codePairReader {
+var utf8ByteOrderMark = []byte{0xEF, 0xBB, 0xBF}
+
+func newTextCodePairReader(reader *bufio.Reader, decoder *encoding.Decoder, firstLine string) codePairReader {
 	return &textCodePairReader{
 		reader:        reader,
 		decoder:       decoder,
@@ -107,64 +125,95 @@ func newTextCodePairReader(reader io.Reader, decoder encoding.Decoder, firstLine
 	}
 }
 
-func readSingleLine(reader io.Reader, d encoding.Decoder) (line string, err error) {
-	buffer := make([]byte, 1)
-	bytes := make([]byte, 0)
-
-	for {
-		count, e := reader.Read(buffer)
-		if e == io.EOF {
-			e = nil
+// readLineBytes returns the next line without its line ending, or io.EOF when no data is left. The returned slice is
+// only valid until the next read.
+func readLineBytes(reader *bufio.Reader, scratch *[]byte) ([]byte, error) {
+	line, err := reader.ReadSlice('\n')
+	if err == bufio.ErrBufferFull {
+		// the line is longer than the buffer; collect it in the scratch space
+		buffer := append((*scratch)[:0], line...)
+		for err == bufio.ErrBufferFull {
+			line, err = reader.ReadSlice('\n')
+			buffer = append(buffer, line...)
 		}
-		if e != nil {
-			err = e
-			return
-		}
-		if count != 1 {
-			break
-		}
-		if buffer[0] == '\n' {
-			break
-		}
-
-		bytes = append(bytes, buffer[0])
+		*scratch = buffer
+		line = buffer
 	}
-
-	line, _, err = transform.String(d.Transformer, string(bytes))
+	if err == io.EOF && len(line) > 0 {
+		// last line without a line ending
+		err = nil
+	}
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	if strings.HasSuffix(line, "\r") {
-		line = line[:len(line)-1]
-	}
-
-	return
+	line = bytes.TrimSuffix(line, []byte{'\n'})
+	line = bytes.TrimSuffix(line, []byte{'\r'})
+	return line, nil
 }
 
-func (a *textCodePairReader) readLine(d encoding.Decoder) (line string, err error) {
-	if !a.firstLineRead {
-		line = a.firstLine
-		a.firstLine = ""
-		a.firstLineRead = true
-		return
+// decodeLine converts raw line bytes into a string, only running the decoder when the bytes need it.
+func decodeLine(line []byte, decoder *encoding.Decoder, isUtf8 bool) (string, error) {
+	if decoder == nil || isASCII(line) || (isUtf8 && utf8.Valid(line)) {
+		return string(line), nil
 	}
 
-	line, err = readSingleLine(a.reader, d)
-	return
+	decoded, err := decoder.Bytes(line)
+	return string(decoded), err
+}
+
+func isASCII(data []byte) bool {
+	for _, b := range data {
+		if b >= utf8.RuneSelf {
+			return false
+		}
+	}
+	return true
+}
+
+func (a *textCodePairReader) readRawLine() ([]byte, error) {
+	if !a.firstLineRead {
+		a.firstLineRead = true
+		line := []byte(a.firstLine)
+		a.firstLine = ""
+		return line, nil
+	}
+
+	return readLineBytes(a.reader, &a.scratch)
 }
 
 func (a *textCodePairReader) readCode() (int, error) {
-	line, err := a.readLine(*encoding.Nop.NewDecoder())
+	line, err := a.readRawLine()
 	if err != nil {
 		return 0, err
 	}
 
-	code, err := strconv.Atoi(strings.TrimSpace(line))
-	if err != nil {
-		return 0, err
+	return parseCode(line)
+}
+
+// parseCode parses a group code without allocating; leading and trailing whitespace is ignored.
+func parseCode(line []byte) (int, error) {
+	trimmed := bytes.TrimSpace(line)
+	digits := trimmed
+	negative := false
+	if len(digits) > 0 && (digits[0] == '-' || digits[0] == '+') {
+		negative = digits[0] == '-'
+		digits = digits[1:]
+	}
+	if len(digits) == 0 || len(digits) > 9 {
+		return strconv.Atoi(string(trimmed))
 	}
 
+	code := 0
+	for _, c := range digits {
+		if c < '0' || c > '9' {
+			return strconv.Atoi(string(trimmed))
+		}
+		code = code*10 + int(c-'0')
+	}
+	if negative {
+		code = -code
+	}
 	return code, nil
 }
 
@@ -209,7 +258,11 @@ func (a *textCodePairReader) readCodePair() (CodePair, error) {
 		return codePair, err
 	}
 
-	stringValue, err := a.readLine(a.decoder)
+	rawValue, err := a.readRawLine()
+	if err != nil {
+		return codePair, err
+	}
+	stringValue, err := decodeLine(rawValue, a.decoder, a.readAsUtf8)
 	if err != nil {
 		return codePair, err
 	}
@@ -257,19 +310,18 @@ func (a *textCodePairReader) readCodePair() (CodePair, error) {
 }
 
 func (a *textCodePairReader) setUtf8Reader() {
-	a.decoder = *unicode.UTF8.NewDecoder()
+	a.decoder = unicode.UTF8.NewDecoder()
 	a.readAsUtf8 = true
 }
 
 // binary
 type binaryCodePairReader struct {
-	reader          bufio.Reader
+	reader          *bufio.Reader
 	hasReturnedPair bool
 	isPostR13       bool
 }
 
-func newBinaryCodePairReader(reader io.Reader) (rdr codePairReader, err error) {
-	r := *bufio.NewReader(reader)
+func newBinaryCodePairReader(r *bufio.Reader) (rdr codePairReader, err error) {
 	buf := make([]byte, 2)
 	n, err := r.Read(buf)
 	if err != nil {
@@ -372,20 +424,12 @@ func readDoubleBinary(data []byte) (val float64, err error) {
 }
 
 func readStringBinary(reader *bufio.Reader) (val string, err error) {
-	buf := make([]byte, 0)
-	for {
-		var c byte
-		c, err = reader.ReadByte()
-		if err != nil {
-			return
-		}
-		if c == 0x00 {
-			break
-		}
-		buf = append(buf, c)
+	buf, err := reader.ReadBytes(0x00)
+	if err != nil {
+		return
 	}
 
-	val = string(buf)
+	val = string(buf[:len(buf)-1])
 	return
 }
 
@@ -403,7 +447,7 @@ func (b *binaryCodePairReader) readCodePair() (CodePair, error) {
 		if b.isPostR13 {
 			boolByteCount = 1
 		}
-		data, err := readBytes(&b.reader, boolByteCount)
+		data, err := readBytes(b.reader, boolByteCount)
 		if err != nil {
 			return pair, err
 		}
@@ -413,7 +457,7 @@ func (b *binaryCodePairReader) readCodePair() (CodePair, error) {
 		}
 		pair = NewBoolCodePair(code, value)
 	case "Double":
-		data, err := readBytes(&b.reader, 8)
+		data, err := readBytes(b.reader, 8)
 		if err != nil {
 			return pair, err
 		}
@@ -423,7 +467,7 @@ func (b *binaryCodePairReader) readCodePair() (CodePair, error) {
 		}
 		pair = NewDoubleCodePair(code, value)
 	case "Int":
-		data, err := readBytes(&b.reader, 4)
+		data, err := readBytes(b.reader, 4)
 		if err != nil {
 			return pair, err
 		}
@@ -433,7 +477,7 @@ func (b *binaryCodePairReader) readCodePair() (CodePair, error) {
 		}
 		pair = NewIntCodePair(code, value)
 	case "Long":
-		data, err := readBytes(&b.reader, 8)
+		data, err := readBytes(b.reader, 8)
 		if err != nil {
 			return pair, err
 		}
@@ -443,7 +487,7 @@ func (b *binaryCodePairReader) readCodePair() (CodePair, error) {
 		}
 		pair = NewLongCodePair(code, value)
 	case "Short":
-		data, err := readBytes(&b.reader, 2)
+		data, err := readBytes(b.reader, 2)
 		if err != nil {
 			return pair, err
 		}
@@ -453,7 +497,7 @@ func (b *binaryCodePairReader) readCodePair() (CodePair, error) {
 		}
 		pair = NewShortCodePair(code, value)
 	case "String":
-		value, err := readStringBinary(&b.reader)
+		value, err := readStringBinary(b.reader)
 		if err != nil {
 			return pair, err
 		}
@@ -494,7 +538,7 @@ func (b *binaryCodePairReader) readCode() (code int, err error) {
 		code = int(createShort(bt, b2))
 	} else if code == 255 {
 		var data []byte
-		data, err = readBytes(&b.reader, 2)
+		data, err = readBytes(b.reader, 2)
 		if err != nil {
 			return
 		}

@@ -482,10 +482,10 @@ func readCodePairsFromReader(t *testing.T, reader io.Reader) (codePairs []CodePa
 }
 
 func readCodePairsText(t *testing.T, content string) (codePairs []CodePair) {
-	stringReader := strings.NewReader(content)
+	stringReader := bufio.NewReader(strings.NewReader(content))
 	reader := textCodePairReader{
 		reader:        stringReader,
-		decoder:       *encoding.Nop.NewDecoder(),
+		decoder:       nil,
 		firstLine:     "",
 		firstLineRead: true,
 		readAsUtf8:    false,
@@ -504,7 +504,7 @@ func readCodePairsBinary(t *testing.T, data []byte, asPostR13 bool) (codePairs [
 	buf := bytes.NewBuffer(data)
 	binaryReader := bufio.NewReader(buf)
 	reader := binaryCodePairReader{
-		reader:          *binaryReader,
+		reader:          binaryReader,
 		hasReturnedPair: true,
 		isPostR13:       asPostR13,
 	}
