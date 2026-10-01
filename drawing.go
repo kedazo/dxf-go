@@ -38,6 +38,11 @@ type Drawing struct {
 	MLeaderStyles    []MLeaderStyle
 	TableStyles      []TableStyle
 
+	// Classes and Thumbnail are read from the CLASSES and THUMBNAILIMAGE sections, which are not written. Thumbnail is
+	// the preview image as stored (a BMP without its file header); see ThumbnailBMP.
+	Classes   []Class
+	Thumbnail []byte
+
 	// Warnings lists what was skipped while reading because it was malformed.
 	Warnings []string
 
@@ -413,6 +418,10 @@ func readFromCodePairReader(reader codePairReader) (Drawing, error) {
 				drawing.Blocks, nextPair, err = readBlocksSection(nextPair, reader)
 			case "OBJECTS":
 				nextPair, err = readObjectsSection(&drawing, nextPair, reader)
+			case "CLASSES":
+				nextPair, err = readClassesSection(&drawing, nextPair, reader)
+			case "THUMBNAILIMAGE":
+				nextPair, err = readThumbnailSection(&drawing, nextPair, reader)
 			default:
 				// swallow unsupported section
 				for err == nil && !nextPair.isEndSection() {
