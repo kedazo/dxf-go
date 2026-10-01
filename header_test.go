@@ -20,6 +20,23 @@ func TestReadNonDefaultHeaderVersion(t *testing.T) {
 	assertEqInt(t, 6, int(header.MaintenanceVersion))
 }
 
+func TestLineWeightValues(t *testing.T) {
+	// DXF line weight codes: -1 = BYLAYER, -2 = BYBLOCK, -3 = DEFAULT
+	assertEqInt(t, -1, int(NewLineWeightByLayer()))
+	assertEqInt(t, -2, int(NewLineWeightByBlock()))
+	assertEqInt(t, -3, int(NewLineWeightStandard()))
+
+	// AutoCAD's defaults
+	header := *NewHeader()
+	assertEqInt(t, -1, int(header.NewObjectLineWeight))
+	assertEqInt(t, -2, int(header.DimensionLineWeight))
+	assertEqInt(t, -2, int(header.DimensionExtensionLineWeight))
+
+	line := parseEntity(t, "LINE", NewShortCodePair(370, -2)).(*Line)
+	lineWeight := line.LineWeight()
+	assertEqBool(t, true, lineWeight.ByBlock())
+}
+
 func TestTolerateMalformedHeaderVariable(t *testing.T) {
 	// $ACADMAINTVER expects a code-70 (short) value, but here it is followed by
 	// a code-1 (string) value — the kind of degraded HEADER that LibreDWG emits

@@ -8,10 +8,10 @@ const (
 	LineWeightStandard LineWeight = -3
 
 	// LineWeightByLayer represents a line weight inherited from the item's layer.
-	LineWeightByLayer LineWeight = -2
+	LineWeightByLayer LineWeight = -1
 
 	// LineWeightByBlock represents a line weight inherited from the item's block.
-	LineWeightByBlock LineWeight = -1
+	LineWeightByBlock LineWeight = -2
 )
 
 // SetStandard sets the line weight to the standard value.
