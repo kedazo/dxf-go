@@ -313,6 +313,9 @@ func ReadFromReader(reader io.Reader) (drawing Drawing, err error) {
 // ReadFromReaderWithEncoding reads a DXF drawing from the specified io.Reader with the specified default text encoding.
 func ReadFromReaderWithEncoding(reader io.Reader, e encoding.Encoding) (drawing Drawing, err error) {
 	r, err := codePairReaderFromReader(reader, e)
+	if err != nil {
+		return
+	}
 	drawing, err = readFromCodePairReader(r)
 	return
 }

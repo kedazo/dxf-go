@@ -50,11 +50,14 @@ func codePairReaderFromReader(reader io.Reader, e encoding.Encoding) (r codePair
 
 	if firstLine == "AutoCAD Binary DXF" {
 		r, err = newBinaryCodePairReader(buffered)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		r = newTextCodePairReader(buffered, decoder, firstLine)
 	}
 
-	return &commentFilteringReader{inner: r}, err
+	return &commentFilteringReader{inner: r}, nil
 }
 
 // commentFilteringReader wraps a codePairReader and silently skips group code 999 (comment) pairs.

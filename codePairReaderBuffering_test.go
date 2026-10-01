@@ -73,6 +73,23 @@ func TestReadWithByteOrderMarkAndUnixNewlines(t *testing.T) {
 	assertEqPoint(t, Point{1.0, 0.0, 0.0}, drawing.Entities[0].(*Line).P1)
 }
 
+func TestReadInvalidBinarySentinelReturnsError(t *testing.T) {
+	for _, content := range []string{
+		"AutoCAD Binary DXF\r\n",
+		"AutoCAD Binary DXF\r\n\x1A",
+		"AutoCAD Binary DXF\r\nXY  0",
+	} {
+		_, err := ReadFromReader(strings.NewReader(content))
+		assert(t, err != nil, fmt.Sprintf("expected an error for %q", content))
+	}
+}
+
+func TestReadEmptyInput(t *testing.T) {
+	drawing, err := ReadFromReader(strings.NewReader(""))
+	assert(t, err == nil, "expected empty input to be a valid drawing")
+	assertEqInt(t, 0, len(drawing.Entities))
+}
+
 func BenchmarkReadFromReader(b *testing.B) {
 	content := linesDrawing(20000)
 	b.SetBytes(int64(len(content)))
