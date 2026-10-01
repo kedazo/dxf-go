@@ -20,6 +20,21 @@ func NewOrigin() *Point {
 	}
 }
 
+// Add returns p moved by offset.
+func (p Point) Add(offset Vector) Point {
+	return Point{p.X + offset.X, p.Y + offset.Y, p.Z + offset.Z}
+}
+
+// Sub returns the vector from other to p.
+func (p Point) Sub(other Point) Vector {
+	return Vector{p.X - other.X, p.Y - other.Y, p.Z - other.Z}
+}
+
+// ToVector returns the vector from the origin to p.
+func (p Point) ToVector() Vector {
+	return Vector{p.X, p.Y, p.Z}
+}
+
 func (p *Point) String() string {
 	return fmt.Sprintf("(%s, %s, %s)", formatFloat64Text(p.X), formatFloat64Text(p.Y), formatFloat64Text(p.Z))
 }

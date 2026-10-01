@@ -2,6 +2,7 @@ package dxf
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 	"strings"
 	"testing"
@@ -125,6 +126,29 @@ func assertEqPoint(t *testing.T, expected, actual Point) {
 
 func assertEqVector(t *testing.T, expected, actual Vector) {
 	if expected != actual {
+		t.Errorf("Expected: %s\nActual: %s", expected.String(), actual.String())
+	}
+}
+
+const nearEpsilon = 1e-9
+
+func assertNearFloat64(t *testing.T, expected, actual float64) {
+	t.Helper()
+	if math.Abs(expected-actual) > nearEpsilon {
+		t.Errorf("Expected: %v\nActual: %v", expected, actual)
+	}
+}
+
+func assertNearPoint(t *testing.T, expected, actual Point) {
+	t.Helper()
+	if expected.Sub(actual).Length() > nearEpsilon {
+		t.Errorf("Expected: %s\nActual: %s", expected.String(), actual.String())
+	}
+}
+
+func assertNearVector(t *testing.T, expected, actual Vector) {
+	t.Helper()
+	if expected.Sub(actual).Length() > nearEpsilon {
 		t.Errorf("Expected: %s\nActual: %s", expected.String(), actual.String())
 	}
 }
