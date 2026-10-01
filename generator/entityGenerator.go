@@ -150,6 +150,7 @@ func generateEntities() {
 		for _, p := range inf.Pointers {
 			builder.WriteString(fmt.Sprintf("	%s() *%s\n", p.Name, p.Type))
 			builder.WriteString(fmt.Sprintf("	Set%s(val *%s)\n", p.Name, p.Type))
+			builder.WriteString(fmt.Sprintf("	%sHandle() Handle\n", p.Name))
 			builder.WriteString(fmt.Sprintf("	get%sPointer() pointer\n", p.Name))
 			builder.WriteString(fmt.Sprintf("	set%sPointerHandle(h Handle)\n", p.Name))
 		}
@@ -289,6 +290,7 @@ func generateEntities() {
 		for _, infName := range entity.Interfaces {
 			inf := interfaces[infName]
 			for _, p := range inf.Pointers {
+				writePointerHandleGetter(&builder, entity.Name, p)
 				builder.WriteString(fmt.Sprintf("func (e *%s) get%sPointer() pointer {\n", entity.Name, p.Name))
 				builder.WriteString(fmt.Sprintf("	return e.pointer%s\n", p.Name))
 				builder.WriteString("}\n")
@@ -312,6 +314,7 @@ func generateEntities() {
 			}
 		}
 		for _, p := range entity.Pointers {
+			writePointerHandleGetter(&builder, entity.Name, p)
 			builder.WriteString(fmt.Sprintf("func (e *%s) %s() *%s {\n", entity.Name, p.Name, p.Type))
 			if p.Type == "DrawingItem" {
 				builder.WriteString(fmt.Sprintf("	return e.pointer%s.value\n", p.Name))
@@ -695,6 +698,16 @@ func writeField(builder *strings.Builder, field xmlField, asInterface bool, inde
 	if len(predicates) > 0 {
 		builder.WriteString(indent + "}\n")
 	}
+}
+
+// writePointerHandleGetter writes the public getter of a pointer's handle, e.g. OwnerHandle(): the pointed-to item
+// may be something Drawing.ItemByHandle finds but the pointer can't hold, like a BLOCK_RECORD.
+func writePointerHandleGetter(builder *strings.Builder, entityName string, pointer xmlPointer) {
+	builder.WriteString(fmt.Sprintf("// %sHandle returns the handle of the %s (code %d), or 0.\n", pointer.Name, pointer.Name, pointer.Code))
+	builder.WriteString(fmt.Sprintf("func (e *%s) %sHandle() Handle {\n", entityName, pointer.Name))
+	builder.WriteString(fmt.Sprintf("	return e.pointer%s.handle\n", pointer.Name))
+	builder.WriteString("}\n")
+	builder.WriteString("\n")
 }
 
 func writePointer(builder *strings.Builder, pointer xmlPointer, asInterface bool, indent string) {

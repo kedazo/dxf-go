@@ -40,6 +40,8 @@ func newEntityCommon() entityCommon {
 func (e *entityCommon) pointers() []*pointer {
 	return []*pointer{&e.pointerOwner, &e.pointerPlotStyle}
 }
+func (e *entityCommon) OwnerHandle() Handle                { return e.pointerOwner.handle }
+func (e *entityCommon) PlotStyleHandle() Handle            { return e.pointerPlotStyle.handle }
 func (e *entityCommon) getOwnerPointer() pointer           { return e.pointerOwner }
 func (e *entityCommon) setOwnerPointerHandle(h Handle)     { e.pointerOwner.handle = h }
 func (e *entityCommon) Owner() *DrawingItem                { return e.pointerOwner.value }

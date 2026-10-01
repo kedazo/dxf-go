@@ -51,10 +51,12 @@ type Entity interface {
 	SetShadowMode(val ShadowMode)
 	Owner() *DrawingItem
 	SetOwner(val *DrawingItem)
+	OwnerHandle() Handle
 	getOwnerPointer() pointer
 	setOwnerPointerHandle(h Handle)
 	PlotStyle() *DrawingItem
 	SetPlotStyle(val *DrawingItem)
+	PlotStyleHandle() Handle
 	getPlotStylePointer() pointer
 	setPlotStylePointerHandle(h Handle)
 }
@@ -628,6 +630,11 @@ func (e *Face) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Face) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Face) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -642,6 +649,11 @@ func (e *Face) Owner() *DrawingItem {
 
 func (e *Face) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Face) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *Face) getPlotStylePointer() pointer {
@@ -984,6 +996,11 @@ func (e *Solid3D) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Solid3D) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Solid3D) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -1000,6 +1017,11 @@ func (e *Solid3D) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
 }
 
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Solid3D) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
+}
+
 func (e *Solid3D) getPlotStylePointer() pointer {
 	return e.pointerPlotStyle
 }
@@ -1014,6 +1036,11 @@ func (e *Solid3D) PlotStyle() *DrawingItem {
 
 func (e *Solid3D) SetPlotStyle(val *DrawingItem) {
 	e.pointerPlotStyle.value = val
+}
+
+// HistoryObjectHandle returns the handle of the HistoryObject (code 350), or 0.
+func (e *Solid3D) HistoryObjectHandle() Handle {
+	return e.pointerHistoryObject.handle
 }
 
 func (e *Solid3D) HistoryObject() *DrawingItem {
@@ -1310,6 +1337,11 @@ func (e *ProxyEntity) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *ProxyEntity) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *ProxyEntity) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -1324,6 +1356,11 @@ func (e *ProxyEntity) Owner() *DrawingItem {
 
 func (e *ProxyEntity) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *ProxyEntity) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *ProxyEntity) getPlotStylePointer() pointer {
@@ -1638,6 +1675,11 @@ func (e *Arc) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Arc) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Arc) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -1652,6 +1694,11 @@ func (e *Arc) Owner() *DrawingItem {
 
 func (e *Arc) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Arc) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *Arc) getPlotStylePointer() pointer {
@@ -1976,6 +2023,11 @@ func (e *ArcAlignedText) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *ArcAlignedText) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *ArcAlignedText) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -1990,6 +2042,11 @@ func (e *ArcAlignedText) Owner() *DrawingItem {
 
 func (e *ArcAlignedText) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *ArcAlignedText) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *ArcAlignedText) getPlotStylePointer() pointer {
@@ -2392,6 +2449,11 @@ func (e *AttributeDefinition) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *AttributeDefinition) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *AttributeDefinition) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -2406,6 +2468,11 @@ func (e *AttributeDefinition) Owner() *DrawingItem {
 
 func (e *AttributeDefinition) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *AttributeDefinition) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *AttributeDefinition) getPlotStylePointer() pointer {
@@ -2885,6 +2952,11 @@ func (e *Attribute) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Attribute) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Attribute) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -2899,6 +2971,11 @@ func (e *Attribute) Owner() *DrawingItem {
 
 func (e *Attribute) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Attribute) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *Attribute) getPlotStylePointer() pointer {
@@ -3312,6 +3389,11 @@ func (e *Body) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Body) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Body) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -3326,6 +3408,11 @@ func (e *Body) Owner() *DrawingItem {
 
 func (e *Body) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Body) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *Body) getPlotStylePointer() pointer {
@@ -3600,6 +3687,11 @@ func (e *Circle) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Circle) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Circle) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -3614,6 +3706,11 @@ func (e *Circle) Owner() *DrawingItem {
 
 func (e *Circle) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Circle) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *Circle) getPlotStylePointer() pointer {
@@ -3912,6 +4009,11 @@ func (e *dimensionHelper) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *dimensionHelper) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *dimensionHelper) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -3926,6 +4028,11 @@ func (e *dimensionHelper) Owner() *DrawingItem {
 
 func (e *dimensionHelper) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *dimensionHelper) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *dimensionHelper) getPlotStylePointer() pointer {
@@ -4307,6 +4414,11 @@ func (e *AlignedDimension) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *AlignedDimension) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *AlignedDimension) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -4321,6 +4433,11 @@ func (e *AlignedDimension) Owner() *DrawingItem {
 
 func (e *AlignedDimension) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *AlignedDimension) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *AlignedDimension) getPlotStylePointer() pointer {
@@ -4741,6 +4858,11 @@ func (e *RotatedDimension) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *RotatedDimension) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *RotatedDimension) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -4755,6 +4877,11 @@ func (e *RotatedDimension) Owner() *DrawingItem {
 
 func (e *RotatedDimension) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *RotatedDimension) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *RotatedDimension) getPlotStylePointer() pointer {
@@ -5191,6 +5318,11 @@ func (e *RadialDimension) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *RadialDimension) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *RadialDimension) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -5205,6 +5337,11 @@ func (e *RadialDimension) Owner() *DrawingItem {
 
 func (e *RadialDimension) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *RadialDimension) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *RadialDimension) getPlotStylePointer() pointer {
@@ -5613,6 +5750,11 @@ func (e *DiameterDimension) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *DiameterDimension) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *DiameterDimension) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -5627,6 +5769,11 @@ func (e *DiameterDimension) Owner() *DrawingItem {
 
 func (e *DiameterDimension) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *DiameterDimension) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *DiameterDimension) getPlotStylePointer() pointer {
@@ -6039,6 +6186,11 @@ func (e *AngularThreePointDimension) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *AngularThreePointDimension) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *AngularThreePointDimension) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -6053,6 +6205,11 @@ func (e *AngularThreePointDimension) Owner() *DrawingItem {
 
 func (e *AngularThreePointDimension) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *AngularThreePointDimension) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *AngularThreePointDimension) getPlotStylePointer() pointer {
@@ -6485,6 +6642,11 @@ func (e *OrdinateDimension) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *OrdinateDimension) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *OrdinateDimension) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -6499,6 +6661,11 @@ func (e *OrdinateDimension) Owner() *DrawingItem {
 
 func (e *OrdinateDimension) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *OrdinateDimension) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *OrdinateDimension) getPlotStylePointer() pointer {
@@ -6929,6 +7096,11 @@ func (e *ArcDimension) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *ArcDimension) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *ArcDimension) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -6943,6 +7115,11 @@ func (e *ArcDimension) Owner() *DrawingItem {
 
 func (e *ArcDimension) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *ArcDimension) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *ArcDimension) getPlotStylePointer() pointer {
@@ -7322,6 +7499,11 @@ func (e *Ellipse) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Ellipse) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Ellipse) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -7336,6 +7518,11 @@ func (e *Ellipse) Owner() *DrawingItem {
 
 func (e *Ellipse) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Ellipse) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *Ellipse) getPlotStylePointer() pointer {
@@ -7631,6 +7818,11 @@ func (e *Helix) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Helix) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Helix) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -7645,6 +7837,11 @@ func (e *Helix) Owner() *DrawingItem {
 
 func (e *Helix) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Helix) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *Helix) getPlotStylePointer() pointer {
@@ -7969,6 +8166,11 @@ func (e *Image) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Image) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Image) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -7983,6 +8185,11 @@ func (e *Image) Owner() *DrawingItem {
 
 func (e *Image) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Image) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *Image) getPlotStylePointer() pointer {
@@ -8401,6 +8608,11 @@ func (e *Insert) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Insert) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Insert) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -8415,6 +8627,11 @@ func (e *Insert) Owner() *DrawingItem {
 
 func (e *Insert) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Insert) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *Insert) getPlotStylePointer() pointer {
@@ -8764,6 +8981,11 @@ func (e *Leader) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Leader) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Leader) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -8778,6 +9000,11 @@ func (e *Leader) Owner() *DrawingItem {
 
 func (e *Leader) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Leader) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *Leader) getPlotStylePointer() pointer {
@@ -9165,6 +9392,11 @@ func (e *Light) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Light) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Light) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -9179,6 +9411,11 @@ func (e *Light) Owner() *DrawingItem {
 
 func (e *Light) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Light) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *Light) getPlotStylePointer() pointer {
@@ -9490,6 +9727,11 @@ func (e *Line) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Line) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Line) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -9504,6 +9746,11 @@ func (e *Line) Owner() *DrawingItem {
 
 func (e *Line) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Line) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *Line) getPlotStylePointer() pointer {
@@ -9787,6 +10034,11 @@ func (e *LWPolyline) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *LWPolyline) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *LWPolyline) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -9801,6 +10053,11 @@ func (e *LWPolyline) Owner() *DrawingItem {
 
 func (e *LWPolyline) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *LWPolyline) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *LWPolyline) getPlotStylePointer() pointer {
@@ -10144,6 +10401,11 @@ func (e *MLine) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *MLine) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *MLine) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -10158,6 +10420,11 @@ func (e *MLine) Owner() *DrawingItem {
 
 func (e *MLine) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *MLine) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *MLine) getPlotStylePointer() pointer {
@@ -10717,6 +10984,11 @@ func (e *MText) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *MText) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *MText) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -10731,6 +11003,11 @@ func (e *MText) Owner() *DrawingItem {
 
 func (e *MText) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *MText) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *MText) getPlotStylePointer() pointer {
@@ -11024,6 +11301,11 @@ func (e *OleFrame) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *OleFrame) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *OleFrame) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -11038,6 +11320,11 @@ func (e *OleFrame) Owner() *DrawingItem {
 
 func (e *OleFrame) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *OleFrame) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *OleFrame) getPlotStylePointer() pointer {
@@ -11319,6 +11606,11 @@ func (e *Ole2Frame) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Ole2Frame) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Ole2Frame) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -11333,6 +11625,11 @@ func (e *Ole2Frame) Owner() *DrawingItem {
 
 func (e *Ole2Frame) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Ole2Frame) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *Ole2Frame) getPlotStylePointer() pointer {
@@ -11631,6 +11928,11 @@ func (e *ModelPoint) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *ModelPoint) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *ModelPoint) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -11645,6 +11947,11 @@ func (e *ModelPoint) Owner() *DrawingItem {
 
 func (e *ModelPoint) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *ModelPoint) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *ModelPoint) getPlotStylePointer() pointer {
@@ -11940,6 +12247,11 @@ func (e *Polyline) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Polyline) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Polyline) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -11954,6 +12266,11 @@ func (e *Polyline) Owner() *DrawingItem {
 
 func (e *Polyline) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Polyline) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *Polyline) getPlotStylePointer() pointer {
@@ -12296,6 +12613,11 @@ func (e *Ray) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Ray) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Ray) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -12310,6 +12632,11 @@ func (e *Ray) Owner() *DrawingItem {
 
 func (e *Ray) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Ray) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *Ray) getPlotStylePointer() pointer {
@@ -12571,6 +12898,11 @@ func (e *Region) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Region) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Region) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -12585,6 +12917,11 @@ func (e *Region) Owner() *DrawingItem {
 
 func (e *Region) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Region) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *Region) getPlotStylePointer() pointer {
@@ -12865,6 +13202,11 @@ func (e *RText) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *RText) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *RText) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -12879,6 +13221,11 @@ func (e *RText) Owner() *DrawingItem {
 
 func (e *RText) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *RText) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *RText) getPlotStylePointer() pointer {
@@ -13207,6 +13554,11 @@ func (e *Section) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Section) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Section) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -13221,6 +13573,11 @@ func (e *Section) Owner() *DrawingItem {
 
 func (e *Section) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Section) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *Section) getPlotStylePointer() pointer {
@@ -13488,6 +13845,11 @@ func (e *Seqend) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Seqend) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Seqend) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -13502,6 +13864,11 @@ func (e *Seqend) Owner() *DrawingItem {
 
 func (e *Seqend) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Seqend) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *Seqend) getPlotStylePointer() pointer {
@@ -13742,6 +14109,11 @@ func (e *Shape) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Shape) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Shape) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -13756,6 +14128,11 @@ func (e *Shape) Owner() *DrawingItem {
 
 func (e *Shape) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Shape) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *Shape) getPlotStylePointer() pointer {
@@ -14051,6 +14428,11 @@ func (e *Solid) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Solid) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Solid) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -14065,6 +14447,11 @@ func (e *Solid) Owner() *DrawingItem {
 
 func (e *Solid) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Solid) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *Solid) getPlotStylePointer() pointer {
@@ -14384,6 +14771,11 @@ func (e *Spline) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Spline) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Spline) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -14398,6 +14790,11 @@ func (e *Spline) Owner() *DrawingItem {
 
 func (e *Spline) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Spline) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *Spline) getPlotStylePointer() pointer {
@@ -14792,6 +15189,11 @@ func (e *Text) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Text) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Text) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -14806,6 +15208,11 @@ func (e *Text) Owner() *DrawingItem {
 
 func (e *Text) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Text) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *Text) getPlotStylePointer() pointer {
@@ -15157,6 +15564,11 @@ func (e *Tolerance) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Tolerance) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Tolerance) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -15171,6 +15583,11 @@ func (e *Tolerance) Owner() *DrawingItem {
 
 func (e *Tolerance) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Tolerance) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *Tolerance) getPlotStylePointer() pointer {
@@ -15457,6 +15874,11 @@ func (e *Trace) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Trace) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Trace) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -15471,6 +15893,11 @@ func (e *Trace) Owner() *DrawingItem {
 
 func (e *Trace) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Trace) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *Trace) getPlotStylePointer() pointer {
@@ -15787,6 +16214,11 @@ func (e *DgnUnderlay) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *DgnUnderlay) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *DgnUnderlay) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -15801,6 +16233,11 @@ func (e *DgnUnderlay) Owner() *DrawingItem {
 
 func (e *DgnUnderlay) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *DgnUnderlay) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *DgnUnderlay) getPlotStylePointer() pointer {
@@ -16170,6 +16607,11 @@ func (e *DwfUnderlay) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *DwfUnderlay) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *DwfUnderlay) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -16184,6 +16626,11 @@ func (e *DwfUnderlay) Owner() *DrawingItem {
 
 func (e *DwfUnderlay) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *DwfUnderlay) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *DwfUnderlay) getPlotStylePointer() pointer {
@@ -16553,6 +17000,11 @@ func (e *PdfUnderlay) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *PdfUnderlay) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *PdfUnderlay) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -16567,6 +17019,11 @@ func (e *PdfUnderlay) Owner() *DrawingItem {
 
 func (e *PdfUnderlay) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *PdfUnderlay) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *PdfUnderlay) getPlotStylePointer() pointer {
@@ -16931,6 +17388,11 @@ func (e *Vertex) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Vertex) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Vertex) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -16945,6 +17407,11 @@ func (e *Vertex) Owner() *DrawingItem {
 
 func (e *Vertex) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Vertex) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *Vertex) getPlotStylePointer() pointer {
@@ -17373,6 +17840,11 @@ func (e *Viewport) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Viewport) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Viewport) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -17389,6 +17861,11 @@ func (e *Viewport) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
 }
 
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Viewport) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
+}
+
 func (e *Viewport) getPlotStylePointer() pointer {
 	return e.pointerPlotStyle
 }
@@ -17403,6 +17880,11 @@ func (e *Viewport) PlotStyle() *DrawingItem {
 
 func (e *Viewport) SetPlotStyle(val *DrawingItem) {
 	e.pointerPlotStyle.value = val
+}
+
+// ClipBoundaryHandle returns the handle of the ClipBoundary (code 340), or 0.
+func (e *Viewport) ClipBoundaryHandle() Handle {
+	return e.pointerClipBoundary.handle
 }
 
 func (e *Viewport) ClipBoundary() *DrawingItem {
@@ -18149,6 +18631,11 @@ func (e *Wipeout) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *Wipeout) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *Wipeout) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -18163,6 +18650,11 @@ func (e *Wipeout) Owner() *DrawingItem {
 
 func (e *Wipeout) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *Wipeout) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *Wipeout) getPlotStylePointer() pointer {
@@ -18557,6 +19049,11 @@ func (e *XLine) pointers() (pointers []*pointer) {
 	return
 }
 
+// OwnerHandle returns the handle of the Owner (code 330), or 0.
+func (e *XLine) OwnerHandle() Handle {
+	return e.pointerOwner.handle
+}
+
 func (e *XLine) getOwnerPointer() pointer {
 	return e.pointerOwner
 }
@@ -18571,6 +19068,11 @@ func (e *XLine) Owner() *DrawingItem {
 
 func (e *XLine) SetOwner(val *DrawingItem) {
 	e.pointerOwner.value = val
+}
+
+// PlotStyleHandle returns the handle of the PlotStyle (code 390), or 0.
+func (e *XLine) PlotStyleHandle() Handle {
+	return e.pointerPlotStyle.handle
 }
 
 func (e *XLine) getPlotStylePointer() pointer {
