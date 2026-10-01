@@ -403,8 +403,8 @@ func readBlocksSection(np CodePair, reader codePairReader) (blocks []Block, next
 				}
 				nextPair, err = reader.readCodePair()
 			}
-			// Read block entities until ENDBLK
-			for err == nil {
+			// Read block entities until ENDBLK; a missing ENDBLK must not swallow the following sections
+			for err == nil && !nextPair.isEndSection() && !nextPair.isEOF() {
 				if nextPair.Code == 0 {
 					val := nextPair.Value.(StringCodePairValue).Value
 					if val == "ENDBLK" {

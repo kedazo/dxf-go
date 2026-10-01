@@ -65,6 +65,27 @@ func TestReadBlockWithInsertAttributes(t *testing.T) {
 	_ = blocks[0].Entities[1].(*Line)
 }
 
+func TestReadBlockWithoutEndBlock(t *testing.T) {
+	drawing := parseFromCodePairs(t,
+		NewStringCodePair(0, "SECTION"),
+		NewStringCodePair(2, "BLOCKS"),
+		NewStringCodePair(0, "BLOCK"),
+		NewStringCodePair(2, "B"),
+		NewStringCodePair(0, "CIRCLE"),
+		NewStringCodePair(0, "ENDSEC"),
+		NewStringCodePair(0, "SECTION"),
+		NewStringCodePair(2, "ENTITIES"),
+		NewStringCodePair(0, "LINE"),
+		NewStringCodePair(0, "ENDSEC"),
+		NewStringCodePair(0, "EOF"),
+	)
+	assertEqInt(t, 1, len(drawing.Blocks))
+	assertEqInt(t, 1, len(drawing.Blocks[0].Entities))
+	_ = drawing.Blocks[0].Entities[0].(*Circle)
+	assertEqInt(t, 1, len(drawing.Entities))
+	_ = drawing.Entities[0].(*Line)
+}
+
 func TestReadBlockWithAttributeDefinitionAndStandaloneMText(t *testing.T) {
 	blocks := parseBlocks(t,
 		NewStringCodePair(0, "BLOCK"),
