@@ -325,13 +325,8 @@ type binaryCodePairReader struct {
 }
 
 func newBinaryCodePairReader(r *bufio.Reader) (rdr codePairReader, err error) {
-	buf := make([]byte, 2)
-	n, err := r.Read(buf)
+	buf, err := readBytes(r, 2)
 	if err != nil {
-		return
-	}
-	if n != 2 {
-		err = errors.New("not enough bytes")
 		return
 	}
 	if buf[0] != 0x1A || buf[1] != 0x00 {
@@ -346,18 +341,13 @@ func newBinaryCodePairReader(r *bufio.Reader) (rdr codePairReader, err error) {
 	return
 }
 
+// readBytes reads exactly count bytes; a single Read may legally return fewer at buffer boundaries.
 func readBytes(reader *bufio.Reader, count int) (buf []byte, err error) {
 	buf = make([]byte, count)
-	n, err := reader.Read(buf)
-	if err != nil {
-		return
-	}
-
-	if n != len(buf) {
+	_, err = io.ReadFull(reader, buf)
+	if err == io.ErrUnexpectedEOF {
 		err = errors.New("not enough bytes")
-		return
 	}
-
 	return
 }
 

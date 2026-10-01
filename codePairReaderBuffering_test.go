@@ -1,8 +1,11 @@
 package dxf
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"testing"
 	"testing/iotest"
@@ -71,6 +74,26 @@ func TestReadWithByteOrderMarkAndUnixNewlines(t *testing.T) {
 	}
 	assertEqInt(t, 1, len(drawing.Entities))
 	assertEqPoint(t, Point{1.0, 0.0, 0.0}, drawing.Entities[0].(*Line).P1)
+}
+
+func TestReadBinaryFileWithShortReads(t *testing.T) {
+	// every Read returns a single byte, so multi-byte values span several reads
+	data, err := os.ReadFile("res/diamond-bin.dxf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	drawing, err := ReadFromReader(iotest.OneByteReader(bytes.NewReader(data)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertEqInt(t, 12, len(drawing.Entities))
+	assertEqPoint(t, Point{45.0, -45.0, 0.0}, drawing.Entities[0].(*Line).P2)
+
+	drawing, err = ReadFromReader(bufio.NewReaderSize(iotest.HalfReader(bytes.NewReader(data)), 16))
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertEqInt(t, 12, len(drawing.Entities))
 }
 
 func TestReadInvalidBinarySentinelReturnsError(t *testing.T) {
