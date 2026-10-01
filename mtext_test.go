@@ -33,6 +33,13 @@ func TestMTextPlainText(t *testing.T) {
 		{"x\\Sab^;", "xab"},
 		{"H\\S^2;O", "H2O"},
 		{"\\S1/;", "1"},
+		// character escapes; decoded backslashes and braces are text, not codes
+		{"\\U+0150r\\U+00E9s", "Őrés"},
+		{"a\\P\\U+0151", "a\nő"},
+		{"\\U+005C\\U+007Bx\\U+007D", "\\{x}"},
+		{"\\U+12G4", "\\U+12G4"},
+		{"\\M+182A0 \\M+2A440 \\M+3B0A1 \\M+5B0A1", "あ 一 가 啊"},
+		{"\\M+4B0A1", "\\M+4B0A1"},
 		// unterminated codes don't break anything
 		{"\\H2.5", ""},
 		{"{unclosed", "unclosed"},
@@ -123,6 +130,8 @@ func TestTextPlainText(t *testing.T) {
 		{"%%065%%066", "AB"},
 		{"%%", "%%"},
 		{"50%%x", "50%%x"},
+		{"\\U+0150r \\M+182A0", "Őr あ"},
+		{"C:\\path\\Users", "C:\\path\\Users"},
 	} {
 		text := NewText()
 		text.Value = testCase.value

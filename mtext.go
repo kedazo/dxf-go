@@ -3,6 +3,7 @@ package dxf
 import (
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 // MTextRun is a piece of MTEXT content with the same formatting.
@@ -51,9 +52,62 @@ func (m *MText) PlainText() string {
 	return mtextRunsToPlainText(m.Runs())
 }
 
-// PlainText returns the TEXT value with its control codes (%%u, %%o, %%k, %%c, %%d, %%p, %%nnn) resolved.
+// PlainText returns the TEXT value with its control codes (%%u, %%o, %%k, %%c, %%d, %%p, %%nnn) and character
+// escapes (\U+XXXX, \M+nXXXX) resolved.
 func (t *Text) PlainText() string {
-	return decodePercentCodes(t.Value, true)
+	return decodePercentCodes(decodeCharacterEscapes(t.Value), true)
+}
+
+// mbcsCodePages are the code pages of \M+nXXXX escapes, by n.
+var mbcsCodePages = map[byte]string{
+	'1': "ANSI_932", // Japanese (Shift-JIS)
+	'2': "ANSI_950", // Traditional Chinese (Big5)
+	'3': "ANSI_949", // Korean (Wansung)
+	'5': "ANSI_936", // Simplified Chinese (GB 2312)
+	// 4 is Korean Johab, which has no decoder here
+}
+
+// decodeCharacterEscape decodes the \U+XXXX (Unicode) or \M+nXXXX (a double-byte character of an Asian code page)
+// escape at s[i:], returning the character and the escape's length.
+func decodeCharacterEscape(s string, i int) (decoded string, length int, ok bool) {
+	rest := s[i:]
+	switch {
+	case len(rest) >= 7 && strings.HasPrefix(rest, `\U+`) && isHexDigits(rest[3:7]):
+		code, _ := strconv.ParseUint(rest[3:7], 16, 32)
+		return string(rune(code)), 7, true
+	case len(rest) >= 8 && strings.HasPrefix(rest, `\M+`) && isHexDigits(rest[4:8]):
+		codePage, known := mbcsCodePages[rest[3]]
+		if !known {
+			return "", 0, false
+		}
+		code, _ := strconv.ParseUint(rest[4:8], 16, 32)
+		decoded, err := encodingFromCodePage(codePage).NewDecoder().Bytes([]byte{byte(code >> 8), byte(code)})
+		if err != nil || !utf8.Valid(decoded) || strings.ContainsRune(string(decoded), utf8.RuneError) {
+			return "", 0, false
+		}
+		return string(decoded), 8, true
+	}
+	return "", 0, false
+}
+
+// decodeCharacterEscapes replaces every \U+XXXX and \M+nXXXX escape in s.
+func decodeCharacterEscapes(s string) string {
+	if !strings.Contains(s, `\U+`) && !strings.Contains(s, `\M+`) {
+		return s
+	}
+	var builder strings.Builder
+	for i := 0; i < len(s); {
+		if s[i] == '\\' {
+			if decoded, length, ok := decodeCharacterEscape(s, i); ok {
+				builder.WriteString(decoded)
+				i += length
+				continue
+			}
+		}
+		builder.WriteByte(s[i])
+		i++
+	}
+	return builder.String()
 }
 
 func mtextRunsToPlainText(runs []MTextRun) string {
@@ -158,6 +212,15 @@ func (p *mtextParser) parseCode(code byte) {
 		p.pendingParagraph = true
 	case '~':
 		p.text.WriteString(" ")
+	case 'U', 'M':
+		// \U+XXXX and \M+nXXXX character escapes; anything else stays as written
+		if decoded, length, ok := decodeCharacterEscape(p.input, p.position-2); ok {
+			p.text.WriteString(decoded)
+			p.position += length - 2
+		} else {
+			p.text.WriteByte('\\')
+			p.text.WriteByte(code)
+		}
 	case 'L', 'l', 'O', 'o', 'K', 'k':
 		p.flush()
 		on := code >= 'A' && code <= 'Z'
