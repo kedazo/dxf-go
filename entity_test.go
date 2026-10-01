@@ -40,9 +40,81 @@ func TestParseUnsupportedEntity(t *testing.T) {
 		NewStringCodePair(0, "ENDSEC"),
 		NewStringCodePair(0, "EOF"),
 	)
-	assertEqInt(t, 2, len(drawing.Entities))
+	assertEqInt(t, 3, len(drawing.Entities))
 	assertEqString(t, "LINE", drawing.Entities[0].typeString())
-	assertEqString(t, "LINE", drawing.Entities[1].typeString())
+	assertEqString(t, "NOT_AN_ENTITY", drawing.Entities[1].(*UnknownEntity).Type)
+	assertEqString(t, "LINE", drawing.Entities[2].typeString())
+}
+
+func TestReadAndWriteUnknownEntity(t *testing.T) {
+	drawing := parseFromCodePairs(t,
+		NewStringCodePair(0, "SECTION"),
+		NewStringCodePair(2, "ENTITIES"),
+		NewStringCodePair(0, "ACAD_TABLE"),
+		NewStringCodePair(5, "2A"),
+		NewStringCodePair(102, "{ACAD_XDICTIONARY"),
+		NewStringCodePair(360, "2B"),
+		NewStringCodePair(102, "}"),
+		NewStringCodePair(330, "1F"),
+		NewStringCodePair(100, "AcDbEntity"),
+		NewStringCodePair(8, "TABLES"),
+		NewShortCodePair(62, 3),
+		NewStringCodePair(100, "AcDbBlockReference"),
+		NewStringCodePair(2, "*T1"),
+		NewDoubleCodePair(10, 1.0),
+		NewDoubleCodePair(20, 2.0),
+		NewStringCodePair(100, "AcDbTable"),
+		NewShortCodePair(280, 0),
+		NewStringCodePair(1001, "ACAD"),
+		NewStringCodePair(1000, "xdata"),
+		NewStringCodePair(0, "LINE"),
+		NewStringCodePair(0, "ENDSEC"),
+		NewStringCodePair(0, "EOF"),
+	)
+	assertEqInt(t, 2, len(drawing.Entities))
+	unknown := drawing.Entities[0].(*UnknownEntity)
+	assertEqString(t, "ACAD_TABLE", unknown.Type)
+	assertEqString(t, "TABLES", unknown.Layer())
+	assertEqInt(t, 3, int(unknown.Color()))
+	assertEqUInt64(t, 0x2A, uint64(unknown.Handle()))
+	// the subclass data and extended data are kept, the application group is not
+	assertEqCodePairs(t, []CodePair{
+		NewStringCodePair(100, "AcDbBlockReference"),
+		NewStringCodePair(2, "*T1"),
+		NewDoubleCodePair(10, 1.0),
+		NewDoubleCodePair(20, 2.0),
+		NewStringCodePair(100, "AcDbTable"),
+		NewShortCodePair(280, 0),
+		NewStringCodePair(1001, "ACAD"),
+		NewStringCodePair(1000, "xdata"),
+	}, unknown.CodePairs)
+	assertEqInt(t, 1, drawing.UnsupportedEntities()["ACAD_TABLE"])
+
+	written := allCodePairs(unknown, R2018)
+	assertContainsCodePairs(t, []CodePair{
+		NewStringCodePair(0, "ACAD_TABLE"),
+	}, written)
+	assertContainsCodePairs(t, []CodePair{
+		NewStringCodePair(8, "TABLES"),
+	}, written)
+	assertContainsCodePairs(t, unknown.CodePairs, written)
+	assertNotContainsCodePairs(t, []CodePair{NewStringCodePair(102, "{ACAD_XDICTIONARY")}, written)
+
+	// entities with subclass markers can't be written to R12
+	assertNotContainsCodePairs(t, []CodePair{NewStringCodePair(0, "ACAD_TABLE")}, drawingCodePairsFromEntity(t, unknown, R12))
+}
+
+func TestReadUnknownEntityInBlock(t *testing.T) {
+	blocks := parseBlocks(t,
+		NewStringCodePair(0, "BLOCK"),
+		NewStringCodePair(2, "B"),
+		NewStringCodePair(0, "MULTILEADER"),
+		NewStringCodePair(8, "NOTES"),
+		NewStringCodePair(0, "LINE"),
+		NewStringCodePair(0, "ENDBLK"),
+	)
+	assertEqInt(t, 2, len(blocks[0].Entities))
+	assertEqString(t, "NOTES", blocks[0].Entities[0].(*UnknownEntity).Layer())
 }
 
 func TestWriteSimpleLine(t *testing.T) {

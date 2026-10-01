@@ -47,14 +47,8 @@ func readEntity(np CodePair, reader codePairReader) (entity Entity, nextPair Cod
 		entity, ok = createCustomEntity(entityType)
 	}
 	if !ok {
-		// swallow unsupported entity
-		nextPair, error = reader.readCodePair()
-		for error == nil && nextPair.Code != 0 {
-			nextPair, error = reader.readCodePair()
-		}
-
-		created = false
-		return
+		// keep the group codes of entity types this library doesn't model
+		entity = NewUnknownEntity(entityType)
 	}
 
 	created = true
