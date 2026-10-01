@@ -41,6 +41,8 @@ type Entity interface {
 	SetPreviewImageData(val []string)
 	Color24Bit() int
 	SetColor24Bit(val int)
+	HasColor24Bit() bool
+	ClearColor24Bit()
 	ColorName() string
 	SetColorName(val string)
 	Transparency() int
@@ -144,7 +146,7 @@ func codePairsForEntity(this Entity, version AcadVersion) (pairs []CodePair) {
 			pairs = append(pairs, NewStringCodePair(310, val))
 		}
 	}
-	if version >= R2004 && this.Color24Bit() != 0 {
+	if version >= R2004 && this.HasColor24Bit() {
 		pairs = append(pairs, NewIntCodePair(420, this.Color24Bit()))
 	}
 	if version >= R2004 {
@@ -579,6 +581,7 @@ type Face struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -757,6 +760,16 @@ func (this *Face) Color24Bit() int {
 
 func (this *Face) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Face) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Face) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Face) ColorName() string {
@@ -926,6 +939,7 @@ type Solid3D struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -1110,6 +1124,16 @@ func (this *Solid3D) Color24Bit() int {
 
 func (this *Solid3D) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Solid3D) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Solid3D) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Solid3D) ColorName() string {
@@ -1217,6 +1241,7 @@ type ProxyEntity struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -1417,6 +1442,16 @@ func (this *ProxyEntity) Color24Bit() int {
 
 func (this *ProxyEntity) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *ProxyEntity) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *ProxyEntity) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *ProxyEntity) ColorName() string {
@@ -1554,6 +1589,7 @@ type Arc struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -1734,6 +1770,16 @@ func (this *Arc) Color24Bit() int {
 
 func (this *Arc) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Arc) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Arc) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Arc) ColorName() string {
@@ -1839,6 +1885,7 @@ type ArcAlignedText struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -2061,6 +2108,16 @@ func (this *ArcAlignedText) Color24Bit() int {
 
 func (this *ArcAlignedText) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *ArcAlignedText) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *ArcAlignedText) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *ArcAlignedText) ColorName() string {
@@ -2228,6 +2285,7 @@ type AttributeDefinition struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -2466,6 +2524,16 @@ func (this *AttributeDefinition) Color24Bit() int {
 
 func (this *AttributeDefinition) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *AttributeDefinition) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *AttributeDefinition) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *AttributeDefinition) ColorName() string {
@@ -2712,6 +2780,7 @@ type Attribute struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -2948,6 +3017,16 @@ func (this *Attribute) Color24Bit() int {
 
 func (this *Attribute) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Attribute) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Attribute) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Attribute) ColorName() string {
@@ -3190,6 +3269,7 @@ type Body struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -3364,6 +3444,16 @@ func (this *Body) Color24Bit() int {
 
 func (this *Body) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Body) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Body) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Body) ColorName() string {
@@ -3465,6 +3555,7 @@ type Circle struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -3641,6 +3732,16 @@ func (this *Circle) Color24Bit() int {
 
 func (this *Circle) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Circle) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Circle) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Circle) ColorName() string {
@@ -3741,6 +3842,7 @@ type dimensionHelper struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -3940,6 +4042,16 @@ func (this *dimensionHelper) Color24Bit() int {
 
 func (this *dimensionHelper) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *dimensionHelper) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *dimensionHelper) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *dimensionHelper) ColorName() string {
@@ -4113,6 +4225,7 @@ type AlignedDimension struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -4314,6 +4427,16 @@ func (this *AlignedDimension) Color24Bit() int {
 
 func (this *AlignedDimension) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *AlignedDimension) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *AlignedDimension) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *AlignedDimension) ColorName() string {
@@ -4520,6 +4643,7 @@ type RotatedDimension struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -4727,6 +4851,16 @@ func (this *RotatedDimension) Color24Bit() int {
 
 func (this *RotatedDimension) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *RotatedDimension) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *RotatedDimension) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *RotatedDimension) ColorName() string {
@@ -4951,6 +5085,7 @@ type RadialDimension struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -5152,6 +5287,16 @@ func (this *RadialDimension) Color24Bit() int {
 
 func (this *RadialDimension) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *RadialDimension) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *RadialDimension) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *RadialDimension) ColorName() string {
@@ -5352,6 +5497,7 @@ type DiameterDimension struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -5553,6 +5699,16 @@ func (this *DiameterDimension) Color24Bit() int {
 
 func (this *DiameterDimension) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *DiameterDimension) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *DiameterDimension) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *DiameterDimension) ColorName() string {
@@ -5753,6 +5909,7 @@ type AngularThreePointDimension struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -5958,6 +6115,16 @@ func (this *AngularThreePointDimension) Color24Bit() int {
 
 func (this *AngularThreePointDimension) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *AngularThreePointDimension) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *AngularThreePointDimension) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *AngularThreePointDimension) ColorName() string {
@@ -6182,6 +6349,7 @@ type OrdinateDimension struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -6383,6 +6551,16 @@ func (this *OrdinateDimension) Color24Bit() int {
 
 func (this *OrdinateDimension) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *OrdinateDimension) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *OrdinateDimension) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *OrdinateDimension) ColorName() string {
@@ -6589,6 +6767,7 @@ type ArcDimension struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -6806,6 +6985,16 @@ func (this *ArcDimension) Color24Bit() int {
 
 func (this *ArcDimension) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *ArcDimension) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *ArcDimension) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *ArcDimension) ColorName() string {
@@ -7000,6 +7189,7 @@ type Ellipse struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -7180,6 +7370,16 @@ func (this *Ellipse) Color24Bit() int {
 
 func (this *Ellipse) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Ellipse) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Ellipse) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Ellipse) ColorName() string {
@@ -7290,6 +7490,7 @@ type Helix struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -7478,6 +7679,16 @@ func (this *Helix) Color24Bit() int {
 
 func (this *Helix) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Helix) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Helix) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Helix) ColorName() string {
@@ -7598,6 +7809,7 @@ type Image struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -7805,6 +8017,16 @@ func (this *Image) Color24Bit() int {
 
 func (this *Image) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Image) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Image) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Image) ColorName() string {
@@ -8030,6 +8252,7 @@ type Insert struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -8226,6 +8449,16 @@ func (this *Insert) Color24Bit() int {
 
 func (this *Insert) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Insert) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Insert) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Insert) ColorName() string {
@@ -8372,6 +8605,7 @@ type Leader struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -8578,6 +8812,16 @@ func (this *Leader) Color24Bit() int {
 
 func (this *Leader) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Leader) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Leader) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Leader) ColorName() string {
@@ -8764,6 +9008,7 @@ type Light struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -8968,6 +9213,16 @@ func (this *Light) Color24Bit() int {
 
 func (this *Light) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Light) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Light) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Light) ColorName() string {
@@ -9106,6 +9361,7 @@ type Line struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -9282,6 +9538,16 @@ func (this *Line) Color24Bit() int {
 
 func (this *Line) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Line) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Line) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Line) ColorName() string {
@@ -9388,6 +9654,7 @@ type LWPolyline struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -9568,6 +9835,16 @@ func (this *LWPolyline) Color24Bit() int {
 
 func (this *LWPolyline) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *LWPolyline) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *LWPolyline) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *LWPolyline) ColorName() string {
@@ -9696,6 +9973,7 @@ type MLine struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -9914,6 +10192,16 @@ func (this *MLine) Color24Bit() int {
 
 func (this *MLine) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *MLine) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *MLine) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *MLine) ColorName() string {
@@ -10244,6 +10532,7 @@ type MText struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -10277,6 +10566,7 @@ type MText struct {
 	ColumnHeights []float64
 	readingColumnData bool
 	readColumnCount bool
+	readingBackgroundFill bool
 	pointerOwner pointer
 	pointerPlotStyle pointer
 }
@@ -10329,6 +10619,7 @@ func NewMText() *MText {
 		ColumnHeights: []float64{},
 		readingColumnData: false,
 		readColumnCount: false,
+		readingBackgroundFill: false,
 	}
 }
 
@@ -10472,6 +10763,16 @@ func (this *MText) Color24Bit() int {
 
 func (this *MText) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *MText) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *MText) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *MText) ColorName() string {
@@ -10593,6 +10894,7 @@ type OleFrame struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -10769,6 +11071,16 @@ func (this *OleFrame) Color24Bit() int {
 
 func (this *OleFrame) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *OleFrame) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *OleFrame) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *OleFrame) ColorName() string {
@@ -10867,6 +11179,7 @@ type Ole2Frame struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -11053,6 +11366,16 @@ func (this *Ole2Frame) Color24Bit() int {
 
 func (this *Ole2Frame) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Ole2Frame) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Ole2Frame) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Ole2Frame) ColorName() string {
@@ -11178,6 +11501,7 @@ type ModelPoint struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -11354,6 +11678,16 @@ func (this *ModelPoint) Color24Bit() int {
 
 func (this *ModelPoint) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *ModelPoint) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *ModelPoint) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *ModelPoint) ColorName() string {
@@ -11456,6 +11790,7 @@ type Polyline struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -11652,6 +11987,16 @@ func (this *Polyline) Color24Bit() int {
 
 func (this *Polyline) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Polyline) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Polyline) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Polyline) ColorName() string {
@@ -11825,6 +12170,7 @@ type Ray struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -11997,6 +12343,16 @@ func (this *Ray) Color24Bit() int {
 
 func (this *Ray) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Ray) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Ray) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Ray) ColorName() string {
@@ -12087,6 +12443,7 @@ type Region struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -12261,6 +12618,16 @@ func (this *Region) Color24Bit() int {
 
 func (this *Region) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Region) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Region) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Region) ColorName() string {
@@ -12362,6 +12729,7 @@ type RText struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -12544,6 +12912,16 @@ func (this *RText) Color24Bit() int {
 
 func (this *RText) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *RText) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *RText) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *RText) ColorName() string {
@@ -12679,6 +13057,7 @@ type Section struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -12875,6 +13254,16 @@ func (this *Section) Color24Bit() int {
 
 func (this *Section) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Section) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Section) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Section) ColorName() string {
@@ -12977,6 +13366,7 @@ type Seqend struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -13145,6 +13535,16 @@ func (this *Seqend) Color24Bit() int {
 
 func (this *Seqend) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Seqend) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Seqend) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Seqend) ColorName() string {
@@ -13204,6 +13604,7 @@ type Shape struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -13388,6 +13789,16 @@ func (this *Shape) Color24Bit() int {
 
 func (this *Shape) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Shape) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Shape) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Shape) ColorName() string {
@@ -13506,6 +13917,7 @@ type Solid struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -13686,6 +14098,16 @@ func (this *Solid) Color24Bit() int {
 
 func (this *Solid) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Solid) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Solid) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Solid) ColorName() string {
@@ -13810,6 +14232,7 @@ type Spline struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -14008,6 +14431,16 @@ func (this *Spline) Color24Bit() int {
 
 func (this *Spline) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Spline) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Spline) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Spline) ColorName() string {
@@ -14211,6 +14644,7 @@ type Text struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -14405,6 +14839,16 @@ func (this *Text) Color24Bit() int {
 
 func (this *Text) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Text) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Text) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Text) ColorName() string {
@@ -14581,6 +15025,7 @@ type Tolerance struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -14759,6 +15204,16 @@ func (this *Tolerance) Color24Bit() int {
 
 func (this *Tolerance) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Tolerance) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Tolerance) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Tolerance) ColorName() string {
@@ -14868,6 +15323,7 @@ type Trace struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -15048,6 +15504,16 @@ func (this *Trace) Color24Bit() int {
 
 func (this *Trace) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Trace) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Trace) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Trace) ColorName() string {
@@ -15172,6 +15638,7 @@ type DgnUnderlay struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -15367,6 +15834,16 @@ func (this *DgnUnderlay) Color24Bit() int {
 
 func (this *DgnUnderlay) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *DgnUnderlay) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *DgnUnderlay) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *DgnUnderlay) ColorName() string {
@@ -15544,6 +16021,7 @@ type DwfUnderlay struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -15739,6 +16217,16 @@ func (this *DwfUnderlay) Color24Bit() int {
 
 func (this *DwfUnderlay) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *DwfUnderlay) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *DwfUnderlay) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *DwfUnderlay) ColorName() string {
@@ -15916,6 +16404,7 @@ type PdfUnderlay struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -16111,6 +16600,16 @@ func (this *PdfUnderlay) Color24Bit() int {
 
 func (this *PdfUnderlay) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *PdfUnderlay) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *PdfUnderlay) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *PdfUnderlay) ColorName() string {
@@ -16288,6 +16787,7 @@ type Vertex struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -16478,6 +16978,16 @@ func (this *Vertex) Color24Bit() int {
 
 func (this *Vertex) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Vertex) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Vertex) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Vertex) ColorName() string {
@@ -16665,6 +17175,7 @@ type Wipeout struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -16872,6 +17383,16 @@ func (this *Wipeout) Color24Bit() int {
 
 func (this *Wipeout) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Wipeout) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Wipeout) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *Wipeout) ColorName() string {
@@ -17097,6 +17618,7 @@ type XLine struct {
 	imageByteCount int
 	previewImageData []string
 	color24Bit int
+	hasColor24Bit bool
 	colorName string
 	transparency int
 	shadowMode ShadowMode
@@ -17269,6 +17791,16 @@ func (this *XLine) Color24Bit() int {
 
 func (this *XLine) SetColor24Bit(val int) {
 	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *XLine) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *XLine) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
 }
 
 func (this *XLine) ColorName() string {

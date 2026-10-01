@@ -26,8 +26,12 @@ type MTextRun struct {
 	Underline    bool
 	Overline     bool
 	Strike       bool
-	// Stacked is set for stacked fractions (\S); Text is then "numerator/denominator".
+	// Stacked is set for stacked fractions (\S); Text is then "numerator/denominator", or only the part that is not
+	// blank. Stacks with both parts blank (ArchiCAD uses them as spacers) produce no run.
 	Stacked bool
+	// Superscript and Subscript are set for \Sa^; and \S^b; stacks (e.g. the 2 of m²); Text is then that part.
+	Superscript bool
+	Subscript   bool
 }
 
 // FormattedText returns the complete MTEXT content including formatting codes: the extended text chunks (code 3)
@@ -41,7 +45,8 @@ func (m *MText) Runs() []MTextRun {
 	return ParseMTextRuns(m.FormattedText())
 }
 
-// PlainText returns the MTEXT content without formatting codes; paragraph breaks become newlines.
+// PlainText returns the MTEXT content without formatting codes; paragraph breaks become newlines and superscript
+// digits become their Unicode forms (m² for m\S2^;).
 func (m *MText) PlainText() string {
 	return mtextRunsToPlainText(m.Runs())
 }
@@ -57,7 +62,24 @@ func mtextRunsToPlainText(runs []MTextRun) string {
 		if run.NewParagraph {
 			builder.WriteByte('\n')
 		}
-		builder.WriteString(run.Text)
+		if run.Superscript {
+			builder.WriteString(superscriptDigits(run.Text))
+		} else {
+			builder.WriteString(run.Text)
+		}
+	}
+	return builder.String()
+}
+
+// superscriptDigits returns text in Unicode superscript digits if it consists of digits only, otherwise unchanged.
+func superscriptDigits(text string) string {
+	const superscripts = "⁰¹²³⁴⁵⁶⁷⁸⁹"
+	var builder strings.Builder
+	for _, r := range text {
+		if r < '0' || r > '9' {
+			return text
+		}
+		builder.WriteString(string([]rune(superscripts)[r-'0']))
 	}
 	return builder.String()
 }
@@ -235,13 +257,25 @@ func (p *mtextParser) parseFont(argument string) {
 
 func (p *mtextParser) parseStack(argument string) {
 	p.flush()
-	numerator, denominator := argument, ""
+	numerator, denominator, separator := argument, "", byte(0)
 	if index := strings.IndexAny(argument, "^/#"); index >= 0 {
-		numerator, denominator = argument[:index], argument[index+1:]
+		numerator, denominator, separator = argument[:index], argument[index+1:], argument[index]
 	}
+	numerator, denominator = strings.TrimSpace(numerator), strings.TrimSpace(denominator)
 	run := p.state
-	run.Text = strings.TrimSpace(numerator) + "/" + strings.TrimSpace(denominator)
 	run.Stacked = true
+	switch {
+	case numerator == "" && denominator == "":
+		return
+	case denominator == "":
+		run.Text = numerator
+		run.Superscript = separator == '^'
+	case numerator == "":
+		run.Text = denominator
+		run.Subscript = separator == '^'
+	default:
+		run.Text = numerator + "/" + denominator
+	}
 	p.appendRun(run)
 }
 

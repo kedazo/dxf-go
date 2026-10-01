@@ -172,7 +172,7 @@ func (e *Table) asInsert() *Insert {
 	insert.Location = e.InsertionPoint
 	insert.SetLayer(e.Layer())
 	insert.SetColor(e.Color())
-	insert.SetColor24Bit(e.Color24Bit())
+	copyColor24Bit(e, insert)
 	insert.SetColorName(e.ColorName())
 	insert.SetLineTypeName(e.LineTypeName())
 	insert.SetLineWeight(e.LineWeight())

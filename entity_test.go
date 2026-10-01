@@ -1217,3 +1217,58 @@ func parseEntities(t *testing.T, body ...CodePair) []Entity {
 	drawing := parseFromCodePairs(t, codePairs...)
 	return drawing.Entities
 }
+
+func codePairsWithCode(code int, pairs []CodePair) (found []CodePair) {
+	for _, pair := range pairs {
+		if pair.Code == code {
+			found = append(found, pair)
+		}
+	}
+	return
+}
+
+func TestReadAndWriteTrueColorBlack(t *testing.T) {
+	// ArchiCAD writes 420 = 0 for black; it must not be mistaken for "no true color"
+	for _, entityType := range []string{"LINE", "HATCH"} {
+		black := parseEntity(t, entityType, NewIntCodePair(420, 0))
+		assertEqBool(t, true, black.HasColor24Bit())
+		assertEqInt(t, 0, black.Color24Bit())
+		assertEqCodePairs(t, []CodePair{NewIntCodePair(420, 0)}, codePairsWithCode(420, drawingCodePairsFromEntity(t, black, R2004)))
+
+		unset := parseEntity(t, entityType)
+		assertEqBool(t, false, unset.HasColor24Bit())
+		assertEqInt(t, 0, len(codePairsWithCode(420, drawingCodePairsFromEntity(t, unset, R2004))))
+	}
+}
+
+func TestSetAndClearTrueColor(t *testing.T) {
+	line := NewLine()
+	assertEqBool(t, false, line.HasColor24Bit())
+	line.SetColor24Bit(0)
+	assertEqBool(t, true, line.HasColor24Bit())
+	assertEqCodePairs(t, []CodePair{NewIntCodePair(420, 0)}, codePairsWithCode(420, drawingCodePairsFromEntity(t, line, R2004)))
+
+	line.ClearColor24Bit()
+	assertEqBool(t, false, line.HasColor24Bit())
+	assertEqInt(t, 0, len(codePairsWithCode(420, drawingCodePairsFromEntity(t, line, R2004))))
+}
+
+func TestReadMTextTrueColorAndBackgroundColor(t *testing.T) {
+	// the entity's 420 comes before the MTEXT data, the background fill's 420 after code 90
+	mtext := parseEntity(t, "MTEXT",
+		NewStringCodePair(100, "AcDbEntity"),
+		NewIntCodePair(420, 0xA80E02),
+		NewStringCodePair(100, "AcDbMText"),
+		NewStringCodePair(1, "text"),
+		NewIntCodePair(90, 1),
+		NewShortCodePair(63, 7),
+		NewIntCodePair(420, 0x112233),
+	).(*MText)
+	assertEqBool(t, true, mtext.HasColor24Bit())
+	assertEqInt(t, 0xA80E02, mtext.Color24Bit())
+	assertEqInt(t, 0x112233, mtext.BackgroundColorRGB)
+
+	withoutBackground := parseEntity(t, "MTEXT", NewIntCodePair(420, 0xA80E02), NewStringCodePair(1, "text")).(*MText)
+	assertEqInt(t, 0xA80E02, withoutBackground.Color24Bit())
+	assertEqInt(t, 0, withoutBackground.BackgroundColorRGB)
+}

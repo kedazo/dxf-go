@@ -771,8 +771,14 @@ func (mt *MText) tryApplyCodePair(codePair CodePair) {
 		mt.LineSpacingFactor = codePair.Value.(DoubleCodePairValue).Value
 	case 90:
 		mt.BackgroundFillSetting = BackgroundFillSetting(codePair.Value.(IntCodePairValue).Value)
+		mt.readingBackgroundFill = true
 	case 420:
-		mt.BackgroundColorRGB = codePair.Value.(IntCodePairValue).Value
+		// 420 is the entity's true color, unless it is part of the background fill data that follows code 90
+		if mt.readingBackgroundFill {
+			mt.BackgroundColorRGB = codePair.Value.(IntCodePairValue).Value
+		} else {
+			tryApplyCodePairForEntity(mt, codePair)
+		}
 	case 430:
 		mt.BackgroundColorName = codePair.Value.(StringCodePairValue).Value
 	case 45:

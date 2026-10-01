@@ -58,6 +58,7 @@ type xmlField struct {
 	WriteConverter        string    `xml:"WriteConverter,attr"`
 	DisableWritingDefault bool      `xml:"DisableWritingDefault,attr"`
 	AllowMultiples        bool      `xml:"AllowMultiples,attr"`
+	TrackPresence         bool      `xml:"TrackPresence,attr"` // interface fields only: adds Has/Clear methods
 	MinVersion            string    `xml:"MinVersion,attr"`
 	MaxVersion            string    `xml:"MaxVersion,attr"`
 	Comment               string    `xml:"Comment,attr"`
@@ -141,6 +142,10 @@ func generateEntities() {
 			}
 			builder.WriteString(fmt.Sprintf("	%s() %s\n", field.Name, fieldType))       // getter
 			builder.WriteString(fmt.Sprintf("	Set%s(val %s)\n", field.Name, fieldType)) // setter
+			if field.TrackPresence {
+				builder.WriteString(fmt.Sprintf("	Has%s() bool\n", field.Name))
+				builder.WriteString(fmt.Sprintf("	Clear%s()\n", field.Name))
+			}
 		}
 		for _, p := range inf.Pointers {
 			builder.WriteString(fmt.Sprintf("	%s() *%s\n", p.Name, p.Type))
@@ -210,6 +215,9 @@ func generateEntities() {
 				}
 
 				builder.WriteString(fmt.Sprintf("	%s %s%s\n", backingField, fieldType, comment))
+				if field.TrackPresence {
+					builder.WriteString(fmt.Sprintf("	has%s bool\n", field.Name))
+				}
 			}
 		}
 
@@ -337,8 +345,23 @@ func generateEntities() {
 				// setter
 				builder.WriteString(fmt.Sprintf("func (this *%s) Set%s(val %s) {\n", entity.Name, field.Name, fieldType))
 				builder.WriteString(fmt.Sprintf("	this.%s = val\n", backingField))
+				if field.TrackPresence {
+					builder.WriteString(fmt.Sprintf("	this.has%s = true\n", field.Name))
+				}
 				builder.WriteString("}\n")
 				builder.WriteString("\n")
+
+				if field.TrackPresence {
+					builder.WriteString(fmt.Sprintf("func (this *%s) Has%s() bool {\n", entity.Name, field.Name))
+					builder.WriteString(fmt.Sprintf("	return this.has%s\n", field.Name))
+					builder.WriteString("}\n")
+					builder.WriteString("\n")
+					builder.WriteString(fmt.Sprintf("func (this *%s) Clear%s() {\n", entity.Name, field.Name))
+					builder.WriteString(fmt.Sprintf("	this.%s = %s\n", backingField, field.DefaultValue))
+					builder.WriteString(fmt.Sprintf("	this.has%s = false\n", field.Name))
+					builder.WriteString("}\n")
+					builder.WriteString("\n")
+				}
 			}
 		}
 
@@ -688,7 +711,10 @@ func fieldPredicates(field xmlField, asInterface bool) (predicates []string) {
 	if len(field.MaxVersion) > 0 {
 		predicates = append(predicates, fmt.Sprintf("version <= %s", field.MaxVersion))
 	}
-	if field.DisableWritingDefault {
+	if field.TrackPresence {
+		// written whenever it was set, even to the default value
+		predicates = append(predicates, fmt.Sprintf("this.Has%s()", field.Name))
+	} else if field.DisableWritingDefault {
 		suffix := ""
 		if asInterface {
 			suffix = "()"

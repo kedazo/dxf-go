@@ -26,6 +26,13 @@ func TestMTextPlainText(t *testing.T) {
 		{"1\\S1/2;\"", "11/2\""},
 		{"\\S+0.01^-0.02;", "+0.01/-0.02"},
 		{"\\S3#4;", "3/4"},
+		// ArchiCAD: superscripts and empty stacks used as spacers
+		{"{\\fArial Narrow|b0|i0|c238|p0;288,47 m{\\H0.66x;\\S2^  ;}}", "288,47 m²"},
+		{"\\A1;\\pt0;pny 2,20{\\H0.66x;\\S^  ;} /0,28{\\H0.66x;\\S^  ;\\S^  ;}", "pny 2,20 /0,28"},
+		{"x\\S10^;", "x¹⁰"},
+		{"x\\Sab^;", "xab"},
+		{"H\\S^2;O", "H2O"},
+		{"\\S1/;", "1"},
 		// unterminated codes don't break anything
 		{"\\H2.5", ""},
 		{"{unclosed", "unclosed"},
@@ -77,6 +84,18 @@ func TestMTextRuns(t *testing.T) {
 	assertEqBool(t, true, runs[4].Stacked)
 	assertEqBool(t, false, runs[4].NewParagraph)
 	assertEqFloat64(t, 0.5, runs[4].HeightFactor)
+}
+
+func TestMTextRunsSuperscriptAndSubscript(t *testing.T) {
+	runs := ParseMTextRuns("m\\S2^ ;\\S^ ;H\\S^2;")
+	assertEqInt(t, 4, len(runs))
+	assertEqString(t, "2", runs[1].Text)
+	assertEqBool(t, true, runs[1].Stacked)
+	assertEqBool(t, true, runs[1].Superscript)
+	assertEqBool(t, false, runs[1].Subscript)
+	assertEqString(t, "2", runs[3].Text)
+	assertEqBool(t, false, runs[3].Superscript)
+	assertEqBool(t, true, runs[3].Subscript)
 }
 
 func TestMTextRunsRelativeValuesMultiply(t *testing.T) {

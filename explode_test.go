@@ -666,3 +666,30 @@ func TestExplodeWithoutInheritance(t *testing.T) {
 	assertEqString(t, "0", line.Layer())
 	assertEqInt(t, int(ByBlock()), int(line.Color()))
 }
+
+func TestResolveInheritedTrueColor(t *testing.T) {
+	insert := insertEntity("BLOCK", Point{})
+	insert.SetColor(Color(1))
+
+	// a true color black entity is not BYBLOCK, even if its ACI fallback is
+	black := lineEntity(Point{}, Point{1, 0, 0})
+	black.SetColor(ByBlock())
+	black.SetColor24Bit(0)
+	ResolveInherited(black, []*Insert{insert})
+	assertEqInt(t, int(ByBlock()), int(black.Color()))
+	assertEqBool(t, true, black.HasColor24Bit())
+
+	// a BYBLOCK entity takes the INSERT's color, including whether it has a true color
+	byBlock := lineEntity(Point{}, Point{1, 0, 0})
+	byBlock.SetColor(ByBlock())
+	ResolveInherited(byBlock, []*Insert{insert})
+	assertEqInt(t, 1, int(byBlock.Color()))
+	assertEqBool(t, false, byBlock.HasColor24Bit())
+
+	insert.SetColor24Bit(0)
+	byBlock = lineEntity(Point{}, Point{1, 0, 0})
+	byBlock.SetColor(ByBlock())
+	ResolveInherited(byBlock, []*Insert{insert})
+	assertEqBool(t, true, byBlock.HasColor24Bit())
+	assertEqInt(t, 0, byBlock.Color24Bit())
+}

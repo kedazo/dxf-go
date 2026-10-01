@@ -15,6 +15,7 @@ type entityCommon struct {
 	imageByteCount   int
 	previewImageData []string
 	color24Bit       int
+	hasColor24Bit    bool
 	colorName        string
 	transparency     int
 	shadowMode       ShadowMode
@@ -72,7 +73,9 @@ func (e *entityCommon) SetImageByteCount(val int)          { e.imageByteCount = 
 func (e *entityCommon) PreviewImageData() []string         { return e.previewImageData }
 func (e *entityCommon) SetPreviewImageData(val []string)   { e.previewImageData = val }
 func (e *entityCommon) Color24Bit() int                    { return e.color24Bit }
-func (e *entityCommon) SetColor24Bit(val int)              { e.color24Bit = val }
+func (e *entityCommon) SetColor24Bit(val int)              { e.color24Bit, e.hasColor24Bit = val, true }
+func (e *entityCommon) HasColor24Bit() bool                { return e.hasColor24Bit }
+func (e *entityCommon) ClearColor24Bit()                   { e.color24Bit, e.hasColor24Bit = 0, false }
 func (e *entityCommon) ColorName() string                  { return e.colorName }
 func (e *entityCommon) SetColorName(val string)            { e.colorName = val }
 func (e *entityCommon) Transparency() int                  { return e.transparency }

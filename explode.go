@@ -120,9 +120,9 @@ func ResolveInherited(e Entity, path []*Insert) {
 		if e.Layer() == "0" {
 			e.SetLayer(insert.Layer())
 		}
-		if e.Color() == ByBlock() && e.Color24Bit() == 0 {
+		if e.Color() == ByBlock() && !e.HasColor24Bit() {
 			e.SetColor(insert.Color())
-			e.SetColor24Bit(insert.Color24Bit())
+			copyColor24Bit(insert, e)
 			e.SetColorName(insert.ColorName())
 		}
 		if strings.EqualFold(e.LineTypeName(), "BYBLOCK") {
@@ -196,8 +196,17 @@ func copyEntityProperties(from, to Entity) {
 	to.SetLineWeight(from.LineWeight())
 	to.SetLineTypeScale(from.LineTypeScale())
 	to.SetIsVisible(from.IsVisible())
-	to.SetColor24Bit(from.Color24Bit())
+	copyColor24Bit(from, to)
 	to.SetColorName(from.ColorName())
 	to.SetTransparency(from.Transparency())
 	to.SetShadowMode(from.ShadowMode())
+}
+
+// copyColor24Bit copies the true color, including whether one is set at all (0 is black, not "no true color").
+func copyColor24Bit(from, to Entity) {
+	if from.HasColor24Bit() {
+		to.SetColor24Bit(from.Color24Bit())
+	} else {
+		to.ClearColor24Bit()
+	}
 }
