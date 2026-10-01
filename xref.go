@@ -2,9 +2,7 @@ package dxf
 
 import (
 	"fmt"
-	"hash/fnv"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -112,24 +110,10 @@ func XrefFileResolverWith(dir string, options XrefFileResolverOptions) func(bloc
 	}
 }
 
-// DWG2DXF returns a converter for XrefFileResolverOptions.ConvertDWG that runs LibreDWG's dwg2dxf, which has to be
-// installed, and writes the DXF files into outputDir. Note that dwg2dxf can silently drop entities; cmd/dxfcheck
-// checks a conversion against the DWG.
+// DWG2DXF returns a converter for XrefFileResolverOptions.ConvertDWG that runs LibreDWG's dwg2dxf, found on PATH or
+// next to the running program, and writes the DXF files into outputDir. See DWG2DXFWith.
 func DWG2DXF(outputDir string) func(dwgPath string) (string, error) {
-	return func(dwgPath string) (string, error) {
-		if err := os.MkdirAll(outputDir, 0o755); err != nil {
-			return "", err
-		}
-		// the hash keeps DWG files with the same name in different folders apart
-		hash := fnv.New32a()
-		hash.Write([]byte(dwgPath))
-		name := strings.TrimSuffix(filepath.Base(dwgPath), filepath.Ext(dwgPath))
-		dxfPath := filepath.Join(outputDir, fmt.Sprintf("%s-%08x.dxf", name, hash.Sum32()))
-		if output, err := exec.Command("dwg2dxf", "-y", "-o", dxfPath, dwgPath).CombinedOutput(); err != nil {
-			return "", fmt.Errorf("dwg2dxf: %v: %s", err, strings.TrimSpace(string(output)))
-		}
-		return dxfPath, nil
-	}
+	return DWG2DXFWith("", outputDir)
 }
 
 // findFile returns path if it exists, otherwise the file whose path differs from it only in non-ASCII characters,

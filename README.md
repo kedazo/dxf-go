@@ -73,6 +73,10 @@ converted with LibreDWG's `dwg2dxf` first, and the conversion is checked against
 go run github.com/kedazo/dxf-go/cmd/dxfcheck [-keep dir] plan.dxf sheet.dxf xref.dwg
 ```
 
+The LibreDWG programs are taken from `PATH` or from next to the running program (as installers bundle them), or
+given with `-dwg2dxf`/`-dwgread`. They only get ASCII file names, so Windows builds also work with accented or garbled
+names. The library's `DWG2DXF`/`DWG2DXFWith` converters do the same.
+
 ## Development
 
 The entity, header and table code is generated from the XML files in `spec/`:

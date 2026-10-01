@@ -37,6 +37,8 @@ var (
 	problems int
 	// conversionDir receives the DXF files converted from DWG
 	conversionDir string
+	// the LibreDWG programs; empty means on PATH or next to dxfcheck
+	dwg2dxfProgram, dwgreadProgram string
 )
 
 func problem(format string, args ...interface{}) {
@@ -51,8 +53,10 @@ func main() {
 
 func run() int {
 	keep := flag.String("keep", "", "directory to keep converted DXF files in (default: a temporary directory)")
+	flag.StringVar(&dwg2dxfProgram, "dwg2dxf", "", "LibreDWG's dwg2dxf (default: on PATH or next to dxfcheck)")
+	flag.StringVar(&dwgreadProgram, "dwgread", "", "LibreDWG's dwgread (default: on PATH or next to dxfcheck)")
 	flag.Usage = func() {
-		fmt.Fprintln(os.Stderr, "usage: dxfcheck [-keep dir] file.dxf|file.dwg ...")
+		fmt.Fprintln(os.Stderr, "usage: dxfcheck [-keep dir] [-dwg2dxf path] [-dwgread path] file.dxf|file.dwg ...")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
@@ -75,11 +79,11 @@ func run() int {
 		return 2
 	}
 
-	for i, path := range flag.Args() {
+	for _, path := range flag.Args() {
 		fmt.Println("==", path)
 		if strings.EqualFold(filepath.Ext(path), ".dwg") {
-			converted := filepath.Join(conversionDir, fmt.Sprintf("%d-%s.dxf", i+1, strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))))
-			if !convertDWG(path, converted) {
+			converted, ok := convertDWG(path)
+			if !ok {
 				continue
 			}
 			path = converted
@@ -94,22 +98,20 @@ func run() int {
 	return 0
 }
 
-// convertDWG converts a DWG with dwg2dxf and compares the entity counts with dwgread's JSON output.
-func convertDWG(path, converted string) bool {
-	if _, err := exec.LookPath("dwg2dxf"); err != nil {
-		problem("can't convert DWG: dwg2dxf (LibreDWG) is not installed")
-		return false
-	}
-	if output, err := exec.Command("dwg2dxf", "-y", "-o", converted, path).CombinedOutput(); err != nil {
-		problem("dwg2dxf failed: %v\n%s", err, output)
-		return false
+// convertDWG converts a DWG with dwg2dxf into the conversion directory and compares the entity counts with dwgread's
+// JSON output.
+func convertDWG(path string) (converted string, ok bool) {
+	converted, err := dxf.DWG2DXFWith(dwg2dxfProgram, conversionDir)(path)
+	if err != nil {
+		problem("can't convert DWG: %v", err)
+		return "", false
 	}
 	fmt.Println("  converted with dwg2dxf to", converted)
 
-	dwgCounts, err := dwgEntityCounts(path, converted+".json")
+	dwgCounts, err := dwgEntityCounts(path)
 	if err != nil {
 		fmt.Println("  (entity counts of the DWG not checked:", err, ")")
-		return true
+		return converted, true
 	}
 	dxfCounts := map[string]int{}
 	for _, pair := range readRawPairs(converted) {
@@ -127,16 +129,41 @@ func convertDWG(path, converted string) bool {
 	if len(lost) > 0 {
 		problem("dwg2dxf dropped entities that are in the DWG: %s", strings.Join(lost, ", "))
 	}
-	return true
+	return converted, true
 }
 
-// dwgEntityCounts counts the entities of a DWG by type, as dwgread reads them.
-func dwgEntityCounts(path, jsonPath string) (map[string]int, error) {
-	if _, err := exec.LookPath("dwgread"); err != nil {
-		return nil, fmt.Errorf("dwgread is not installed")
+// dwgEntityCounts counts the entities of a DWG by type, as dwgread reads them. Like dwg2dxf, dwgread only gets ASCII
+// names: a DWG with a non-ASCII path is read from an ASCII-named copy in the conversion directory.
+func dwgEntityCounts(path string) (map[string]int, error) {
+	program := dwgreadProgram
+	if program == "" {
+		found, err := dxf.FindLibreDWGTool("dwgread")
+		if err != nil {
+			return nil, err
+		}
+		program = found
 	}
+	if absolute, err := filepath.Abs(program); err == nil {
+		program = absolute
+	}
+	if absolute, err := filepath.Abs(path); err == nil {
+		path = absolute
+	}
+
+	input := path
+	if !isASCII(path) {
+		input = "dwgread-input.dwg"
+		if err := copyFile(path, filepath.Join(conversionDir, input)); err != nil {
+			return nil, err
+		}
+		defer os.Remove(filepath.Join(conversionDir, input))
+	}
+	jsonName := "dwgread-output.json"
+	jsonPath := filepath.Join(conversionDir, jsonName)
 	defer os.Remove(jsonPath)
-	if output, err := exec.Command("dwgread", "-O", "JSON", "-o", jsonPath, path).CombinedOutput(); err != nil {
+	command := exec.Command(program, "-O", "JSON", "-o", jsonName, input)
+	command.Dir = conversionDir
+	if output, err := command.CombinedOutput(); err != nil {
 		return nil, fmt.Errorf("dwgread failed: %v: %s", err, output)
 	}
 	file, err := os.Open(jsonPath)
@@ -164,6 +191,23 @@ func dwgEntityCounts(path, jsonPath string) (map[string]int, error) {
 		counts[entityType]++
 	}
 	return counts, nil
+}
+
+func isASCII(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] >= 0x80 {
+			return false
+		}
+	}
+	return true
+}
+
+func copyFile(from, to string) error {
+	data, err := os.ReadFile(from)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(to, data, 0o644)
 }
 
 type rawPair struct {
@@ -532,13 +576,11 @@ func checkImages(d *dxf.Drawing, entities []dxf.Entity, dir, xref string) {
 // are, DWG files are read from a DXF next to them or else converted with dwg2dxf (and checked) into the conversion
 // directory. The images of every xref are checked relative to the xref's own folder.
 func xrefResolver(dir string) func(block *dxf.Block) (*dxf.Drawing, error) {
-	conversions := 0
 	originals := map[string]string{} // converted DXF -> the DWG it came from
 	return dxf.XrefFileResolverWith(dir, dxf.XrefFileResolverOptions{
 		ConvertDWG: func(dwgPath string) (string, error) {
-			conversions++
-			dxfPath := filepath.Join(conversionDir, fmt.Sprintf("xref%d-%s.dxf", conversions, strings.TrimSuffix(filepath.Base(dwgPath), filepath.Ext(dwgPath))))
-			if !convertDWG(dwgPath, dxfPath) {
+			dxfPath, ok := convertDWG(dwgPath)
+			if !ok {
 				return "", fmt.Errorf("dwg2dxf failed")
 			}
 			originals[dxfPath] = dwgPath
