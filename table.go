@@ -11,6 +11,7 @@ type Table struct {
 	entityCommon
 
 	BlockName           string
+	StyleHandle         Handle // the TABLESTYLE, code 342; see Drawing.TableStyle
 	InsertionPoint      Point
 	HorizontalDirection Vector
 	RowCount            int
@@ -86,6 +87,8 @@ func (e *Table) tryApplyCodePair(codePair CodePair) {
 			return
 		}
 		switch codePair.Code {
+		case 342:
+			e.StyleHandle = handleFromString(stringValue(codePair))
 		case 11:
 			e.HorizontalDirection.X = doubleValue(codePair)
 		case 21:

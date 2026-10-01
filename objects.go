@@ -59,7 +59,21 @@ type ImageDefinition struct {
 	ResolutionUnits int16  // code 281: 0 = none, 2 = centimeters, 5 = inches
 }
 
-// readObjectsSection reads the LAYOUT and IMAGEDEF objects; other objects are skipped.
+// objectParsers read the objects this library models from their group codes; other objects are skipped.
+var objectParsers = map[string]func(drawing *Drawing, pairs []CodePair){
+	"LAYOUT": func(d *Drawing, pairs []CodePair) { d.Layouts = append(d.Layouts, parseLayout(pairs)) },
+	"IMAGEDEF": func(d *Drawing, pairs []CodePair) {
+		d.ImageDefinitions = append(d.ImageDefinitions, parseImageDefinition(pairs))
+	},
+	"RASTERVARIABLES":  func(d *Drawing, pairs []CodePair) { d.RasterVariables = parseRasterVariables(pairs) },
+	"WIPEOUTVARIABLES": func(d *Drawing, pairs []CodePair) { d.WipeoutVariables = parseWipeoutVariables(pairs) },
+	"MLEADERSTYLE": func(d *Drawing, pairs []CodePair) {
+		d.MLeaderStyles = append(d.MLeaderStyles, parseMLeaderStyle(pairs))
+	},
+	"TABLESTYLE": func(d *Drawing, pairs []CodePair) { d.TableStyles = append(d.TableStyles, parseTableStyle(pairs)) },
+}
+
+// readObjectsSection reads the objects in objectParsers; other objects are skipped.
 func readObjectsSection(drawing *Drawing, np CodePair, reader codePairReader) (nextPair CodePair, err error) {
 	nextPair = np
 	for err == nil && !nextPair.isEndSection() {
@@ -69,19 +83,15 @@ func readObjectsSection(drawing *Drawing, np CodePair, reader codePairReader) (n
 			continue
 		}
 
-		objectType := nextPair.Value.(StringCodePairValue).Value
+		parse := objectParsers[nextPair.Value.(StringCodePairValue).Value]
 		var pairs []CodePair
 		for nextPair, err = reader.readCodePair(); err == nil && nextPair.Code != 0; nextPair, err = reader.readCodePair() {
-			if objectType == "LAYOUT" || objectType == "IMAGEDEF" {
+			if parse != nil {
 				pairs = append(pairs, nextPair)
 			}
 		}
-
-		switch objectType {
-		case "LAYOUT":
-			drawing.Layouts = append(drawing.Layouts, parseLayout(pairs))
-		case "IMAGEDEF":
-			drawing.ImageDefinitions = append(drawing.ImageDefinitions, parseImageDefinition(pairs))
+		if parse != nil {
+			parse(drawing, pairs)
 		}
 	}
 	return

@@ -31,6 +31,9 @@ type MLeader struct {
 	BlockScale        Vector
 	BlockRotation     float64 // radians
 
+	// StyleHandle is the MLEADERSTYLE (code 340 after the context data); see Drawing.MLeaderStyle.
+	StyleHandle Handle
+
 	// the subclass data as read
 	leaderData []CodePair
 }
@@ -93,6 +96,9 @@ func (e *MLeader) parseLeaderData() {
 			inContext = false
 			continue
 		case !inContext:
+			if code == 340 {
+				e.StyleHandle = handleFromString(stringValue(pair))
+			}
 			continue
 		case code == 302 && strings.HasPrefix(stringValue(pair), "LEADER"):
 			inLeader = true

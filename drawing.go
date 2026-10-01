@@ -29,9 +29,14 @@ type Drawing struct {
 
 	Entities []Entity
 
-	// Layouts and ImageDefinitions are read from the OBJECTS section, which is not written.
+	// Layouts, ImageDefinitions and the other objects are read from the OBJECTS section, which is not written.
 	Layouts          []Layout
 	ImageDefinitions []ImageDefinition
+	// RasterVariables and WipeoutVariables are nil when the drawing has none.
+	RasterVariables  *RasterVariables
+	WipeoutVariables *WipeoutVariables
+	MLeaderStyles    []MLeaderStyle
+	TableStyles      []TableStyle
 
 	// Warnings lists what was skipped while reading because it was malformed.
 	Warnings []string
