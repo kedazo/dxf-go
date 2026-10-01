@@ -54,17 +54,34 @@ func (d *Drawing) GetItemByHandle(h Handle) (item *DrawingItem, err error) {
 	item = nil
 	err = nil
 
-	for i := range d.Entities {
-		e := &d.Entities[i]
+	d.forEachEntity(func(e *Entity) bool {
 		if (*e).Handle() == h {
 			di := (*e).(DrawingItem)
 			item = &di
+			return false
+		}
+		return true
+	})
+	if item == nil {
+		err = fmt.Errorf("Unable to find item with handle '%d'", h)
+	}
+	return
+}
+
+// forEachEntity calls fn for every top-level and block entity until fn returns false.
+func (d *Drawing) forEachEntity(fn func(e *Entity) bool) {
+	for i := range d.Entities {
+		if !fn(&d.Entities[i]) {
 			return
 		}
 	}
-
-	err = fmt.Errorf("Unable to find item with handle '%d'", h)
-	return
+	for b := range d.Blocks {
+		for i := range d.Blocks[b].Entities {
+			if !fn(&d.Blocks[b].Entities[i]) {
+				return
+			}
+		}
+	}
 }
 
 func (d *Drawing) Normalize() {
@@ -470,28 +487,36 @@ func assignHandles(d *Drawing) {
 }
 
 func assignPointers(d *Drawing) {
-	for i := range d.Entities {
-		e := &d.Entities[i]
+	d.forEachEntity(func(e *Entity) bool {
 		for _, p := range (*e).pointers() {
 			if p.handle == 0 && p.value != nil {
 				p.handle = (*p.value).Handle()
 			}
 		}
-	}
+		return true
+	})
 }
 
 func bindPointers(d *Drawing) {
-	for i := range d.Entities {
-		e := &d.Entities[i]
+	itemsByHandle := make(map[Handle]DrawingItem)
+	d.forEachEntity(func(e *Entity) bool {
+		if h := (*e).Handle(); h != 0 {
+			if _, exists := itemsByHandle[h]; !exists {
+				itemsByHandle[h] = (*e).(DrawingItem)
+			}
+		}
+		return true
+	})
+	d.forEachEntity(func(e *Entity) bool {
 		for _, p := range (*e).pointers() {
 			if p.handle != 0 {
-				o, err := d.GetItemByHandle(p.handle)
-				if err == nil {
-					p.value = o
+				if item, ok := itemsByHandle[p.handle]; ok {
+					p.value = &item
 				}
 			}
 		}
-	}
+		return true
+	})
 }
 
 func writeBlocksSection(drawing *Drawing, writer codePairWriter) (err error) {

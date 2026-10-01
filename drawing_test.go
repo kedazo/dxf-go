@@ -119,6 +119,37 @@ func TestReadAndNavigateHandles(t *testing.T) {
 	assertEqPoint(t, Point{1.0, 2.0, 3.0}, circle.Center)
 }
 
+func TestReadAndNavigateHandlesInBlocks(t *testing.T) {
+	drawing := parseFromCodePairs(t,
+		NewStringCodePair(0, "SECTION"),
+		NewStringCodePair(2, "BLOCKS"),
+		NewStringCodePair(0, "BLOCK"),
+		NewStringCodePair(2, "B"),
+		// artificial parent circle
+		NewStringCodePair(0, "CIRCLE"),
+		NewStringCodePair(5, "9999"), // handle
+		NewDoubleCodePair(10, 1.0),
+		NewDoubleCodePair(20, 2.0),
+		NewDoubleCodePair(30, 3.0),
+		NewStringCodePair(0, "ENDBLK"),
+		NewStringCodePair(0, "ENDSEC"),
+		NewStringCodePair(0, "SECTION"),
+		NewStringCodePair(2, "ENTITIES"),
+		// artificial child line
+		NewStringCodePair(0, "LINE"),
+		NewStringCodePair(330, "9999"), // ownerhandle
+		NewStringCodePair(0, "ENDSEC"),
+		NewStringCodePair(0, "EOF"),
+	)
+	item, err := drawing.GetItemByHandle(Handle(0x9999))
+	assert(t, err == nil, "expected to find a block entity by handle")
+	assertEqPoint(t, Point{1.0, 2.0, 3.0}, (*item).(*Circle).Center)
+
+	line := drawing.Entities[0].(*Line)
+	circle := (*line.Owner()).(*Circle)
+	assertEqPoint(t, Point{1.0, 2.0, 3.0}, circle.Center)
+}
+
 func TestRoundTripOwnerPointers(t *testing.T) {
 	// line sets circle as its owner
 	circle := NewCircle()
