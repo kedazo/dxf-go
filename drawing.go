@@ -420,7 +420,9 @@ func readFromCodePairReader(reader codePairReader) (Drawing, error) {
 			case "TABLES":
 				nextPair, err = readTables(&drawing, nextPair, reader)
 			case "BLOCKS":
-				drawing.Blocks, nextPair, err = readBlocksSection(nextPair, reader)
+				var warnings []string
+				drawing.Blocks, nextPair, warnings, err = readBlocksSection(nextPair, reader)
+				drawing.Warnings = append(drawing.Warnings, warnings...)
 			case "OBJECTS":
 				nextPair, err = readObjectsSection(&drawing, nextPair, reader)
 			case "CLASSES":
@@ -458,7 +460,7 @@ func readFromCodePairReader(reader codePairReader) (Drawing, error) {
 	return drawing, nil
 }
 
-func readBlocksSection(np CodePair, reader codePairReader) (blocks []Block, nextPair CodePair, err error) {
+func readBlocksSection(np CodePair, reader codePairReader) (blocks []Block, nextPair CodePair, warnings []string, err error) {
 	nextPair = np
 	for err == nil && !nextPair.isEndSection() {
 		if nextPair.Code != 0 {
@@ -498,16 +500,21 @@ func readBlocksSection(np CodePair, reader codePairReader) (blocks []Block, next
 				nextPair, err = reader.readCodePair()
 			}
 			block.XData = xdata.result()
-			// Read block entities until ENDBLK; a missing ENDBLK must not swallow the following sections
+			// Read block entities until ENDBLK; a missing ENDBLK must not swallow the following blocks and sections
+			hasEnd := false
 			for err == nil && !nextPair.isEndSection() && !nextPair.isEOF() {
 				if nextPair.Code == 0 {
 					val := nextPair.Value.(StringCodePairValue).Value
 					if val == "ENDBLK" {
 						// Skip past ENDBLK's pairs
+						hasEnd = true
 						nextPair, err = reader.readCodePair()
 						for err == nil && nextPair.Code != 0 {
 							nextPair, err = reader.readCodePair()
 						}
+						break
+					}
+					if val == "BLOCK" {
 						break
 					}
 				}
@@ -520,6 +527,10 @@ func readBlocksSection(np CodePair, reader codePairReader) (blocks []Block, next
 				if ok {
 					block.Entities = append(block.Entities, entity)
 				}
+			}
+			if !hasEnd && err == nil {
+				warnings = append(warnings, fmt.Sprintf("block %q: no ENDBLK, it ends at the next 0/%s", block.Name,
+					stringValue(nextPair)))
 			}
 			block.Entities = collectEntities(&entityBufferReader{entities: block.Entities})
 			blocks = append(blocks, block)

@@ -10,7 +10,9 @@ import (
 	"testing"
 
 	"golang.org/x/text/encoding"
+	"golang.org/x/text/encoding/charmap"
 	"golang.org/x/text/encoding/simplifiedchinese"
+	"golang.org/x/text/encoding/unicode"
 )
 
 func TestReadBoolAsText(t *testing.T) {
@@ -350,6 +352,46 @@ func TestReadErrorHasTheByteOffset(t *testing.T) {
 	assertEqInt(t, 0, readError.Line)
 	assertEqInt(t, 50, int(readError.Offset))
 	assert(t, strings.HasPrefix(err.Error(), "byte offset 50: "), "unexpected message "+err.Error())
+}
+
+func TestReadCarriageReturnLineEndings(t *testing.T) {
+	content := strings.Join([]string{
+		"  0", "SECTION", "  2", "ENTITIES",
+		"  0", "TEXT", "  1", "a^Mb", " 10", "1.5",
+		"  0", "ENDSEC", "  0", "EOF",
+	}, "\r")
+	drawing, err := ReadFromReader(strings.NewReader(content))
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertEqInt(t, 1, len(drawing.Entities))
+	text := drawing.Entities[0].(*Text)
+	assertEqString(t, "a\rb", text.Value)
+	assertEqFloat64(t, 1.5, text.Location.X)
+}
+
+func TestReadUtf16File(t *testing.T) {
+	content := join(
+		"  0", "SECTION", "  2", "HEADER",
+		"  9", "$ACADVER", "  1", "AC1018",
+		"  9", "$DWGCODEPAGE", "  3", "ANSI_1250",
+		"  0", "ENDSEC",
+		"  0", "SECTION", "  2", "ENTITIES",
+		"  0", "TEXT", "  1", "Előtér \\U+00E9",
+		"  0", "ENDSEC", "  0", "EOF",
+	)
+	for _, endianness := range []unicode.Endianness{unicode.LittleEndian, unicode.BigEndian} {
+		encoded, err := unicode.UTF16(endianness, unicode.UseBOM).NewEncoder().String(content)
+		if err != nil {
+			t.Fatal(err)
+		}
+		// the UTF-16 wins over the code page and over the encoding the caller passes
+		drawing, err := ReadFromReaderWithEncoding(strings.NewReader(encoded), charmap.Windows1252)
+		if err != nil {
+			t.Fatal(err)
+		}
+		assertEqString(t, "Előtér é", drawing.Entities[0].(*Text).Value)
+	}
 }
 
 func TestReadEmptyFile(t *testing.T) {

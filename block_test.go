@@ -134,6 +134,33 @@ func TestReadBlockWithoutEndBlock(t *testing.T) {
 	_ = drawing.Blocks[0].Entities[0].(*Circle)
 	assertEqInt(t, 1, len(drawing.Entities))
 	_ = drawing.Entities[0].(*Line)
+	assertEqInt(t, 1, len(drawing.Warnings))
+	assertEqString(t, `block "B": no ENDBLK, it ends at the next 0/ENDSEC`, drawing.Warnings[0])
+}
+
+func TestReadBlockWithoutEndBlockBeforeTheNextBlock(t *testing.T) {
+	drawing := parseFromCodePairs(t,
+		NewStringCodePair(0, "SECTION"),
+		NewStringCodePair(2, "BLOCKS"),
+		NewStringCodePair(0, "BLOCK"),
+		NewStringCodePair(2, "A"),
+		NewStringCodePair(0, "CIRCLE"),
+		NewStringCodePair(0, "BLOCK"),
+		NewStringCodePair(2, "B"),
+		NewStringCodePair(0, "LINE"),
+		NewStringCodePair(0, "ENDBLK"),
+		NewStringCodePair(0, "ENDSEC"),
+		NewStringCodePair(0, "EOF"),
+	)
+	assertEqInt(t, 2, len(drawing.Blocks))
+	assertEqString(t, "A", drawing.Blocks[0].Name)
+	assertEqInt(t, 1, len(drawing.Blocks[0].Entities))
+	_ = drawing.Blocks[0].Entities[0].(*Circle)
+	assertEqString(t, "B", drawing.Blocks[1].Name)
+	assertEqInt(t, 1, len(drawing.Blocks[1].Entities))
+	_ = drawing.Blocks[1].Entities[0].(*Line)
+	assertEqInt(t, 1, len(drawing.Warnings))
+	assertEqString(t, `block "A": no ENDBLK, it ends at the next 0/BLOCK`, drawing.Warnings[0])
 }
 
 func TestReadBlockWithAttributeDefinitionAndStandaloneMText(t *testing.T) {

@@ -15,6 +15,7 @@ import (
 
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/unicode"
+	"golang.org/x/text/transform"
 )
 
 type codePairReader interface {
@@ -31,8 +32,8 @@ func codePairReaderFromReader(reader io.Reader, e encoding.Encoding) (r codePair
 	// one buffered reader is shared by the format sniffing below and the actual code pair reader; the bytes it reads
 	// are counted for the positions in errors
 	counter := &byteCountingReader{reader: reader}
-	buffered := bufio.NewReaderSize(counter, readerBufferSize)
-	consumed := func() int64 { return counter.count - int64(buffered.Buffered()) }
+	file := bufio.NewReaderSize(counter, readerBufferSize)
+	consumed := func() int64 { return counter.count - int64(file.Buffered()) }
 
 	if e == nil {
 		// no explicit encoding, like ReadFile
@@ -41,6 +42,19 @@ func codePairReaderFromReader(reader io.Reader, e encoding.Encoding) (r codePair
 	var decoder *encoding.Decoder
 	if e != encoding.Nop {
 		decoder = e.NewDecoder()
+	}
+
+	buffered := file
+	start, _ := file.Peek(4096)
+	switch {
+	case bytes.HasPrefix(start, []byte{0xFF, 0xFE}) || bytes.HasPrefix(start, []byte{0xFE, 0xFF}):
+		// UTF-16 with a byte order mark: read as UTF-8, whatever the caller or the header says
+		utf16 := unicode.UTF16(unicode.LittleEndian, unicode.UseBOM).NewDecoder()
+		buffered = bufio.NewReaderSize(transform.NewReader(file, utf16), readerBufferSize)
+		decoder = unicode.UTF8.NewDecoder()
+	case bytes.IndexByte(start, '\r') >= 0 && bytes.IndexByte(start, '\n') < 0:
+		// lines end with a bare CR (classic Mac OS); values can't contain one, a CR in a value is written as ^M
+		buffered = bufio.NewReaderSize(&carriageReturnReader{reader: file}, readerBufferSize)
 	}
 
 	var scratch []byte
@@ -69,6 +83,21 @@ func codePairReaderFromReader(reader io.Reader, e encoding.Encoding) (r codePair
 	}
 
 	return &commentFilteringReader{inner: r}, nil
+}
+
+// carriageReturnReader turns the bare CR line endings of a text DXF into LF.
+type carriageReturnReader struct {
+	reader io.Reader
+}
+
+func (c *carriageReturnReader) Read(p []byte) (int, error) {
+	n, err := c.reader.Read(p)
+	for i := range p[:n] {
+		if p[i] == '\r' {
+			p[i] = '\n'
+		}
+	}
+	return n, err
 }
 
 // byteCountingReader counts the bytes read through it.
