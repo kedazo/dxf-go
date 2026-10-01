@@ -177,9 +177,10 @@ func generateHeader() {
 	builder.WriteString("\n")
 
 	// readHeader()
-	builder.WriteString("func readHeader(nextPair CodePair, reader codePairReader) (Header, CodePair, error) {\n")
+	builder.WriteString("func readHeader(nextPair CodePair, reader codePairReader) (Header, CodePair, []string, error) {\n")
 	builder.WriteString("	header := *NewHeader()\n")
 	builder.WriteString("	var err error\n")
+	builder.WriteString("	var warnings []string\n")
 	builder.WriteString("	var variableName string\n")
 	builder.WriteString("	for nextPair.Code != 0 {\n")
 
@@ -202,6 +203,8 @@ func generateHeader() {
 					builder.WriteString(fmt.Sprintf("				case %d:\n", code))
 					builder.WriteString(fmt.Sprintf("					header.%s.%c = nextPair.Value.(DoubleCodePairValue).Value\n", variable.FieldName, component))
 				}
+				builder.WriteString("				default:\n")
+				builder.WriteString("					warnings = append(warnings, malformedHeaderVariable(variableName, nextPair))\n")
 				builder.WriteString("				}\n")
 			} else {
 				// validate all possible codes; there are some duplicates
@@ -220,11 +223,15 @@ func generateHeader() {
 					}
 					builder.WriteString("				default:\n")
 					builder.WriteString("					// tolerate malformed header variable: unexpected code, skip and continue\n")
+					builder.WriteString("					warnings = append(warnings, malformedHeaderVariable(variableName, nextPair))\n")
 					builder.WriteString("				}\n")
 				} else {
 					builder.WriteString(fmt.Sprintf("				if nextPair.Code == %d {\n", variable.Code))
 					builder.WriteString(fmt.Sprintf("					header.%s = %s\n", variable.FieldName, generateReadFunction(variable)))
-					builder.WriteString("				} // else: tolerate malformed header variable, skip and continue\n")
+					builder.WriteString("				} else {\n")
+					builder.WriteString("					// tolerate malformed header variable: unexpected code, skip and continue\n")
+					builder.WriteString("					warnings = append(warnings, malformedHeaderVariable(variableName, nextPair))\n")
+					builder.WriteString("				}\n")
 				}
 			}
 
@@ -245,11 +252,11 @@ func generateHeader() {
 	builder.WriteString("\n")
 	builder.WriteString("		nextPair, err = reader.readCodePair()\n")
 	builder.WriteString("		if err != nil {\n")
-	builder.WriteString("			return header, nextPair, err\n")
+	builder.WriteString("			return header, nextPair, warnings, err\n")
 	builder.WriteString("		}\n")
 	builder.WriteString("	}\n")
 	builder.WriteString("\n")
-	builder.WriteString("	return header, nextPair, nil\n")
+	builder.WriteString("	return header, nextPair, warnings, nil\n")
 	builder.WriteString("}\n")
 
 	writeFile("header.generated.go", builder)

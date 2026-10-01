@@ -29,6 +29,9 @@ type Drawing struct {
 
 	Entities []Entity
 
+	// Warnings lists what was skipped while reading because it was malformed.
+	Warnings []string
+
 	appIdTableHandle       Handle
 	blockRecordTableHandle Handle
 	dimStyleTableHandle    Handle
@@ -99,6 +102,11 @@ func (d *Drawing) Normalize() {
 	d.ensureAppId("ACADANNOTATIVE")
 	d.ensureAppId("ACAD_MLEADERVER")
 	d.ensureAppId("ACAD_NAV_VCDISPLAY")
+}
+
+// malformedHeaderVariable describes a header variable value that was skipped because of an unexpected group code.
+func malformedHeaderVariable(variableName string, pair CodePair) string {
+	return fmt.Sprintf("header variable %s: skipped a value with unexpected group code %d", variableName, pair.Code)
 }
 
 // BlockByName returns the block with the given name, compared case-insensitively like AutoCAD does, or nil.
@@ -365,7 +373,9 @@ func readFromCodePairReader(reader codePairReader) (Drawing, error) {
 			case "ENTITIES":
 				drawing.Entities, nextPair, err = readEntities(nextPair, reader)
 			case "HEADER":
-				drawing.Header, nextPair, err = readHeader(nextPair, reader)
+				var warnings []string
+				drawing.Header, nextPair, warnings, err = readHeader(nextPair, reader)
+				drawing.Warnings = append(drawing.Warnings, warnings...)
 			case "TABLES":
 				nextPair, err = readTables(&drawing, nextPair, reader)
 			case "BLOCKS":

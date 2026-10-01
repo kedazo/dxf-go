@@ -20,6 +20,29 @@ func TestReadNonDefaultHeaderVersion(t *testing.T) {
 	assertEqInt(t, 6, int(header.MaintenanceVersion))
 }
 
+func TestMalformedHeaderVariablesAreReportedAsWarnings(t *testing.T) {
+	drawing := parseFromCodePairs(t,
+		NewStringCodePair(0, "SECTION"),
+		NewStringCodePair(2, "HEADER"),
+		NewStringCodePair(9, "$ACADMAINTVER"),
+		NewStringCodePair(1, "GARBAGE"),
+		NewStringCodePair(9, "$INSBASE"),
+		NewDoubleCodePair(10, 1.0),
+		NewDoubleCodePair(40, 2.0),
+		NewStringCodePair(9, "$ACADVER"),
+		NewStringCodePair(1, "AC1015"),
+		NewStringCodePair(9, "$UNKNOWNVARIABLE"),
+		NewStringCodePair(1, "fine"),
+		NewStringCodePair(0, "ENDSEC"),
+		NewStringCodePair(0, "EOF"),
+	)
+	assertEqInt(t, int(R2000), int(drawing.Header.Version))
+	assertEqFloat64(t, 1.0, drawing.Header.InsertionBase.X)
+	assertEqInt(t, 2, len(drawing.Warnings))
+	assertEqString(t, "header variable $ACADMAINTVER: skipped a value with unexpected group code 1", drawing.Warnings[0])
+	assertEqString(t, "header variable $INSBASE: skipped a value with unexpected group code 40", drawing.Warnings[1])
+}
+
 func TestLineWeightValues(t *testing.T) {
 	// DXF line weight codes: -1 = BYLAYER, -2 = BYBLOCK, -3 = DEFAULT
 	assertEqInt(t, -1, int(NewLineWeightByLayer()))
