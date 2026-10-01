@@ -104,6 +104,39 @@ func TestExplodeXrefLayers(t *testing.T) {
 	assertEqString(t, "WALL", xref.Entities[0].Layer())
 }
 
+func TestExplodeXrefLayerOverridesAndSources(t *testing.T) {
+	host, xref := xrefDrawings()
+	resolve := func(*Block) (*Drawing, error) { return xref, nil }
+
+	// a host layer named "<xref>|<layer>" overrides the xref's layer (AutoCAD's VISRETAIN)
+	override := *NewLayer()
+	override.Name = "XR|WALL"
+	override.Color = 5
+	host.Layers = append(host.Layers, override)
+	result := host.Explode(ExplodeOptions{Recursive: true, ResolveXref: resolve})
+	assertEqInt(t, 1, len(result.XrefLayers))
+	assertEqInt(t, 5, int(result.XrefLayers[0].Color))
+
+	// every entity from the xref knows its drawing; the host's own entities don't
+	assertEqInt(t, 6, len(result.XrefSources))
+	assert(t, result.XrefSources[result.Entities[0]] == xref, "expected the xref drawing as the source")
+
+	// merged: xref entities keep their layer names, and a host layer of the same name wins
+	hostWall := *NewLayer()
+	hostWall.Name = "WALL"
+	hostWall.Color = 1
+	host.Layers = append(host.Layers, hostWall)
+	merged := host.Explode(ExplodeOptions{Recursive: true, ResolveXref: resolve, MergeXrefLayers: true})
+	assertEqString(t, "WALL", merged.Entities[0].Layer())
+	assertEqInt(t, 0, len(merged.XrefLayers))
+
+	host.Layers = host.Layers[:len(host.Layers)-1]
+	merged = host.Explode(ExplodeOptions{Recursive: true, ResolveXref: resolve, MergeXrefLayers: true})
+	assertEqInt(t, 1, len(merged.XrefLayers))
+	assertEqString(t, "WALL", merged.XrefLayers[0].Name)
+	assertEqInt(t, 3, int(merged.XrefLayers[0].Color))
+}
+
 func TestXrefFileResolver(t *testing.T) {
 	dir := t.TempDir()
 	if err := os.Mkdir(filepath.Join(dir, "xrefs"), 0o755); err != nil {

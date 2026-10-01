@@ -20,6 +20,10 @@ type ExplodeOptions struct {
 	// on "<xref block>|<layer>" layers (layer "0" stays "0"), the way AutoCAD names xref layers; XrefLayers lists
 	// those layers.
 	ResolveXref func(block *Block) (*Drawing, error)
+	// MergeXrefLayers keeps the layer names of xref entities, like binding xrefs into the host: a host layer with the
+	// same name wins (ArchiCAD exports use the same layer names in a sheet and its xrefs), and XrefLayers only lists
+	// the layers the host doesn't have.
+	MergeXrefLayers bool
 }
 
 // ExplodeResult holds the exploded entities and everything that could not be exploded exactly.
@@ -27,8 +31,12 @@ type ExplodeResult struct {
 	Entities []Entity
 	Issues   []WalkIssue
 	// XrefLayers are the layers of the resolved external references, named "<xref block>|<layer>" like their
-	// exploded entities, so their colors, line types and line weights can be looked up.
+	// exploded entities, so their colors, line types and line weights can be looked up. A host layer with that name
+	// overrides the xref's (AutoCAD keeps such overrides with VISRETAIN).
 	XrefLayers []Layer
+	// XrefSources maps every entity that comes from an external reference to the drawing it was read from, whose
+	// line types, text styles, dimension styles and image definitions apply to it.
+	XrefSources map[Entity]*Drawing
 }
 
 // Explode returns the drawing's entities with every INSERT replaced by copies of its block's entities in world
@@ -58,8 +66,14 @@ func (d *Drawing) explodeEntities(entities []Entity, options ExplodeOptions) (re
 			if len(path) > 0 {
 				entity.SetIsInPaperSpace(path[0].IsInPaperSpace())
 			}
-			if source.xrefName != "" && entity.Layer() != "0" {
-				entity.SetLayer(source.xrefName + "|" + entity.Layer())
+			if source.xrefName != "" {
+				if entity.Layer() != "0" && !options.MergeXrefLayers {
+					entity.SetLayer(source.xrefName + "|" + entity.Layer())
+				}
+				if result.XrefSources == nil {
+					result.XrefSources = map[Entity]*Drawing{}
+				}
+				result.XrefSources[entity] = source.drawing
 			}
 			if options.InheritProperties {
 				ResolveInherited(entity, path)
@@ -76,13 +90,7 @@ func (d *Drawing) explodeEntities(entities []Entity, options ExplodeOptions) (re
 		source = from
 		if source.xrefName != "" && !xrefsWithLayers[source.xrefName] {
 			xrefsWithLayers[source.xrefName] = true
-			for _, layer := range source.drawing.Layers {
-				if layer.Name != "0" {
-					layer.Name = source.xrefName + "|" + layer.Name
-					layer.SetHandle(0)
-					result.XrefLayers = append(result.XrefLayers, layer)
-				}
-			}
+			result.XrefLayers = append(result.XrefLayers, xrefLayers(d, source, options.MergeXrefLayers)...)
 		}
 		switch ent := e.(type) {
 		case *Insert:
@@ -132,6 +140,32 @@ func (d *Drawing) explodeEntities(entities []Entity, options ExplodeOptions) (re
 	})
 
 	result.Issues = append(walkIssues, result.Issues...)
+	return
+}
+
+// xrefLayers returns the layers an xref adds to the host: renamed "<xref>|<layer>" unless merged, with the host's
+// layer of the same name taking precedence.
+func xrefLayers(host *Drawing, source walkSource, merge bool) (layers []Layer) {
+	hostLayers := make(map[string]*Layer, len(host.Layers))
+	for i := range host.Layers {
+		hostLayers[strings.ToUpper(host.Layers[i].Name)] = &host.Layers[i]
+	}
+	for _, layer := range source.drawing.Layers {
+		if layer.Name == "0" {
+			continue
+		}
+		if !merge {
+			layer.Name = source.xrefName + "|" + layer.Name
+		}
+		if override, ok := hostLayers[strings.ToUpper(layer.Name)]; ok {
+			if merge {
+				continue
+			}
+			layer = *override
+		}
+		layer.SetHandle(0)
+		layers = append(layers, layer)
+	}
 	return
 }
 
