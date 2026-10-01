@@ -145,6 +145,86 @@ func TestMTextRunsSuperscriptAndSubscript(t *testing.T) {
 	assertEqBool(t, true, runs[3].Subscript)
 }
 
+func TestMTextRunsStackType(t *testing.T) {
+	runs := ParseMTextRuns("\\S1/2;\\S3#4;\\S+0.1^-0.2;\\S5;\\S a\\/b ^ c\\;d;")
+	assertEqInt(t, 5, len(runs))
+	for i, expected := range []struct {
+		stackType              MTextStackType
+		numerator, denominator string
+	}{
+		{MTextStackHorizontal, "1", "2"},
+		{MTextStackDiagonal, "3", "4"},
+		{MTextStackTolerance, "+0.1", "-0.2"},
+		{MTextStackNone, "5", ""},
+		// escaped separators and semicolons are text
+		{MTextStackTolerance, "a/b", "c;d"},
+	} {
+		assertEqBool(t, true, runs[i].Stacked)
+		assertEqInt(t, int(expected.stackType), int(runs[i].StackType))
+		assertEqString(t, expected.numerator, runs[i].Numerator)
+		assertEqString(t, expected.denominator, runs[i].Denominator)
+	}
+	assertEqString(t, "3/4", runs[1].Text)
+	assertEqBool(t, false, runs[3].Superscript)
+}
+
+func TestMTextRunsVerticalAlignment(t *testing.T) {
+	// ArchiCAD writes \A1 without a semicolon before a brace; it must not swallow the scope or the height
+	runs := ParseMTextRuns("\\A1;{\\fArial;m\\A2{\\H0.7x;\\S2^ ;} after}\\A0;x\\A;y")
+	assertEqInt(t, 5, len(runs))
+	assertEqInt(t, int(MTextVerticalAlignmentCenter), int(runs[0].VerticalAlignment))
+	assertEqString(t, "2", runs[1].Text)
+	assertEqFloat64(t, 0.7, runs[1].HeightFactor)
+	assertEqInt(t, int(MTextVerticalAlignmentTop), int(runs[1].VerticalAlignment))
+	assertEqString(t, " after", runs[2].Text)
+	assertEqString(t, "Arial", runs[2].Font)
+	assertEqFloat64(t, 1, runs[2].HeightFactor)
+	// \A2 stands before the inner scope, so it applies until the outer one ends
+	assertEqInt(t, int(MTextVerticalAlignmentTop), int(runs[2].VerticalAlignment))
+	assertEqInt(t, int(MTextVerticalAlignmentBottom), int(runs[3].VerticalAlignment))
+	// like ezdxf, \A always takes the next character; anything but 0, 1 and 2 means bottom
+	assertEqString(t, "y", runs[4].Text)
+	assertEqInt(t, int(MTextVerticalAlignmentBottom), int(runs[4].VerticalAlignment))
+
+	mtext := NewMText()
+	mtext.Text = "\\A1;{\\fArial;m\\A1{\\H0.7x;\\S2^ ;} after}\\P\\A1x"
+	assertEqString(t, "m² after\nx", mtext.PlainText())
+}
+
+func TestMTextRunsParagraphProperties(t *testing.T) {
+	runs := ParseMTextRuns("{\\pqc;title\\P\\pxqr;right}\\Pdefault\\P\\pxi-3,l3,r1.5,t4,c8,r12;item\\P\\pi*,l*,r*,q*,t;reset\\P\\pt2.5,44.9918;\\pqd;tabs")
+	assertEqInt(t, 6, len(runs))
+
+	assertEqInt(t, int(MTextParagraphAlignmentCenter), int(runs[0].Paragraph.Alignment))
+	assertEqInt(t, int(MTextParagraphAlignmentRight), int(runs[1].Paragraph.Alignment))
+	// paragraph properties are scoped by braces
+	assertEqString(t, "default", runs[2].Text)
+	assertEqInt(t, int(MTextParagraphAlignmentDefault), int(runs[2].Paragraph.Alignment))
+
+	item := runs[3].Paragraph
+	assertEqFloat64(t, -3, item.FirstLineIndent)
+	assertEqFloat64(t, 3, item.LeftIndent)
+	assertEqFloat64(t, 1.5, item.RightIndent)
+	assertEqInt(t, 3, len(item.TabStops))
+	assertEqFloat64(t, 4, item.TabStops[0].Position)
+	assertEqInt(t, int(MTextTabStopLeft), int(item.TabStops[0].Type))
+	assertEqFloat64(t, 8, item.TabStops[1].Position)
+	assertEqInt(t, int(MTextTabStopCenter), int(item.TabStops[1].Type))
+	assertEqFloat64(t, 12, item.TabStops[2].Position)
+	assertEqInt(t, int(MTextTabStopRight), int(item.TabStops[2].Type))
+
+	reset := runs[4].Paragraph
+	assertEqInt(t, int(MTextParagraphAlignmentDefault), int(reset.Alignment))
+	assertEqFloat64(t, 0, reset.FirstLineIndent+reset.LeftIndent+reset.RightIndent)
+	assertEqInt(t, 0, len(reset.TabStops))
+
+	// properties persist across paragraphs and later \p codes only change what they name
+	tabs := runs[5].Paragraph
+	assertEqInt(t, int(MTextParagraphAlignmentDistributed), int(tabs.Alignment))
+	assertEqInt(t, 2, len(tabs.TabStops))
+	assertEqFloat64(t, 44.9918, tabs.TabStops[1].Position)
+}
+
 func TestMTextRunsRelativeValuesMultiply(t *testing.T) {
 	runs := ParseMTextRuns("{\\H2x;{\\H0.5x;\\W0.5;\\W2x;x}}")
 	assertEqInt(t, 1, len(runs))

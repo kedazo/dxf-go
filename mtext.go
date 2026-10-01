@@ -34,7 +34,78 @@ type MTextRun struct {
 	// Superscript and Subscript are set for \Sa^; and \S^b; stacks (e.g. the 2 of m²); Text is then that part.
 	Superscript bool
 	Subscript   bool
+	// StackType is the separator of a stack: horizontal bar (a/b), diagonal (a#b) or tolerance without a line (a^b).
+	// Numerator and Denominator are its two parts, trimmed; a stack without a separator has only a Numerator.
+	StackType   MTextStackType
+	Numerator   string
+	Denominator string
+
+	// VerticalAlignment (\A) places the run within its line: at the bottom (the default), centred or at the top. It
+	// matters for stacks and runs smaller than the line; ArchiCAD writes \A1; (centred).
+	VerticalAlignment MTextVerticalAlignment
+	// Paragraph holds the paragraph properties (\p…;) in effect for the run. They are written at the start of a
+	// paragraph (ArchiCAD repeats them after every \P), so all runs of a paragraph normally agree.
+	Paragraph MTextParagraph
 }
+
+// MTextStackType is the separator of a stacked fraction (\S).
+type MTextStackType int
+
+const (
+	MTextStackNone       MTextStackType = iota // not a stack, or a stack without a separator
+	MTextStackHorizontal                       // a/b: one part above the other, divided by a horizontal bar
+	MTextStackDiagonal                         // a#b: divided by a diagonal slash
+	MTextStackTolerance                        // a^b: one part above the other without a line (also a^ and ^b)
+)
+
+// MTextVerticalAlignment is the alignment of a run within its line (\A0; \A1; \A2;).
+type MTextVerticalAlignment int
+
+const (
+	MTextVerticalAlignmentBottom MTextVerticalAlignment = iota
+	MTextVerticalAlignmentCenter
+	MTextVerticalAlignmentTop
+)
+
+// MTextParagraphAlignment is the horizontal alignment of a paragraph (\pq?;).
+type MTextParagraphAlignment int
+
+const (
+	// MTextParagraphAlignmentDefault means no \pq code: the paragraph follows the MTEXT's attachment point.
+	MTextParagraphAlignmentDefault     MTextParagraphAlignment = iota
+	MTextParagraphAlignmentLeft                                // \pql;
+	MTextParagraphAlignmentRight                               // \pqr;
+	MTextParagraphAlignmentCenter                              // \pqc;
+	MTextParagraphAlignmentJustified                           // \pqj;
+	MTextParagraphAlignmentDistributed                         // \pqd;
+)
+
+// MTextParagraph holds the paragraph properties of the \p code, e.g. \pxi-3,l3,qc,t4,c8,r12;. Indents and tab
+// stops are kept as written; ezdxf reads them as multiples of the MTEXT's text height (InitialTextHeight).
+type MTextParagraph struct {
+	Alignment MTextParagraphAlignment
+	// FirstLineIndent (i) is relative to LeftIndent (l); RightIndent (r) is measured from the right edge.
+	FirstLineIndent float64
+	LeftIndent      float64
+	RightIndent     float64
+	// TabStops (t) are absolute positions; nil means the default stops. Runs share the slice: don't modify it.
+	TabStops []MTextTabStop
+}
+
+// MTextTabStop is a tab stop of a paragraph.
+type MTextTabStop struct {
+	Position float64
+	Type     MTextTabStopType
+}
+
+// MTextTabStopType is how text is aligned at a tab stop: no prefix is left, c centre and r right.
+type MTextTabStopType int
+
+const (
+	MTextTabStopLeft MTextTabStopType = iota
+	MTextTabStopCenter
+	MTextTabStopRight
+)
 
 // FormattedText returns the complete MTEXT content including formatting codes: the extended text chunks (code 3)
 // followed by the text (code 1).
@@ -319,10 +390,23 @@ func (p *mtextParser) parseCode(code byte) {
 			p.state.TrueColor = value
 		}
 	case 'S':
-		p.parseStack(p.readArgument())
-	case 'A', 'p':
-		// alignment and paragraph properties don't change the text
-		p.readArgument()
+		p.parseStack()
+	case 'A':
+		// one digit and an optional semicolon: ArchiCAD writes \A1{\H0.7x;\S2^ ;} for superscripts
+		p.flush()
+		p.state.VerticalAlignment = MTextVerticalAlignmentBottom
+		if p.position < len(p.input) {
+			if digit := p.input[p.position]; digit >= '0' && digit <= '2' {
+				p.state.VerticalAlignment = MTextVerticalAlignment(digit - '0')
+			}
+			p.position++
+		}
+		if p.position < len(p.input) && p.input[p.position] == ';' {
+			p.position++
+		}
+	case 'p':
+		p.flush()
+		p.state.Paragraph = parseMTextParagraph(p.state.Paragraph, p.readArgument())
 	default:
 		// an unknown code; it has no argument we could skip reliably
 	}
@@ -358,15 +442,123 @@ func (p *mtextParser) parseFont(argument string) {
 	}
 }
 
-func (p *mtextParser) parseStack(argument string) {
-	p.flush()
-	numerator, denominator, separator := argument, "", byte(0)
-	if index := strings.IndexAny(argument, "^/#"); index >= 0 {
-		numerator, denominator, separator = argument[:index], argument[index+1:], argument[index]
+// parseMTextParagraph applies the properties of a \p code (without the \p and the semicolon) to paragraph:
+// i, l, r (indents), q (alignment: l r c j d), t (tab stops, to the end) and x (ignored); * resets a property.
+func parseMTextParagraph(paragraph MTextParagraph, argument string) MTextParagraph {
+	for i := 0; i < len(argument); {
+		command := argument[i]
+		i++
+		switch command {
+		case 'i', 'l', 'r':
+			value, length := parseFloatPrefix(argument[i:])
+			if length == 0 && strings.HasPrefix(argument[i:], "*") {
+				length = 1
+			}
+			i += length
+			switch command {
+			case 'i':
+				paragraph.FirstLineIndent = value
+			case 'l':
+				paragraph.LeftIndent = value
+			default:
+				paragraph.RightIndent = value
+			}
+		case 'q':
+			paragraph.Alignment = MTextParagraphAlignmentDefault
+			if i < len(argument) {
+				if index := strings.IndexByte("lrcjd", argument[i]); index >= 0 {
+					paragraph.Alignment = MTextParagraphAlignment(index + 1)
+				}
+				i++
+			}
+		case 't':
+			// the tab stops run to the end; an empty list resets them
+			var tabStops []MTextTabStop
+			for i < len(argument) {
+				stop := MTextTabStop{}
+				switch argument[i] {
+				case 'c':
+					stop.Type = MTextTabStopCenter
+					i++
+				case 'r':
+					stop.Type = MTextTabStopRight
+					i++
+				}
+				value, length := parseFloatPrefix(argument[i:])
+				if length == 0 {
+					// a comma or something invalid
+					i++
+					continue
+				}
+				stop.Position = value
+				tabStops = append(tabStops, stop)
+				i += length
+			}
+			paragraph.TabStops = tabStops
+		}
+		// x, commas and unknown letters are skipped
 	}
+	return paragraph
+}
+
+// parseFloatPrefix parses the number at the start of s ([+-]digits[.digits]) and returns its length, 0 if none.
+func parseFloatPrefix(s string) (float64, int) {
+	end := 0
+	if end < len(s) && (s[end] == '+' || s[end] == '-') {
+		end++
+	}
+	digits := 0
+	for ; end < len(s) && (s[end] >= '0' && s[end] <= '9' || s[end] == '.'); end++ {
+		digits++
+	}
+	if digits == 0 {
+		return 0, 0
+	}
+	value, err := strconv.ParseFloat(s[:end], 64)
+	if err != nil {
+		return 0, 0
+	}
+	return value, end
+}
+
+// parseStack parses the \S argument up to the semicolon; position is after the S. A backslash escapes the next
+// character, so \S1\/2; is not a fraction and \; doesn't end the stack.
+func (p *mtextParser) parseStack() {
+	p.flush()
+	var parts [2]strings.Builder
+	part, separator := 0, byte(0)
+	for p.position < len(p.input) {
+		c := p.input[p.position]
+		p.position++
+		switch {
+		case c == ';':
+			p.appendStack(parts[0].String(), parts[1].String(), separator)
+			return
+		case c == '\\' && p.position < len(p.input):
+			parts[part].WriteByte(p.input[p.position])
+			p.position++
+		case part == 0 && (c == '^' || c == '/' || c == '#'):
+			part, separator = 1, c
+		default:
+			parts[part].WriteByte(c)
+		}
+	}
+	p.appendStack(parts[0].String(), parts[1].String(), separator)
+}
+
+func (p *mtextParser) appendStack(numerator, denominator string, separator byte) {
 	numerator, denominator = strings.TrimSpace(numerator), strings.TrimSpace(denominator)
 	run := p.state
 	run.Stacked = true
+	run.Numerator, run.Denominator = numerator, denominator
+	switch separator {
+	case '/':
+		run.StackType = MTextStackHorizontal
+	case '#':
+		run.StackType = MTextStackDiagonal
+	case '^':
+		run.StackType = MTextStackTolerance
+	}
 	switch {
 	case numerator == "" && denominator == "":
 		return
