@@ -85,11 +85,19 @@ func (d *Drawing) Normalize() {
 	d.ensureAppId("ACAD_NAV_VCDISPLAY")
 }
 
-func (d *Drawing) ensureBlock(name string) {
-	for _, block := range d.Blocks {
-		if block.Name == name {
-			return
+// BlockByName returns the block with the given name, compared case-insensitively like AutoCAD does, or nil.
+func (d *Drawing) BlockByName(name string) *Block {
+	for i := range d.Blocks {
+		if strings.EqualFold(d.Blocks[i].Name, name) {
+			return &d.Blocks[i]
 		}
+	}
+	return nil
+}
+
+func (d *Drawing) ensureBlock(name string) {
+	if d.BlockByName(name) != nil {
+		return
 	}
 
 	block := *NewBlock()
@@ -388,6 +396,8 @@ func readBlocksSection(np CodePair, reader codePairReader) (blocks []Block, next
 					block.handle = handleFromString(nextPair.Value.(StringCodePairValue).Value)
 				case 8:
 					block.Layer = nextPair.Value.(StringCodePairValue).Value
+				case 70:
+					block.Flags = nextPair.Value.(ShortCodePairValue).Value
 				case 10:
 					block.BasePoint.X = nextPair.Value.(DoubleCodePairValue).Value
 				case 20:

@@ -65,6 +65,56 @@ func TestReadBlockWithInsertAttributes(t *testing.T) {
 	_ = blocks[0].Entities[1].(*Line)
 }
 
+func TestReadBlockFlags(t *testing.T) {
+	blocks := parseBlocks(t,
+		NewStringCodePair(0, "BLOCK"),
+		NewStringCodePair(2, "*D1"),
+		NewShortCodePair(70, 1),
+		NewStringCodePair(0, "ENDBLK"),
+		NewStringCodePair(0, "BLOCK"),
+		NewStringCodePair(2, "XREF"),
+		NewShortCodePair(70, 4|8|2),
+		NewStringCodePair(1, "other.dwg"),
+		NewStringCodePair(0, "ENDBLK"),
+	)
+	assertEqInt(t, 2, len(blocks))
+	assertEqBool(t, true, blocks[0].IsAnonymous())
+	assertEqBool(t, false, blocks[0].IsXref())
+	assertEqBool(t, false, blocks[1].IsAnonymous())
+	assertEqBool(t, true, blocks[1].IsXref())
+	assertEqBool(t, true, blocks[1].IsXrefOverlay())
+	assertEqBool(t, true, blocks[1].HasAttributeDefinitions())
+	assertEqString(t, "other.dwg", blocks[1].XrefName)
+}
+
+func TestWriteBlockFlags(t *testing.T) {
+	block := NewBlock()
+	block.Name = "*D1"
+	block.Flags = 1
+	assertContainsCodePairs(t, []CodePair{
+		NewStringCodePair(2, "*D1"),
+		NewShortCodePair(70, 1),
+	}, block.getBlockPairs(R2000))
+}
+
+func TestBlockByName(t *testing.T) {
+	drawing := *NewDrawing()
+	drawing.Blocks = append(drawing.Blocks, Block{Name: "Door_1"})
+	block := drawing.BlockByName("DOOR_1")
+	assert(t, block != nil, "expected to find block case-insensitively")
+	assertEqString(t, "Door_1", block.Name)
+	block.BasePoint = Point{1.0, 2.0, 3.0}
+	assertEqPoint(t, Point{1.0, 2.0, 3.0}, drawing.Blocks[0].BasePoint)
+	assert(t, drawing.BlockByName("missing") == nil, "expected nil for a missing block")
+}
+
+func TestNormalizeKeepsDifferentlyCasedModelSpaceBlock(t *testing.T) {
+	drawing := *NewDrawing()
+	drawing.Blocks = []Block{{Name: "*Model_Space"}, {Name: "*Paper_Space"}}
+	drawing.Normalize()
+	assertEqInt(t, 2, len(drawing.Blocks))
+}
+
 func TestReadBlockWithoutEndBlock(t *testing.T) {
 	drawing := parseFromCodePairs(t,
 		NewStringCodePair(0, "SECTION"),
