@@ -94,6 +94,8 @@ func createCustomEntity(entityType string) (entity Entity, ok bool) {
 		entity = NewHatch()
 	case "MESH":
 		entity = NewMesh()
+	case "ACAD_TABLE":
+		entity = newTable()
 	default:
 		ok = false
 	}
@@ -263,6 +265,8 @@ func afterRead(entity *Entity) {
 		ent.parseHatchData()
 	case *Mesh:
 		ent.parseMeshData()
+	case *Table:
+		ent.parseCells()
 	case *DgnUnderlay:
 		afterReadUnderlay(ent)
 	case *DwfUnderlay:

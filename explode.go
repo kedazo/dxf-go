@@ -79,6 +79,9 @@ func (d *Drawing) explodeEntities(entities []Entity, options ExplodeOptions) (re
 			}
 			emitTransformed(transformed, issues, path)
 			return SkipBlock
+		case *Table:
+			// tables are always exploded into their block's lines and texts
+			return nil
 		case *Attribute:
 			if ent.IsInvisible() {
 				return nil

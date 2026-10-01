@@ -100,6 +100,8 @@ func resetClonedEntity(e Entity) {
 	case *Mesh:
 		ent.meshData = nil
 		ent.overrideData = cloneSlice(ent.overrideData)
+	case *Table:
+		ent.tableData = cloneSlice(ent.tableData)
 	case *ProxyEntity:
 		ent.graphicsDataString = cloneSlice(ent.graphicsDataString)
 		ent.entityDataString = cloneSlice(ent.entityDataString)
