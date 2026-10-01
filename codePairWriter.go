@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"strconv"
 	"strings"
 )
 
@@ -70,12 +71,20 @@ func formatBoolText(val bool) string {
 }
 
 func formatFloat64Text(val float64) string {
-	// trim trailing zeros
-	display := strings.TrimRight(fmt.Sprintf("%.12f", val), "0")
+	// the shortest representation that reads back as exactly the same value
+	abs := math.Abs(val)
+	if abs != 0 && (abs < 1e-6 || abs >= 1e16) {
+		display := strconv.FormatFloat(val, 'E', -1, 64)
+		if mantissa, exponent, found := strings.Cut(display, "E"); found && !strings.Contains(mantissa, ".") {
+			display = mantissa + ".0E" + exponent
+		}
+		return display
+	}
 
-	// ensure it doesn't end with a decimal
-	if strings.HasSuffix(display, ".") {
-		display += "0"
+	display := strconv.FormatFloat(val, 'f', -1, 64)
+	if !strings.ContainsAny(display, ".NI") {
+		// ensure it has a decimal (not for NaN and Inf)
+		display += ".0"
 	}
 
 	return display

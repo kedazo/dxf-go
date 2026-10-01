@@ -3,6 +3,8 @@ package dxf
 import (
 	"bufio"
 	"bytes"
+	"fmt"
+	"math"
 	"testing"
 )
 
@@ -58,6 +60,21 @@ func TestWriteDoubleAsText(t *testing.T) {
 	assertText(t, "-1.0", formatFloat64Text(-1.0))
 	assertText(t, "-1.000005", formatFloat64Text(-1.000005))
 	assertText(t, "1500000000000000.0", formatFloat64Text(1.5e15))
+	assertText(t, "0.0", formatFloat64Text(0.0))
+	assertText(t, "0.1", formatFloat64Text(0.1))
+	assertText(t, "-435.1260818112822", formatFloat64Text(-435.1260818112822))
+	assertText(t, "1.5E-13", formatFloat64Text(1.5e-13))
+	assertText(t, "1.0E+20", formatFloat64Text(1e20))
+}
+
+func TestWriteDoubleAsTextIsLossless(t *testing.T) {
+	for _, value := range []float64{1.0 / 3.0, -435.1260818112822, 70123.45678901234, 1e-15, 2.5e-7, 123456789012345678.0, math.Pi} {
+		actual, err := readDoubleText(formatFloat64Text(value))
+		if err != nil {
+			t.Fatal(err)
+		}
+		assert(t, actual == value, fmt.Sprintf("%v was written as %s", value, formatFloat64Text(value)))
+	}
 }
 
 func TestWriteStringAsText(t *testing.T) {
