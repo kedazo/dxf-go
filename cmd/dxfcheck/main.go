@@ -528,29 +528,19 @@ func fileExists(dir, name string) bool {
 	return err == nil
 }
 
-// xrefResolver resolves external references next to the drawing: DXF files are read as they are, DWG files are read
-// from a DXF next to them or else converted with dwg2dxf into the conversion directory.
+// xrefResolver resolves external references next to the drawing (garbled names included): DXF files are read as they
+// are, DWG files are read from a DXF next to them or else converted with dwg2dxf (and checked) into the conversion
+// directory.
 func xrefResolver(dir string) func(block *dxf.Block) (*dxf.Drawing, error) {
-	files := dxf.XrefFileResolver(dir)
-	converted := dxf.XrefFileResolver(conversionDir)
-	return func(block *dxf.Block) (*dxf.Drawing, error) {
-		drawing, err := files(block)
-		if err == nil || !strings.EqualFold(filepath.Ext(block.XrefName), ".dwg") {
-			return drawing, err
+	conversions := 0
+	return dxf.XrefFileResolverWith(dir, dxf.XrefFileResolverOptions{ConvertDWG: func(dwgPath string) (string, error) {
+		conversions++
+		dxfPath := filepath.Join(conversionDir, fmt.Sprintf("xref%d-%s.dxf", conversions, strings.TrimSuffix(filepath.Base(dwgPath), filepath.Ext(dwgPath))))
+		if !convertDWG(dwgPath, dxfPath) {
+			return "", fmt.Errorf("dwg2dxf failed")
 		}
-		source := strings.ReplaceAll(block.XrefName, `\`, "/")
-		if !filepath.IsAbs(source) {
-			source = filepath.Join(dir, source)
-		}
-		if _, statErr := os.Stat(source); statErr != nil {
-			return nil, err
-		}
-		name := "xref-" + strings.TrimSuffix(filepath.Base(source), filepath.Ext(source))
-		if !convertDWG(source, filepath.Join(conversionDir, name+".dxf")) {
-			return nil, fmt.Errorf("%s couldn't be converted", source)
-		}
-		return converted(&dxf.Block{Name: block.Name, XrefName: name + ".dxf"})
-	}
+		return dxfPath, nil
+	}})
 }
 
 // checkExplode explodes the drawing, resolving external references next to it, and reports the issues.

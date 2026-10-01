@@ -104,6 +104,77 @@ func TestExplodeXrefLayers(t *testing.T) {
 	assertEqString(t, "WALL", xref.Entities[0].Layer())
 }
 
+func writeXrefFile(t *testing.T, path string) {
+	_, xref := xrefDrawings()
+	xref.Header.Version = R2004
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := xref.SaveFile(path); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestXrefFileResolverFindsGarbledNames(t *testing.T) {
+	// "É-01 FÖLDSZINT" extracted from an archive with the wrong code page, folder included
+	dir := t.TempDir()
+	writeXrefFile(t, filepath.Join(dir, "Xrefed Nézetek", "É-01 FÖLDSZINT.dxf"))
+	if err := os.Rename(filepath.Join(dir, "Xrefed Nézetek"), filepath.Join(dir, "Xrefed NВzetek")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(filepath.Join(dir, "Xrefed NВzetek", "É-01 FÖLDSZINT.dxf"), filepath.Join(dir, "Xrefed NВzetek", "Р-01 FЩLDSZINT.dxf")); err != nil {
+		t.Fatal(err)
+	}
+
+	resolve := XrefFileResolver(dir)
+	drawing, err := resolve(&Block{Name: "XR", XrefName: `Xrefed Nézetek\É-01 FÖLDSZINT.dwg`})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertEqInt(t, 4, len(drawing.Entities))
+
+	// ASCII characters still have to match
+	_, err = resolve(&Block{Name: "XR", XrefName: `Xrefed Nézetek\É-02 FÖLDSZINT.dwg`})
+	assert(t, err != nil, "expected no match for a different ASCII character")
+
+	// two candidates are ambiguous
+	writeXrefFile(t, filepath.Join(dir, "Xrefed NВzetek", "Ъ-01 FЩLDSZINT.dxf"))
+	_, err = XrefFileResolver(dir)(&Block{Name: "XR", XrefName: `Xrefed Nézetek\É-01 FÖLDSZINT.dwg`})
+	assert(t, err != nil, "expected an ambiguous match to fail")
+}
+
+func TestXrefFileResolverConvertsDWG(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "plan.dwg"), []byte("not really a DWG"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// without a converter a DWG without a DXF next to it can't be resolved
+	_, err := XrefFileResolver(dir)(&Block{Name: "XR", XrefName: "plan.dwg"})
+	assert(t, err != nil, "expected an error without a converter")
+
+	conversions := 0
+	resolve := XrefFileResolverWith(dir, XrefFileResolverOptions{ConvertDWG: func(dwgPath string) (string, error) {
+		conversions++
+		assertEqString(t, filepath.Join(dir, "plan.dwg"), dwgPath)
+		dxfPath := filepath.Join(dir, "converted", "plan.dxf")
+		writeXrefFile(t, dxfPath)
+		return dxfPath, nil
+	}})
+	for i := 0; i < 2; i++ {
+		drawing, err := resolve(&Block{Name: "XR", XrefName: "plan.dwg"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		assertEqInt(t, 4, len(drawing.Entities))
+	}
+	assertEqInt(t, 1, conversions)
+
+	failing := XrefFileResolverWith(dir, XrefFileResolverOptions{ConvertDWG: func(string) (string, error) { return "", errors.New("broken") }})
+	_, err = failing(&Block{Name: "XR", XrefName: "plan.dwg"})
+	assertContains(t, "broken", err.Error())
+}
+
 func TestExplodeXrefLayerOverridesAndSources(t *testing.T) {
 	host, xref := xrefDrawings()
 	resolve := func(*Block) (*Drawing, error) { return xref, nil }
