@@ -2251,6 +2251,7 @@ type AttributeDefinition struct {
 	VerticalTextJustification VerticalTextJustification
 	IsLockedInBlock bool
 	KeepDuplicateRecords bool
+	AttributeType int16 // 1 = single line, 2 = multiline attribute, 4 = multiline attribute definition.
 	MTextFlag MTextFlag
 	IsReallyLocked bool
 	secondaryAttributeHandlesCount int
@@ -2261,6 +2262,9 @@ type AttributeDefinition struct {
 	MText MText
 	lastSubclassMarker string
 	isVersionSet bool
+	isTagSet bool
+	isLockedInBlockSet bool
+	isInEmbeddedObject bool
 	xrecCode70Count int
 	pointerOwner pointer
 	pointerPlotStyle pointer
@@ -2304,7 +2308,8 @@ func NewAttributeDefinition() *AttributeDefinition {
 		VerticalTextJustification: VerticalTextJustificationBaseline,
 		IsLockedInBlock: false,
 		KeepDuplicateRecords: false,
-		MTextFlag: MTextFlagMultilineAttribute,
+		AttributeType: 1,
+		MTextFlag: MTextFlag(0),
 		IsReallyLocked: false,
 		secondaryAttributeHandlesCount: 0,
 		SecondaryAttributeHandles: []string{},
@@ -2314,6 +2319,9 @@ func NewAttributeDefinition() *AttributeDefinition {
 		MText: *NewMText(),
 		lastSubclassMarker: "",
 		isVersionSet: false,
+		isTagSet: false,
+		isLockedInBlockSet: false,
+		isInEmbeddedObject: false,
 		xrecCode70Count: 0,
 	}
 }
@@ -2649,6 +2657,12 @@ func (this *AttributeDefinition) codePairs(version AcadVersion) (pairs []CodePai
 	if version >= R2007 {
 		pairs = append(pairs, NewShortCodePair(280, shortFromBool(this.IsLockedInBlock)))
 	}
+	if version >= R2018 {
+		pairs = append(pairs, NewShortCodePair(71, this.AttributeType))
+	}
+	if version >= R2018 {
+		pairs = append(pairs, NewShortCodePair(72, 0))
+	}
 	if version >= R2007 {
 		pairs = append(pairs, NewStringCodePair(100, "AcDbXrecord"))
 	}
@@ -2720,6 +2734,7 @@ type Attribute struct {
 	Normal Vector
 	IsLockedInBlock bool
 	KeepDuplicateRecords bool
+	AttributeType int16 // 1 = single line, 2 = multiline attribute, 4 = multiline attribute definition.
 	MTextFlag MTextFlag
 	IsReallyLocked bool
 	secondaryAttributeCount int
@@ -2730,6 +2745,9 @@ type Attribute struct {
 	MText MText
 	lastSubclassMarker string
 	isVersionSet bool
+	isTagSet bool
+	isLockedInBlockSet bool
+	isInEmbeddedObject bool
 	xrecCode70Count int
 	pointerOwner pointer
 	pointerPlotStyle pointer
@@ -2772,7 +2790,8 @@ func NewAttribute() *Attribute {
 		Normal: *NewZAxis(),
 		IsLockedInBlock: false,
 		KeepDuplicateRecords: false,
-		MTextFlag: MTextFlagMultilineAttribute,
+		AttributeType: 1,
+		MTextFlag: MTextFlag(0),
 		IsReallyLocked: false,
 		secondaryAttributeCount: 0,
 		secondaryAttributeHandles: []string{},
@@ -2782,6 +2801,9 @@ func NewAttribute() *Attribute {
 		MText: *NewMText(),
 		lastSubclassMarker: "",
 		isVersionSet: false,
+		isTagSet: false,
+		isLockedInBlockSet: false,
+		isInEmbeddedObject: false,
 		xrecCode70Count: 0,
 	}
 }
@@ -3112,6 +3134,12 @@ func (this *Attribute) codePairs(version AcadVersion) (pairs []CodePair) {
 	}
 	if version >= R2007 {
 		pairs = append(pairs, NewShortCodePair(280, shortFromBool(this.IsLockedInBlock)))
+	}
+	if version >= R2018 {
+		pairs = append(pairs, NewShortCodePair(71, this.AttributeType))
+	}
+	if version >= R2018 {
+		pairs = append(pairs, NewShortCodePair(72, 0))
 	}
 	if version >= R2007 {
 		pairs = append(pairs, NewStringCodePair(100, "AcDbXrecord"))

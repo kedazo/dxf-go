@@ -218,18 +218,22 @@
     <Field Name="VerticalTextJustification" Code="74" Type="VerticalTextJustification" DefaultValue="VerticalTextJustificationBaseline" ReadConverter="VerticalTextJustification(%v)" WriteConverter="int16(%v)" DisableWritingDefault="true" MinVersion="R12" />
     <Field Name="IsLockedInBlock" Code="280" Type="bool" DefaultValue="false" ReadConverter="boolFromShort(%v)" WriteConverter="shortFromBool(%v)" MinVersion="R2007" />
     <Field Name="KeepDuplicateRecords" Code="280" Type="bool" DefaultValue="false" ReadConverter="boolFromShort(%v)" WriteConverter="shortFromBool(%v)" MinVersion="R2007" />
-    <Field Name="MTextFlag" Code="70" Type="MTextFlag" DefaultValue="MTextFlagMultilineAttribute" ReadConverter="MTextFlag(%v)" WriteConverter="int16(%v)" MinVersion="R2007" />
+    <Field Name="AttributeType" Code="71" Type="int16" DefaultValue="1" MinVersion="R2018" Comment="1 = single line, 2 = multiline attribute, 4 = multiline attribute definition." />
+    <Field Name="MTextFlag" Code="70" Type="MTextFlag" DefaultValue="MTextFlag(0)" ReadConverter="MTextFlag(%v)" WriteConverter="int16(%v)" MinVersion="R2007" />
     <Field Name="IsReallyLocked" Code="70" Type="bool" DefaultValue="false" ReadConverter="boolFromShort(%v)" WriteConverter="shortFromBool(%v)" MinVersion="R2007" />
     <Field Name="secondaryAttributeHandlesCount" Code="70" Type="int" DefaultValue="0" ReadConverter="int(%v)" WriteConverter="int16(%v)" MinVersion="R2007" />
     <Field Name="SecondaryAttributeHandles" Code="340" Type="string" DefaultValue="[]string{}" AllowMultiples="true" MinVersion="R2007" />
     <Field Name="AlignmentPoint" Code="10" Type="Point" DefaultValue="*NewOrigin()" CodeOverrides="10,20,30" MinVersion="R2007" />
     <Field Name="AnnotationScale" Code="40" Type="float64" DefaultValue="1.0" MinVersion="R2007" />
     <Field Name="XRecordTag" Code="2" Type="string" DefaultValue='""' MinVersion="R2007" />
-    <!-- entity has a trailing MText -->
+    <!-- text of a multiline attribute, stored as an embedded object (101) -->
     <Field Name="MText" Code="-1" Type="MText" DefaultValue="*NewMText()" />
     <!-- private tracking fields -->
     <Field Name="lastSubclassMarker" Code="-1" Type="string" DefaultValue='""' />
     <Field Name="isVersionSet" Code="-1" Type="bool" DefaultValue="false" />
+    <Field Name="isTagSet" Code="-1" Type="bool" DefaultValue="false" />
+    <Field Name="isLockedInBlockSet" Code="-1" Type="bool" DefaultValue="false" />
+    <Field Name="isInEmbeddedObject" Code="-1" Type="bool" DefaultValue="false" />
     <Field Name="xrecCode70Count" Code="-1" Type="int" DefaultValue="0" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='"AcDbText"' MinVersion="R13" />
@@ -254,6 +258,8 @@
       <WriteField Field="FieldLength" />
       <WriteField Field="VerticalTextJustification" />
       <WriteField Field="IsLockedInBlock" />
+      <WriteField Field="AttributeType" />
+      <WriteSpecificValue Code="72" Value="0" MinVersion="R2018" />
       <WriteSpecificValue Code="100" Value='"AcDbXrecord"' MinVersion="R2007" />
       <WriteField Field="KeepDuplicateRecords" />
       <WriteField Field="MTextFlag" />
@@ -298,18 +304,22 @@
     <Field Name="Normal" Code="210" Type="Vector" DefaultValue="*NewZAxis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
     <Field Name="IsLockedInBlock" Code="280" Type="bool" DefaultValue="false" ReadConverter="boolFromShort(%v)" WriteConverter="shortFromBool(%v)" MinVersion="R2007" />
     <Field Name="KeepDuplicateRecords" Code="280" Type="bool" DefaultValue="false" ReadConverter="boolFromShort(%v)" WriteConverter="shortFromBool(%v)" MinVersion="R2007" />
-    <Field Name="MTextFlag" Code="70" Type="MTextFlag" DefaultValue="MTextFlagMultilineAttribute" ReadConverter="MTextFlag(%v)" WriteConverter="int16(%v)" MinVersion="R2007" />
+    <Field Name="AttributeType" Code="71" Type="int16" DefaultValue="1" MinVersion="R2018" Comment="1 = single line, 2 = multiline attribute, 4 = multiline attribute definition." />
+    <Field Name="MTextFlag" Code="70" Type="MTextFlag" DefaultValue="MTextFlag(0)" ReadConverter="MTextFlag(%v)" WriteConverter="int16(%v)" MinVersion="R2007" />
     <Field Name="IsReallyLocked" Code="70" Type="bool" DefaultValue="false" ReadConverter="boolFromShort(%v)" WriteConverter="shortFromBool(%v)" MinVersion="R2007" />
     <Field Name="secondaryAttributeCount" Code="70" Type="int" DefaultValue="0" ReadConverter="int(%v)" WriteConverter="int16(%v)" MinVersion="R2007" />
     <Field Name="secondaryAttributeHandles" Code="340" Type="string" DefaultValue="[]string{}" AllowMultiples="true" MinVersion="R2007" />
     <Field Name="AlignmentPoint" Code="10" Type="Point" DefaultValue="*NewOrigin()" CodeOverrides="10,20,30" MinVersion="R2007" />
     <Field Name="AnnotationScale" Code="40" Type="float64" DefaultValue="1.0" MinVersion="R2007" />
     <Field Name="XRecordTag" Code="2" Type="string" DefaultValue='""' MinVersion="R2007" />
-    <!-- entity has a trailing MText -->
+    <!-- text of a multiline attribute, stored as an embedded object (101) -->
     <Field Name="MText" Code="-1" Type="MText" DefaultValue="*NewMText()" />
     <!-- private tracking fields -->
     <Field Name="lastSubclassMarker" Code="-1" Type="string" DefaultValue='""' />
     <Field Name="isVersionSet" Code="-1" Type="bool" DefaultValue="false" />
+    <Field Name="isTagSet" Code="-1" Type="bool" DefaultValue="false" />
+    <Field Name="isLockedInBlockSet" Code="-1" Type="bool" DefaultValue="false" />
+    <Field Name="isInEmbeddedObject" Code="-1" Type="bool" DefaultValue="false" />
     <Field Name="xrecCode70Count" Code="-1" Type="int" DefaultValue="0" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='"AcDbText"' MinVersion="R13" />
@@ -332,6 +342,8 @@
       <WriteField Field="SecondAlignmentPoint" />
       <WriteField Field="Normal" />
       <WriteField Field="IsLockedInBlock" />
+      <WriteField Field="AttributeType" />
+      <WriteSpecificValue Code="72" Value="0" MinVersion="R2018" />
       <WriteSpecificValue Code="100" Value='"AcDbXrecord"' MinVersion="R2007" />
       <WriteField Field="KeepDuplicateRecords" />
       <WriteField Field="MTextFlag" />

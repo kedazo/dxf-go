@@ -99,6 +99,10 @@ func assertNotContainsCodePairs(t *testing.T, notExpected, actual []CodePair) {
 	}
 }
 
+func assertEqBool(t *testing.T, expected, actual bool) {
+	assert(t, expected == actual, fmt.Sprintf(expectedActualString("t"), expected, actual))
+}
+
 func assertEqShort(t *testing.T, expected, actual int16) {
 	assert(t, expected == actual, fmt.Sprintf(expectedActualString("d"), expected, actual))
 }

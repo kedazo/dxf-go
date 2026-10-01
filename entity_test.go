@@ -246,6 +246,113 @@ func TestReadInsertAttributeFollowedByStandaloneMText(t *testing.T) {
 	assertEqString(t, "label", entities[1].(*MText).Text)
 }
 
+func TestReadR2018MultilineAttribute(t *testing.T) {
+	att := parseEntity(t, "ATTRIB",
+		NewStringCodePair(100, "AcDbText"),
+		NewDoubleCodePair(10, 1.0),
+		NewDoubleCodePair(20, 2.0),
+		NewDoubleCodePair(30, 0.0),
+		NewDoubleCodePair(40, 2.5),
+		NewStringCodePair(1, "first line"),
+		NewShortCodePair(71, 4),
+		NewShortCodePair(72, 1),
+		NewDoubleCodePair(11, 3.0),
+		NewDoubleCodePair(21, 4.0),
+		NewDoubleCodePair(31, 0.0),
+		NewStringCodePair(100, "AcDbAttribute"),
+		NewShortCodePair(280, 0),
+		NewStringCodePair(2, "ROOM"),
+		NewShortCodePair(70, 0),
+		NewShortCodePair(280, 1),
+		NewShortCodePair(71, 2),
+		NewShortCodePair(72, 0),
+		NewDoubleCodePair(11, 9.0),
+		NewDoubleCodePair(21, 9.0),
+		NewDoubleCodePair(31, 9.0),
+		NewStringCodePair(101, "Embedded Object"),
+		NewDoubleCodePair(10, 5.0),
+		NewDoubleCodePair(20, 6.0),
+		NewDoubleCodePair(30, 0.0),
+		NewDoubleCodePair(40, 2.5),
+		NewStringCodePair(1, "first line\\Psecond line"),
+	).(*Attribute)
+	assertEqString(t, "ROOM", att.AttributeTag)
+	assertEqString(t, "first line", att.Value)
+	assertEqPoint(t, Point{1.0, 2.0, 0.0}, att.Location)
+	assertEqInt(t, 4, att.TextGenerationFlags)
+	assertEqInt(t, int(HorizontalTextJustificationCenter), int(att.HorizontalTextJustification))
+	assertEqPoint(t, Point{3.0, 4.0, 0.0}, att.SecondAlignmentPoint)
+	assertEqInt(t, int(VersionR2010), int(att.Version))
+	assertEqBool(t, true, att.IsLockedInBlock)
+	assertEqInt(t, 2, int(att.AttributeType))
+	assertEqBool(t, true, att.IsMultiline())
+	assertEqPoint(t, Point{5.0, 6.0, 0.0}, att.MText.InsertionPoint)
+	assertEqString(t, "first line\\Psecond line", att.MText.Text)
+}
+
+func TestReadAttributeDefinitionLockPositionWithoutVersion(t *testing.T) {
+	// R2007 has the lock position but no version flag
+	attdef := parseEntity(t, "ATTDEF",
+		NewStringCodePair(100, "AcDbAttributeDefinition"),
+		NewStringCodePair(3, "prompt"),
+		NewStringCodePair(2, "TAG"),
+		NewShortCodePair(70, 0),
+		NewShortCodePair(280, 1),
+	).(*AttributeDefinition)
+	assertEqInt(t, int(VersionR2010), int(attdef.Version))
+	assertEqBool(t, true, attdef.IsLockedInBlock)
+}
+
+func TestWriteMultilineAttributeAsEmbeddedObject(t *testing.T) {
+	attdef := NewAttributeDefinition()
+	attdef.TextTag = "ROOM"
+	attdef.AttributeType = 4
+	attdef.MText.Text = "first\\Psecond"
+	actual := allCodePairs(attdef, R2018)
+	assertContainsCodePairs(t, []CodePair{
+		NewShortCodePair(280, 0),
+		NewShortCodePair(71, 4),
+		NewShortCodePair(72, 0),
+	}, actual)
+	assertContainsCodePairs(t, []CodePair{
+		NewStringCodePair(101, "Embedded Object"),
+	}, actual)
+	assertContainsCodePairs(t, []CodePair{
+		NewStringCodePair(1, "first\\Psecond"),
+	}, actual)
+	assertNotContainsCodePairs(t, []CodePair{
+		NewStringCodePair(0, "MTEXT"),
+	}, actual)
+
+	actual = allCodePairs(attdef, R2013)
+	assertNotContainsCodePairs(t, []CodePair{
+		NewStringCodePair(101, "Embedded Object"),
+	}, actual)
+}
+
+func TestRoundTripMultilineInsertAttribute(t *testing.T) {
+	att := NewAttribute()
+	att.AttributeTag = "ROOM"
+	att.Value = "Konyha"
+	att.HorizontalTextJustification = HorizontalTextJustificationCenter
+	att.AttributeType = 2
+	att.MText.Text = "Konyha\\Pétkező"
+	insert := NewInsert()
+	insert.Name = "B"
+	insert.HasAttributes = true
+	insert.AddAttributes(*att)
+	drawing := *NewDrawing()
+	drawing.Header.Version = R2018
+	drawing.Entities = append(drawing.Entities, insert)
+	roundTripped := roundTripDrawing(t, &drawing)
+	assertEqInt(t, 1, len(roundTripped.Entities))
+	actual := roundTripped.Entities[0].(*Insert).Attributes[0]
+	assertEqString(t, "ROOM", actual.AttributeTag)
+	assertEqInt(t, int(HorizontalTextJustificationCenter), int(actual.HorizontalTextJustification))
+	assertEqInt(t, 2, int(actual.AttributeType))
+	assertEqString(t, "Konyha\\Pétkező", actual.MText.Text)
+}
+
 func TestWriteAttributeDefinitionWithoutTrailingMText(t *testing.T) {
 	attdef := NewAttributeDefinition()
 	actual := drawingCodePairsFromEntity(t, attdef, R14)

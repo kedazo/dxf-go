@@ -119,9 +119,15 @@ func writeEntitiesSection(entities []Entity, writer codePairWriter, version Acad
 
 func trailingCodePairs(entity Entity, version AcadVersion) (pairs []CodePair) {
 	switch ent := entity.(type) {
+	case *Attribute:
+		pairs = append(pairs, embeddedMTextCodePairs(&ent.MText, ent.IsMultiline(), version)...)
+	case *AttributeDefinition:
+		pairs = append(pairs, embeddedMTextCodePairs(&ent.MText, ent.IsMultiline(), version)...)
 	case *Insert:
-		for _, att := range ent.Attributes {
+		for i := range ent.Attributes {
+			att := &ent.Attributes[i]
 			pairs = append(pairs, att.codePairs(version)...)
+			pairs = append(pairs, embeddedMTextCodePairs(&att.MText, att.IsMultiline(), version)...)
 		}
 		pairs = append(pairs, ent.seqend.codePairs(version)...)
 	case *Polyline:
@@ -132,6 +138,43 @@ func trailingCodePairs(entity Entity, version AcadVersion) (pairs []CodePair) {
 	}
 
 	return
+}
+
+// embeddedMTextCodePairs returns the "Embedded Object" section that carries the text of a multiline
+// attribute (R2018+): the MTEXT pairs that follow its AcDbMText subclass marker.
+func embeddedMTextCodePairs(mtext *MText, isMultiline bool, version AcadVersion) []CodePair {
+	if version < R2018 || !isMultiline {
+		return nil
+	}
+	mtextPairs := mtext.codePairs(version)
+	for i, pair := range mtextPairs {
+		if value, ok := pair.Value.(StringCodePairValue); ok && pair.Code == 100 && value.Value == "AcDbMText" {
+			return append([]CodePair{NewStringCodePair(101, "Embedded Object")}, mtextPairs[i+1:]...)
+		}
+	}
+	return nil
+}
+
+// IsMultiline reports whether the attribute's text is stored in its embedded MText.
+func (a *Attribute) IsMultiline() bool {
+	return a.AttributeType == 2 || a.AttributeType == 4
+}
+
+// IsMultiline reports whether the attribute definition's text is stored in its embedded MText.
+func (ad *AttributeDefinition) IsMultiline() bool {
+	return ad.AttributeType == 2 || ad.AttributeType == 4
+}
+
+func applySecondAlignmentPointCodePair(point *Point, codePair CodePair) {
+	value := codePair.Value.(DoubleCodePairValue).Value
+	switch codePair.Code {
+	case 11:
+		point.X = value
+	case 21:
+		point.Y = value
+	case 31:
+		point.Z = value
+	}
 }
 
 func beforeWrite(entity Entity) {
@@ -346,9 +389,17 @@ func (d *dimensionHelper) codePairs(version AcadVersion) (pairs []CodePair) {
 //
 
 func (a *Attribute) tryApplyCodePair(codePair CodePair) {
+	if a.isInEmbeddedObject {
+		a.MText.tryApplyCodePair(codePair)
+		return
+	}
+	isAfterLockPosition := a.isLockedInBlockSet && a.lastSubclassMarker != "AcDbXrecord"
 	switch codePair.Code {
 	case 100:
 		a.lastSubclassMarker = codePair.Value.(StringCodePairValue).Value
+	case 101:
+		// "Embedded Object": the remaining pairs describe the multiline text
+		a.isInEmbeddedObject = true
 	case 1:
 		a.Value = codePair.Value.(StringCodePairValue).Value
 	case 2:
@@ -356,6 +407,7 @@ func (a *Attribute) tryApplyCodePair(codePair CodePair) {
 			a.XRecordTag = codePair.Value.(StringCodePairValue).Value
 		} else {
 			a.AttributeTag = codePair.Value.(StringCodePairValue).Value
+			a.isTagSet = true
 		}
 	case 7:
 		a.TextStyleName = codePair.Value.(StringCodePairValue).Value
@@ -377,12 +429,11 @@ func (a *Attribute) tryApplyCodePair(codePair CodePair) {
 		} else {
 			a.Location.Z = codePair.Value.(DoubleCodePairValue).Value
 		}
-	case 11:
-		a.SecondAlignmentPoint.X = codePair.Value.(DoubleCodePairValue).Value
-	case 21:
-		a.SecondAlignmentPoint.Y = codePair.Value.(DoubleCodePairValue).Value
-	case 31:
-		a.SecondAlignmentPoint.Z = codePair.Value.(DoubleCodePairValue).Value
+	case 11, 21, 31:
+		if !isAfterLockPosition {
+			// R2018 repeats the alignment point after the lock position; keep the first one
+			applySecondAlignmentPointCodePair(&a.SecondAlignmentPoint, codePair)
+		}
 	case 39:
 		a.Thickness = codePair.Value.(DoubleCodePairValue).Value
 	case 40:
@@ -414,9 +465,16 @@ func (a *Attribute) tryApplyCodePair(codePair CodePair) {
 			a.Flags = int(codePair.Value.(ShortCodePairValue).Value)
 		}
 	case 71:
-		a.TextGenerationFlags = int(codePair.Value.(ShortCodePairValue).Value)
+		if isAfterLockPosition {
+			a.AttributeType = codePair.Value.(ShortCodePairValue).Value
+		} else {
+			a.TextGenerationFlags = int(codePair.Value.(ShortCodePairValue).Value)
+		}
 	case 72:
-		a.HorizontalTextJustification = HorizontalTextJustification(codePair.Value.(ShortCodePairValue).Value)
+		if !isAfterLockPosition {
+			// R2018 writes an undocumented 72 after the lock position; it is not the justification
+			a.HorizontalTextJustification = HorizontalTextJustification(codePair.Value.(ShortCodePairValue).Value)
+		}
 	case 73:
 		a.FieldLength = codePair.Value.(ShortCodePairValue).Value
 	case 74:
@@ -430,11 +488,13 @@ func (a *Attribute) tryApplyCodePair(codePair CodePair) {
 	case 280:
 		if a.lastSubclassMarker == "AcDbXrecord" {
 			a.KeepDuplicateRecords = boolFromShort(codePair.Value.(ShortCodePairValue).Value)
-		} else if !a.isVersionSet {
+		} else if !a.isVersionSet && !a.isTagSet {
+			// the version precedes the tag; R2007 files only have the lock position after it
 			a.Version = Version(codePair.Value.(ShortCodePairValue).Value)
 			a.isVersionSet = true
 		} else {
 			a.IsLockedInBlock = boolFromShort(codePair.Value.(ShortCodePairValue).Value)
+			a.isLockedInBlockSet = true
 		}
 	case 340:
 		a.secondaryAttributeHandles = append(a.secondaryAttributeHandles, codePair.Value.(StringCodePairValue).Value)
@@ -444,9 +504,17 @@ func (a *Attribute) tryApplyCodePair(codePair CodePair) {
 }
 
 func (ad *AttributeDefinition) tryApplyCodePair(codePair CodePair) {
+	if ad.isInEmbeddedObject {
+		ad.MText.tryApplyCodePair(codePair)
+		return
+	}
+	isAfterLockPosition := ad.isLockedInBlockSet && ad.lastSubclassMarker != "AcDbXrecord"
 	switch codePair.Code {
 	case 100:
 		ad.lastSubclassMarker = codePair.Value.(StringCodePairValue).Value
+	case 101:
+		// "Embedded Object": the remaining pairs describe the multiline text
+		ad.isInEmbeddedObject = true
 	case 1:
 		ad.Value = codePair.Value.(StringCodePairValue).Value
 	case 2:
@@ -454,6 +522,7 @@ func (ad *AttributeDefinition) tryApplyCodePair(codePair CodePair) {
 			ad.XRecordTag = codePair.Value.(StringCodePairValue).Value
 		} else {
 			ad.TextTag = codePair.Value.(StringCodePairValue).Value
+			ad.isTagSet = true
 		}
 	case 3:
 		ad.Prompt = codePair.Value.(StringCodePairValue).Value
@@ -477,12 +546,11 @@ func (ad *AttributeDefinition) tryApplyCodePair(codePair CodePair) {
 		} else {
 			ad.Location.Z = codePair.Value.(DoubleCodePairValue).Value
 		}
-	case 11:
-		ad.SecondAlignmentPoint.X = codePair.Value.(DoubleCodePairValue).Value
-	case 21:
-		ad.SecondAlignmentPoint.Y = codePair.Value.(DoubleCodePairValue).Value
-	case 31:
-		ad.SecondAlignmentPoint.Z = codePair.Value.(DoubleCodePairValue).Value
+	case 11, 21, 31:
+		if !isAfterLockPosition {
+			// R2018 repeats the alignment point after the lock position; keep the first one
+			applySecondAlignmentPointCodePair(&ad.SecondAlignmentPoint, codePair)
+		}
 	case 39:
 		ad.Thickness = codePair.Value.(DoubleCodePairValue).Value
 	case 40:
@@ -514,9 +582,16 @@ func (ad *AttributeDefinition) tryApplyCodePair(codePair CodePair) {
 			ad.Flags = int(codePair.Value.(ShortCodePairValue).Value)
 		}
 	case 71:
-		ad.TextGenerationFlags = int(codePair.Value.(ShortCodePairValue).Value)
+		if isAfterLockPosition {
+			ad.AttributeType = codePair.Value.(ShortCodePairValue).Value
+		} else {
+			ad.TextGenerationFlags = int(codePair.Value.(ShortCodePairValue).Value)
+		}
 	case 72:
-		ad.HorizontalTextJustification = HorizontalTextJustification(codePair.Value.(ShortCodePairValue).Value)
+		if !isAfterLockPosition {
+			// R2018 writes an undocumented 72 after the lock position; it is not the justification
+			ad.HorizontalTextJustification = HorizontalTextJustification(codePair.Value.(ShortCodePairValue).Value)
+		}
 	case 73:
 		ad.FieldLength = codePair.Value.(ShortCodePairValue).Value
 	case 74:
@@ -530,11 +605,13 @@ func (ad *AttributeDefinition) tryApplyCodePair(codePair CodePair) {
 	case 280:
 		if ad.lastSubclassMarker == "AcDbXrecord" {
 			ad.KeepDuplicateRecords = boolFromShort(codePair.Value.(ShortCodePairValue).Value)
-		} else if !ad.isVersionSet {
+		} else if !ad.isVersionSet && !ad.isTagSet {
+			// the version precedes the tag; R2007 files only have the lock position after it
 			ad.Version = Version(codePair.Value.(ShortCodePairValue).Value)
 			ad.isVersionSet = true
 		} else {
 			ad.IsLockedInBlock = boolFromShort(codePair.Value.(ShortCodePairValue).Value)
+			ad.isLockedInBlockSet = true
 		}
 	case 340:
 		ad.SecondaryAttributeHandles = append(ad.SecondaryAttributeHandles, codePair.Value.(StringCodePairValue).Value)
