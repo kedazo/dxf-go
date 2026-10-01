@@ -106,7 +106,7 @@ func TestReadUnknownEntityInBlock(t *testing.T) {
 	blocks := parseBlocks(t,
 		NewStringCodePair(0, "BLOCK"),
 		NewStringCodePair(2, "B"),
-		NewStringCodePair(0, "MULTILEADER"),
+		NewStringCodePair(0, "EXTRUDEDSURFACE"),
 		NewStringCodePair(8, "NOTES"),
 		NewStringCodePair(0, "LINE"),
 		NewStringCodePair(0, "ENDBLK"),

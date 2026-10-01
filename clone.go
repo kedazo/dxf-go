@@ -102,6 +102,8 @@ func resetClonedEntity(e Entity) {
 		ent.overrideData = cloneSlice(ent.overrideData)
 	case *Table:
 		ent.tableData = cloneSlice(ent.tableData)
+	case *MLeader:
+		ent.leaderData = cloneSlice(ent.leaderData)
 	case *ProxyEntity:
 		ent.graphicsDataString = cloneSlice(ent.graphicsDataString)
 		ent.entityDataString = cloneSlice(ent.entityDataString)

@@ -148,6 +148,10 @@ func (w *blockWalker) walkEntity(e Entity, m Matrix, path []*Insert, blockNames 
 	case *Table:
 		// a table shows its block like an INSERT; the INSERT in the path carries the table's properties
 		return w.walkInsert(ent.asInsert(), m, path, blockNames)
+	case *MLeader:
+		if insert := ent.contentInsert(w.drawing); insert != nil {
+			return w.walkInsert(insert, m, path, blockNames)
+		}
 	case Dimension:
 		if w.options.IncludeDimensionBlocks && ent.BlockName() != "" {
 			if block := w.resolveBlock(e, ent.BlockName(), path, blockNames); block != nil {

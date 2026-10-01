@@ -96,6 +96,8 @@ func createCustomEntity(entityType string) (entity Entity, ok bool) {
 		entity = NewMesh()
 	case "ACAD_TABLE":
 		entity = newTable()
+	case "MULTILEADER":
+		entity = newMLeader()
 	default:
 		ok = false
 	}
@@ -267,6 +269,8 @@ func afterRead(entity *Entity) {
 		ent.parseMeshData()
 	case *Table:
 		ent.parseCells()
+	case *MLeader:
+		ent.parseLeaderData()
 	case *DgnUnderlay:
 		afterReadUnderlay(ent)
 	case *DwfUnderlay:
