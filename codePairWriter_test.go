@@ -122,6 +122,35 @@ func TestWriteStringAsBinary(t *testing.T) {
 	assertBinary(t, []byte("é\x00"), formatStringBinary("é", R2007))
 }
 
+func TestWriteBinaryChunksAsBinary(t *testing.T) {
+	assertCodePairBinary(t, []byte{0x36, 0x01, 0x03, 0xDE, 0xAD, 0x01}, NewStringCodePair(310, "dead01"), R2004)
+	assertCodePairBinary(t, []byte{0x36, 0x01, 0x00}, NewStringCodePair(310, ""), R2004)
+	assertCodePairBinary(t, []byte{0xEC, 0x03, 0x02, 0x00, 0x0A}, NewStringCodePair(1004, "000A"), R2004)
+	// not hex: the text itself is kept
+	assertCodePairBinary(t, []byte{0x36, 0x01, 0x02, 0x78, 0x79}, NewStringCodePair(310, "xy"), R2004)
+}
+
+func TestRoundTripLongBinaryChunk(t *testing.T) {
+	// 300 bytes don't fit behind one length byte, so they are split into 127 + 127 + 46
+	data := make([]byte, 300)
+	for i := range data {
+		data[i] = byte(i)
+	}
+	value := fmt.Sprintf("%X", data)
+	buf := new(bytes.Buffer)
+	writer := newBinaryCodePairWriter(buf, R2004)
+	if err := writer.writeCodePair(NewStringCodePair(310, value)); err != nil {
+		t.Fatal(err)
+	}
+
+	actual := readCodePairsBinary(t, buf.Bytes(), true)
+	assertEqCodePairs(t, []CodePair{
+		NewStringCodePair(310, value[:254]),
+		NewStringCodePair(310, value[254:508]),
+		NewStringCodePair(310, value[508:]),
+	}, actual)
+}
+
 func TestRoundTripNonAsciiBinaryFile(t *testing.T) {
 	for _, version := range []AcadVersion{R12, R2004, R2007, R2018} {
 		drawing := *NewDrawing()

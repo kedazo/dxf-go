@@ -2,6 +2,7 @@ package dxf
 
 import (
 	"encoding/binary"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -239,24 +240,56 @@ func (b *binaryCodePairWriter) init() error {
 	return nil
 }
 
-func (b *binaryCodePairWriter) writeCodePair(codePair CodePair) error {
-	var err error
+func (b *binaryCodePairWriter) writeCode(code int) error {
 	if b.version >= R13 {
 		// after R13 codes are always 2 bytes
-		err = b.writeShort(int16(codePair.Code))
-		if err != nil {
-			return err
-		}
-	} else if codePair.Code >= 255 {
-		// before R13 codes were 1 or 3 bytes
-		err = b.writeByte(255)
-		if err != nil {
-			return err
-		}
-		err = b.writeShort(int16(codePair.Code))
-	} else {
-		err = b.writeByte(byte(codePair.Code))
+		return b.writeShort(int16(code))
 	}
+	if code >= 255 {
+		// before R13 codes were 1 or 3 bytes
+		err := b.writeByte(255)
+		if err != nil {
+			return err
+		}
+		return b.writeShort(int16(code))
+	}
+	return b.writeByte(byte(code))
+}
+
+// maxBinaryChunkLength is what AutoCAD puts in one binary chunk; the length byte would allow 255.
+const maxBinaryChunkLength = 127
+
+// writeBinaryChunks writes hex text as length-prefixed binary chunks, split when it doesn't fit in one.
+func (b *binaryCodePairWriter) writeBinaryChunks(code int, value string) error {
+	data, err := hex.DecodeString(strings.TrimSpace(value))
+	if err != nil {
+		// not hex: keep the text itself rather than losing it
+		data = []byte(value)
+	}
+	for {
+		chunk := data[:min(len(data), maxBinaryChunkLength)]
+		data = data[len(chunk):]
+		err = b.writeCode(code)
+		if err != nil {
+			return err
+		}
+		err = b.writeByte(byte(len(chunk)))
+		if err != nil {
+			return err
+		}
+		err = b.writeBytes(chunk)
+		if err != nil || len(data) == 0 {
+			return err
+		}
+	}
+}
+
+func (b *binaryCodePairWriter) writeCodePair(codePair CodePair) error {
+	if value, ok := codePair.Value.(StringCodePairValue); ok && isBinaryChunkCode(codePair.Code) {
+		return b.writeBinaryChunks(codePair.Code, value.Value)
+	}
+
+	err := b.writeCode(codePair.Code)
 	if err != nil {
 		return err
 	}

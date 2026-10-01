@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
 	"math"
 	"strconv"
@@ -321,7 +323,8 @@ func (a *textCodePairReader) readCodePair() (CodePair, error) {
 	}
 
 	typeName := codeTypeName(code)
-	if typeName == "String" {
+	if typeName == "String" || typeName == "Unknown" {
+		// codes outside the official ranges are kept as text instead of failing the whole file
 		value, err := a.decodeString(rawValue)
 		if err != nil {
 			return codePair, err
@@ -484,12 +487,39 @@ func readRawStringBinary(reader *bufio.Reader) ([]byte, error) {
 	return buf[:len(buf)-1], nil
 }
 
+// isBinaryChunkCode reports whether a code holds binary data: hex text in text files, a length byte followed by that
+// many bytes in binary files.
+func isBinaryChunkCode(code int) bool {
+	return between(code, 310, 319) || code == 1004
+}
+
+// readBinaryChunk reads a length-prefixed binary chunk and returns it as hex text, the way text files store it.
+func readBinaryChunk(reader *bufio.Reader) (string, error) {
+	length, err := reader.ReadByte()
+	if err != nil {
+		return "", err
+	}
+	data, err := readBytes(reader, int(length))
+	if err != nil {
+		return "", err
+	}
+	return strings.ToUpper(hex.EncodeToString(data)), nil
+}
+
 func (b *binaryCodePairReader) readCodePair() (CodePair, error) {
 	var pair CodePair
 	var err error
 	code, err := b.readCode()
 	if err != nil {
 		return pair, err
+	}
+
+	if isBinaryChunkCode(code) {
+		value, err := readBinaryChunk(b.reader)
+		if err != nil {
+			return pair, err
+		}
+		return NewStringCodePair(code, value), nil
 	}
 
 	switch codeTypeName(code) {
@@ -557,6 +587,9 @@ func (b *binaryCodePairReader) readCodePair() (CodePair, error) {
 			return pair, err
 		}
 		pair = NewStringCodePair(code, value)
+	default:
+		// the size of a value of unknown type isn't known, so nothing after it can be read
+		return pair, fmt.Errorf("unknown group code %d in binary DXF", code)
 	}
 
 	return pair, err

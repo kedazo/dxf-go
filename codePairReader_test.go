@@ -218,6 +218,70 @@ func TestAutoDetectCodePairsFromBinaryPostR13(t *testing.T) {
 	assertEqCodePairs(t, expected, actual)
 }
 
+func TestReadBinaryChunksAsBinary(t *testing.T) {
+	data := []byte{
+		0x36, 0x01, 0x03, 0xDE, 0xAD, 0x01, // 310/DEAD01
+		0x36, 0x01, 0x00, // 310/(empty)
+		0xEC, 0x03, 0x02, 0x00, 0x0A, // 1004/000A
+		0x01, 0x00, 0x61, 0x00, // 1/a
+	}
+
+	actual := readCodePairsBinary(t, data, true)
+	expected := []CodePair{
+		NewStringCodePair(310, "DEAD01"),
+		NewStringCodePair(310, ""),
+		NewStringCodePair(1004, "000A"),
+		NewStringCodePair(1, "a"),
+	}
+
+	assertEqCodePairs(t, expected, actual)
+}
+
+func TestReadUnknownCodeAsBinaryReturnsError(t *testing.T) {
+	reader := binaryCodePairReader{
+		reader:          bufio.NewReader(bytes.NewReader([]byte{0x96, 0x00, 0x61, 0x00})), // 150/?
+		hasReturnedPair: true,
+		isPostR13:       true,
+	}
+	_, err := reader.readCodePair()
+	if err == nil {
+		t.Error("expected an error for an unknown group code")
+	}
+}
+
+func TestReadUnknownCodeAsText(t *testing.T) {
+	actual := readCodePairsText(t, join(
+		"150", "abc",
+		"1080", "1.5",
+		"  1", "a",
+	))
+	expected := []CodePair{
+		NewStringCodePair(150, "abc"),
+		NewStringCodePair(1080, "1.5"),
+		NewStringCodePair(1, "a"),
+	}
+
+	assertEqCodePairs(t, expected, actual)
+}
+
+func TestReadEntityWithUnknownCodes(t *testing.T) {
+	drawing := parse(t, join(
+		"  0", "SECTION",
+		"  2", "ENTITIES",
+		"  0", "LINE",
+		"150", "abc",
+		" 10", "1.0",
+		"1080", "xyz",
+		" 11", "2.0",
+		"  0", "ENDSEC",
+		"  0", "EOF",
+	))
+	assertEqInt(t, 1, len(drawing.Entities))
+	line := drawing.Entities[0].(*Line)
+	assertEqPoint(t, Point{1.0, 0.0, 0.0}, line.P1)
+	assertEqPoint(t, Point{2.0, 0.0, 0.0}, line.P2)
+}
+
 func TestReadEmptyFile(t *testing.T) {
 	_ = parse(t, "")
 }
