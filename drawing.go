@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -296,13 +295,19 @@ func (d *Drawing) saveToCodePairWriter(writer codePairWriter) error {
 
 // ReadFile reads a DXF drawing from the specified path.
 func ReadFile(path string) (Drawing, error) {
-	var drawing Drawing
-	buf, err := ioutil.ReadFile(path)
-	if err != nil {
-		return drawing, err
-	}
+	return ReadFileWithEncoding(path, encoding.Nop)
+}
 
-	return ReadFromReader(bytes.NewReader(buf))
+// ReadFileWithEncoding reads a DXF drawing from the specified path. Pre-2007 text is decoded with the specified
+// encoding instead of the drawing's `$DWGCODEPAGE`.
+func ReadFileWithEncoding(path string, e encoding.Encoding) (Drawing, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return Drawing{}, err
+	}
+	defer file.Close()
+
+	return ReadFromReaderWithEncoding(file, e)
 }
 
 // ReadFromReader reads a DXF drawing from the specified io.Reader.

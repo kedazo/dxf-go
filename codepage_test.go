@@ -3,6 +3,8 @@ package dxf
 import (
 	"bytes"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -134,6 +136,28 @@ func TestReadBinaryWithExplicitEncoding(t *testing.T) {
 		t.Fatal(err)
 	}
 	assertEqString(t, "Elõtér", drawing.Entities[0].(*Text).Value)
+}
+
+func TestReadFileWithEncoding(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "drawing.dxf")
+	if err := os.WriteFile(path, []byte(codePageDrawing("AC1015", "ANSI_1250", "El\xF5t\xE9r")), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	drawing, err := ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertEqString(t, "Előtér", drawing.Entities[0].(*Text).Value)
+
+	drawing, err = ReadFileWithEncoding(path, charmap.Windows1252)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertEqString(t, "Elõtér", drawing.Entities[0].(*Text).Value)
+
+	_, err = ReadFile(filepath.Join(t.TempDir(), "missing.dxf"))
+	assert(t, err != nil, "expected an error for a missing file")
 }
 
 func TestEncodingFromCodePage(t *testing.T) {
