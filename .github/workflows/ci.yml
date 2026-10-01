@@ -11,10 +11,10 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     steps:
-    - uses: actions/setup-go@v2
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
       with:
-        stable: true
-    - uses: actions/checkout@v1
+        go-version-file: go.mod
     - name: Build and test
       shell: pwsh
       run: ./build-and-test.ps1
