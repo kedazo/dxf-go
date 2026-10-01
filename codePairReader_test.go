@@ -48,6 +48,20 @@ func TestReadStringAsText(t *testing.T) {
 	assertReadStringText(t, "Repère pièce", "Rep\\U+00E8re pi\\U+00E8ce", false)
 }
 
+func TestReadEscapedUnicodeNextToOtherEscapes(t *testing.T) {
+	// MTEXT paragraph starting with a non-ASCII character
+	assertReadStringText(t, "Előtér\\PŐr", "El\\U+0151t\\U+00E9r\\P\\U+0150r", false)
+	assertReadStringText(t, "{\\fArial|b0;Á}", "{\\fArial|b0;\\U+00C1}", false)
+	// escape sequences after multi-byte characters
+	assertReadStringText(t, "éé", "é\\U+00E9", false)
+	// incomplete or invalid escapes are kept as they are
+	assertReadStringText(t, "a\\U+00", "a\\U+00", false)
+	assertReadStringText(t, "\\U+00G1", "\\U+00G1", false)
+	assertReadStringText(t, "\\P", "\\P", false)
+	// invalid UTF-8 bytes become the replacement character
+	assertReadStringText(t, "a�b", "a\xF5b", false)
+}
+
 func TestReadCodePairAsText(t *testing.T) {
 	// \r\n
 	assertReadCodePairText(t, NewBoolCodePair(290, true), "290\r\n1")

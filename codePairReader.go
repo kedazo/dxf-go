@@ -559,42 +559,37 @@ func (b *binaryCodePairReader) setUtf8Reader() {
 	// noop
 }
 
+// parseUtf8 decodes the `\U+XXXX` escapes that pre-2007 files use for characters outside their code page. Other
+// backslash sequences (e.g. MTEXT formatting like `\P`) are kept as they are, and invalid UTF-8 bytes become U+FFFD.
 func parseUtf8(v string) string {
-	var final strings.Builder
-	var seq strings.Builder
-	inEscapeSequence := false
-	sequenceStart := 0
-	for i, r := range v {
-		if !inEscapeSequence {
-			if r == '\\' {
-				inEscapeSequence = true
-				sequenceStart = i
-				seq.Reset()
-				seq.WriteRune(r)
-			} else {
-				final.WriteRune(r)
-			}
-		} else {
-			seq.WriteRune(r)
-			if i == sequenceStart+6 {
-				inEscapeSequence = false
-				escaped := seq.String()
-				seq.Reset()
-				if strings.HasPrefix(escaped, "\\U+") {
-					codeStr := escaped[3:]
-					code, err := strconv.ParseUint(codeStr, 16, 64)
-					if err == nil {
-						final.WriteRune(rune(code))
-					} else {
-						final.WriteRune('?')
-					}
-				} else {
-					final.WriteString(escaped)
-				}
-			}
-		}
+	if utf8.ValidString(v) && !strings.Contains(v, `\U+`) {
+		return v
 	}
 
-	final.WriteString(seq.String())
+	var final strings.Builder
+	final.Grow(len(v))
+	for i := 0; i < len(v); {
+		if v[i] == '\\' && i+7 <= len(v) && v[i+1] == 'U' && v[i+2] == '+' && isHexDigits(v[i+3:i+7]) {
+			code, _ := strconv.ParseUint(v[i+3:i+7], 16, 32)
+			final.WriteRune(rune(code))
+			i += 7
+			continue
+		}
+
+		r, size := utf8.DecodeRuneInString(v[i:])
+		final.WriteRune(r) // utf8.RuneError for an invalid byte
+		i += size
+	}
+
 	return final.String()
+}
+
+func isHexDigits(s string) bool {
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if !(c >= '0' && c <= '9' || c >= 'a' && c <= 'f' || c >= 'A' && c <= 'F') {
+			return false
+		}
+	}
+	return true
 }
