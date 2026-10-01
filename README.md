@@ -63,6 +63,15 @@ func main() {
 
 More examples are in [example_test.go](example_test.go).
 
+## Checking drawings
+
+`cmd/dxfcheck` reads drawings and reports anything that looks parsed wrong or is missing. DWG files and DWG xrefs are
+converted with LibreDWG's `dwg2dxf` first, and the conversion is checked against the DWG's own entity counts:
+
+```bash
+go run github.com/kedazo/dxf-go/cmd/dxfcheck [-keep dir] plan.dxf sheet.dxf xref.dwg
+```
+
 ## Development
 
 The entity, header and table code is generated from the XML files in `spec/`:
