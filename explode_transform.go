@@ -254,8 +254,7 @@ func (t *entityTransformer) transformCircle(circle *Circle) []Entity {
 	}
 	scale, similar := plane.similarityScale()
 	if !similar {
-		t.report(IssueUnsupported, circle, "CIRCLE can't be scaled non-uniformly")
-		return nil
+		return t.circularArcAsEllipse(circle, circle.Normal, circle.Center, circle.Radius, 0, 2*math.Pi, circle.Thickness)
 	}
 	c := CloneEntity(circle).(*Circle)
 	c.Center = plane.point(circle.Center)
@@ -272,8 +271,8 @@ func (t *entityTransformer) transformArc(arc *Arc) []Entity {
 	}
 	scale, similar := plane.similarityScale()
 	if !similar {
-		t.report(IssueUnsupported, arc, "ARC can't be scaled non-uniformly")
-		return nil
+		start := arc.StartAngle * math.Pi / 180
+		return t.circularArcAsEllipse(arc, arc.Normal, arc.Center, arc.Radius, start, start+arcSweep(arc.StartAngle, arc.EndAngle)*math.Pi/180, arc.Thickness)
 	}
 	c := CloneEntity(arc).(*Arc)
 	c.Center = plane.point(arc.Center)
@@ -292,6 +291,34 @@ func (t *entityTransformer) transformArc(arc *Arc) []Entity {
 		c.EndAngle = normalizeDegrees(c.EndAngle)
 	}
 	return []Entity{c}
+}
+
+// circularArcAsEllipse converts a circle or arc (given in its object coordinate system, angles in radians) that is
+// scaled non-uniformly into the exact ELLIPSE.
+func (t *entityTransformer) circularArcAsEllipse(e Entity, normal Vector, center Point, radius, start, end, thickness float64) []Entity {
+	geometry, ok := t.circularArcGeometry(normal, center, radius, start, end)
+	if !ok {
+		t.report(IssueDegenerate, e, "the transformation collapses the "+strings.ToUpper(e.typeString()))
+		return nil
+	}
+	ellipse := NewEllipse()
+	copyEntityProperties(e, ellipse)
+	geometry.apply(ellipse)
+	if thickness != 0 {
+		t.report(IssueApproximated, e, "an ELLIPSE has no thickness")
+	}
+	return []Entity{ellipse}
+}
+
+// circularArcGeometry returns the transformed ellipse of an arc in an object coordinate system.
+func (t *entityTransformer) circularArcGeometry(normal Vector, center Point, radius, start, end float64) (ellipseGeometry, bool) {
+	if normal.IsZero(0) {
+		normal = *NewZAxis()
+	}
+	toWCS := OCSToWCSMatrix(normal)
+	u := t.m.TransformVector(toWCS.TransformVector(Vector{radius, 0, 0}))
+	v := t.m.TransformVector(toWCS.TransformVector(Vector{0, radius, 0}))
+	return t.ellipseFromConjugateAxes(t.m.TransformPoint(toWCS.TransformPoint(center)), u, v, start, end)
 }
 
 // ellipseGeometry is an ellipse in world coordinates; angles are ellipse parameters in radians.
@@ -381,8 +408,13 @@ func (t *entityTransformer) transformLWPolyline(polyline *LWPolyline) []Entity {
 	}
 	scale, similar := plane.similarityScale()
 	if !similar && lwPolylineHasBulges(polyline) {
-		t.report(IssueUnsupported, polyline, "LWPOLYLINE arcs can't be scaled non-uniformly")
-		return nil
+		vertices := make([]bulgeVertex, len(polyline.Vertices))
+		hasWidths := polyline.ConstantWidth != 0
+		for i, vertex := range polyline.Vertices {
+			vertices[i] = bulgeVertex{vertex.X, vertex.Y, vertex.Bulge}
+			hasWidths = hasWidths || vertex.StartingWidth != 0 || vertex.EndingWidth != 0
+		}
+		return t.splitBulgedPolyline(polyline, polyline.ExtrusionDirection, polyline.Elevation(), vertices, polyline.IsClosed(), hasWidths, polyline.Thickness)
 	}
 
 	widthScale := t.widthScale(plane, scale, similar)
@@ -436,6 +468,57 @@ func polylineHasBulges(polyline *Polyline) bool {
 	return false
 }
 
+type bulgeVertex struct {
+	x, y, bulge float64
+}
+
+// splitBulgedPolyline converts a polyline whose arcs become elliptical into LINE and ELLIPSE entities.
+func (t *entityTransformer) splitBulgedPolyline(e Entity, normal Vector, elevation float64, vertices []bulgeVertex, isClosed, hasWidths bool, thickness float64) (result []Entity) {
+	if normal.IsZero(0) {
+		normal = *NewZAxis()
+	}
+	toWCS := OCSToWCSMatrix(normal)
+	world := func(v bulgeVertex) Point {
+		return t.m.TransformPoint(toWCS.TransformPoint(Point{v.x, v.y, elevation}))
+	}
+
+	segmentCount := len(vertices) - 1
+	if isClosed {
+		segmentCount = len(vertices)
+	}
+	for i := 0; i < segmentCount; i++ {
+		start, end := vertices[i], vertices[(i+1)%len(vertices)]
+		center, radius, startAngle, sweep, isArc := bulgeArc([2]float64{start.x, start.y}, [2]float64{end.x, end.y}, start.bulge)
+		if !isArc {
+			line := NewLine()
+			copyEntityProperties(e, line)
+			line.P1, line.P2 = world(start), world(end)
+			result = append(result, line)
+			continue
+		}
+
+		// ellipses always run counter-clockwise
+		from, to := startAngle, startAngle+sweep
+		if sweep < 0 {
+			from, to = to, from
+		}
+		geometry, ok := t.circularArcGeometry(normal, Point{center[0], center[1], elevation}, radius, from, to)
+		if !ok {
+			t.report(IssueDegenerate, e, "the transformation collapses a "+strings.ToUpper(e.typeString())+" arc")
+			continue
+		}
+		ellipse := NewEllipse()
+		copyEntityProperties(e, ellipse)
+		geometry.apply(ellipse)
+		result = append(result, ellipse)
+	}
+
+	if hasWidths || thickness != 0 {
+		t.report(IssueApproximated, e, strings.ToUpper(e.typeString())+" arcs became ellipses; widths and thickness were dropped")
+	}
+	return
+}
+
 func (t *entityTransformer) transformPolyline(polyline *Polyline) []Entity {
 	c := CloneEntity(polyline).(*Polyline)
 	if polyline.Is3DPolyline() || polyline.Is3DPolygonMesh() || polyline.IsPolyfaceMesh() {
@@ -456,8 +539,13 @@ func (t *entityTransformer) transformPolyline(polyline *Polyline) []Entity {
 	}
 	scale, similar := plane.similarityScale()
 	if !similar && polylineHasBulges(polyline) {
-		t.report(IssueUnsupported, polyline, "POLYLINE arcs can't be scaled non-uniformly")
-		return nil
+		vertices := make([]bulgeVertex, len(polyline.Vertices))
+		hasWidths := polyline.DefaultStartingWidth != 0 || polyline.DefaultEndingWidth != 0
+		for i, vertex := range polyline.Vertices {
+			vertices[i] = bulgeVertex{vertex.Location.X, vertex.Location.Y, vertex.Bulge}
+			hasWidths = hasWidths || vertex.StartingWidth != 0 || vertex.EndingWidth != 0
+		}
+		return t.splitBulgedPolyline(polyline, polyline.Normal, polyline.Location.Z, vertices, polyline.IsClosed(), hasWidths, polyline.Thickness)
 	}
 
 	widthScale := t.widthScale(plane, scale, similar)

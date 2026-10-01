@@ -91,26 +91,36 @@ func flattenBulgedPolyline(vertices [][2]float64, bulges []float64, isClosed boo
 // flattenBulge returns the points after start along the segment from start to end with the given bulge (the tangent
 // of a quarter of the arc's included angle; positive is counter-clockwise).
 func flattenBulge(start, end [2]float64, bulge, tolerance float64) [][2]float64 {
-	dx, dy := end[0]-start[0], end[1]-start[1]
-	chord := math.Hypot(dx, dy)
-	if bulge == 0 || chord == 0 {
+	center, radius, startAngle, sweep, ok := bulgeArc(start, end, bulge)
+	if !ok {
 		return [][2]float64{end}
 	}
-
-	sweep := 4.0 * math.Atan(bulge)
-	radius := chord / (2.0 * math.Abs(math.Sin(sweep/2.0)))
-	// the center is on the left of the chord for counter-clockwise arcs
-	offset := chord * (1.0 - bulge*bulge) / (4.0 * bulge)
-	center := [2]float64{
-		start[0] + dx/2.0 - dy/chord*offset,
-		start[1] + dy/2.0 + dx/chord*offset,
-	}
-	startAngle := math.Atan2(start[1]-center[1], start[0]-center[0])
 
 	points := arcPoints(center, radius, startAngle, sweep, tolerance)
 	// end exactly on the next vertex
 	points[len(points)-1] = end
 	return points
+}
+
+// bulgeArc returns the circular arc of a polyline segment with a bulge: its center, radius, start angle and signed
+// sweep (radians, positive is counter-clockwise). It returns false for straight segments.
+func bulgeArc(start, end [2]float64, bulge float64) (center [2]float64, radius, startAngle, sweep float64, ok bool) {
+	dx, dy := end[0]-start[0], end[1]-start[1]
+	chord := math.Hypot(dx, dy)
+	if bulge == 0 || chord == 0 {
+		return
+	}
+
+	sweep = 4.0 * math.Atan(bulge)
+	radius = chord / (2.0 * math.Abs(math.Sin(sweep/2.0)))
+	// the center is on the left of the chord for counter-clockwise arcs
+	offset := chord * (1.0 - bulge*bulge) / (4.0 * bulge)
+	center = [2]float64{
+		start[0] + dx/2.0 - dy/chord*offset,
+		start[1] + dy/2.0 + dx/chord*offset,
+	}
+	startAngle = math.Atan2(start[1]-center[1], start[0]-center[0])
+	return center, radius, startAngle, sweep, true
 }
 
 func flattenHatchEdge(edge HatchEdge, tolerance float64) (points [][2]float64, exact bool) {

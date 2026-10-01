@@ -234,6 +234,73 @@ func TestTransformTextExactly(t *testing.T) {
 	}
 }
 
+// nonUniformTransforms change shapes: circles become ellipses.
+var nonUniformTransforms = map[string]Matrix{
+	"stretched":          ScaleMatrix(1, 3, 1).Mul(RotationZMatrix(0.4)),
+	"sheared":            {{1, 0.7, 0, 2}, {0, 1, 0, 3}, {0, 0, 1, 4}, {0, 0, 0, 1}},
+	"stretched mirrored": RotationZMatrix(0.3).Mul(ScaleMatrix(-1, 2.5, 1)),
+	"stretched tilted":   OCSToWCSMatrix(Vector{1, -2, 0.5}).Mul(ScaleMatrix(2, 0.5, 1)),
+}
+
+func TestTransformCircleAndArcNonUniformlyBecomeEllipses(t *testing.T) {
+	circle := NewCircle()
+	circle.Center, circle.Radius = Point{1, 2, 0.5}, 2
+	arc := NewArc()
+	arc.Center, arc.Radius, arc.StartAngle, arc.EndAngle = Point{-1, 0, 0}, 3, 300, 60
+
+	for name, m := range nonUniformTransforms {
+		ellipse := transformSingle(t, circle, m).(*Ellipse)
+		assertNearFloat64(t, 2*math.Pi, ellipse.EndAngle-ellipse.StartAngle)
+		for i := 0; i < 12; i++ {
+			assertOnEllipse(t, name+" circle", m.TransformPoint(ocsCirclePoint(circle.Normal, circle.Center, circle.Radius, float64(i)*30)), ellipse)
+		}
+
+		ellipse = transformSingle(t, arc, m).(*Ellipse)
+		for i := 0; i <= 8; i++ {
+			assertOnEllipse(t, name+" arc", m.TransformPoint(ocsCirclePoint(arc.Normal, arc.Center, arc.Radius, arc.StartAngle+120*float64(i)/8)), ellipse)
+		}
+		// the end points match (in either order, mirroring reverses the direction)
+		start, end := ellipsePoint(ellipse, ellipse.StartAngle), ellipsePoint(ellipse, ellipse.EndAngle)
+		arcStart := m.TransformPoint(ocsCirclePoint(arc.Normal, arc.Center, arc.Radius, arc.StartAngle))
+		arcEnd := m.TransformPoint(ocsCirclePoint(arc.Normal, arc.Center, arc.Radius, arc.EndAngle))
+		matches := (arcStart.Sub(start).Length() < 1e-9 && arcEnd.Sub(end).Length() < 1e-9) || (arcStart.Sub(end).Length() < 1e-9 && arcEnd.Sub(start).Length() < 1e-9)
+		assert(t, matches, name+": the elliptical arc has the wrong end points")
+	}
+}
+
+func TestTransformBulgedPolylineNonUniformlySplitsIntoLinesAndEllipses(t *testing.T) {
+	polyline := NewLWPolyline()
+	polyline.SetIsClosed(true)
+	polyline.SetElevation(1)
+	polyline.Vertices = []LwVertex{{X: 0, Y: 0, Bulge: 0.5}, {X: 4, Y: 0, Bulge: -1}, {X: 4, Y: 4}}
+
+	for name, m := range nonUniformTransforms {
+		result, issues := TransformEntity(polyline, m, ExplodeOptions{})
+		assertEqInt(t, 0, len(issues))
+		assertEqInt(t, 3, len(result))
+		toWorld := func(x, y float64) Point {
+			return m.TransformPoint(Point{x, y, 1})
+		}
+		for i := 0; i < 2; i++ {
+			ellipse := result[i].(*Ellipse)
+			a, b := polyline.Vertices[i], polyline.Vertices[i+1]
+			// flattened bulge points lie exactly on the original arc
+			for _, p := range flattenBulge([2]float64{a.X, a.Y}, [2]float64{b.X, b.Y}, a.Bulge, 0.01) {
+				assertOnEllipse(t, fmt.Sprintf("%s segment %d", name, i), toWorld(p[0], p[1]), ellipse)
+			}
+			assertOnEllipse(t, name, toWorld(a.X, a.Y), ellipse)
+		}
+		closing := result[2].(*Line)
+		assertNearPointWithin(t, name+" closing line", toWorld(4, 4), closing.P1)
+		assertNearPointWithin(t, name+" closing line", toWorld(0, 0), closing.P2)
+	}
+
+	polyline.ConstantWidth = 0.5
+	_, issues := TransformEntity(polyline, nonUniformTransforms["stretched"], ExplodeOptions{})
+	assertEqInt(t, 1, len(issues))
+	assertEqInt(t, int(IssueApproximated), int(issues[0].Kind))
+}
+
 func TestTransformPointsOfLinearEntities(t *testing.T) {
 	m := similarityTransforms["mirrored tilted"]
 
