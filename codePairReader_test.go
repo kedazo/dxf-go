@@ -31,6 +31,20 @@ func TestReadIntAsText(t *testing.T) {
 	assertReadIntText(t, 2, "          2          ")
 }
 
+func TestReadIntegersWrittenAsDecimals(t *testing.T) {
+	assertReadShortText(t, 1, "1.0")
+	assertReadShortText(t, -2, "  -2.7  ")
+	assertReadIntText(t, 3, "3.0")
+	assertReadLongText(t, 4, "4e0")
+	assertReadBoolText(t, true, "1.0")
+	if _, err := readShortText("abc"); err == nil {
+		t.Error("expected an error for a non-number")
+	}
+	if _, err := readLongText("1e30"); err == nil {
+		t.Error("expected an error for a number out of range")
+	}
+}
+
 func TestReadLongAsText(t *testing.T) {
 	assertReadLongText(t, 2, "2")
 	assertReadLongText(t, -2, "-2")

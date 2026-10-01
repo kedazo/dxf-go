@@ -75,6 +75,41 @@ func TestTolerateMalformedHeaderVariable(t *testing.T) {
 	assertEqInt(t, int(R14), int(header.Version))
 }
 
+func TestReadMaintenanceVersionWithCode90(t *testing.T) {
+	header := parseHeader(t,
+		NewStringCodePair(9, "$ACADMAINTVER"),
+		NewIntCodePair(90, 105),
+	)
+	assertEqInt(t, 105, int(header.MaintenanceVersion))
+}
+
+func TestReadOutOfRangeDates(t *testing.T) {
+	drawing := parse(t, join(
+		"  0", "SECTION",
+		"  2", "HEADER",
+		"  9", "$TDCREATE",
+		" 40", "0.0",
+		"  9", "$TDUPDATE",
+		" 40", "1.0e300",
+		"  9", "$TDINDWG",
+		" 40", "1.0e300",
+		"  9", "$TDUCREATE",
+		" 40", "2634300.5",
+		"  0", "ENDSEC",
+		"  0", "EOF",
+	))
+	// unset or bogus dates are the zero time, and are written back as 0
+	assert(t, drawing.Header.CreationDate.IsZero(), fmt.Sprintf("expected the zero time, got %v", drawing.Header.CreationDate))
+	assert(t, drawing.Header.UpdateDate.IsZero(), fmt.Sprintf("expected the zero time, got %v", drawing.Header.UpdateDate))
+	assertEqInt(t, 0, int(drawing.Header.TimeInDrawing))
+	assertContainsCodePairs(t, []CodePair{
+		NewStringCodePair(9, "$TDCREATE"),
+		NewDoubleCodePair(40, 0.0),
+	}, fileCodePairsFromHeader(t, drawing.Header))
+	// more than 292 years after 1899 no longer overflows a time.Duration
+	assertEqInt(t, 2500, drawing.Header.CreationDateUniversal.Year())
+}
+
 func TestWriteVersionSpecificVariables(t *testing.T) {
 	header := *NewHeader()
 

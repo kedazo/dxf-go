@@ -2774,9 +2774,12 @@ func readHeader(nextPair CodePair, reader codePairReader) (Header, CodePair, []s
 					reader.setUtf8Reader()
 				}
 			case "$ACADMAINTVER":
-				if nextPair.Code == 70 {
+				switch nextPair.Code {
+				case 70:
 					header.MaintenanceVersion = nextPair.Value.(ShortCodePairValue).Value
-				} else {
+				case 90:
+					header.MaintenanceVersion = int16(nextPair.Value.(IntCodePairValue).Value)
+				default:
 					// tolerate malformed header variable: unexpected code, skip and continue
 					warnings = append(warnings, malformedHeaderVariable(variableName, nextPair))
 				}

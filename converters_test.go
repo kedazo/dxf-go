@@ -21,6 +21,11 @@ func TestConvertTimeToJulianDays(t *testing.T) {
 	assert(t, delta < 1e-10, fmt.Sprintf("Expected: %.12f\nActual: %.12f\nDelta: %.12f", expected, actual, delta))
 }
 
+func TestHandleFromStringTrimsSpaces(t *testing.T) {
+	assertEqInt(t, 0x1A2, int(handleFromString("  1A2 ")))
+	assertEqInt(t, 0, int(handleFromString("xyz")))
+}
+
 func TestConvertDaysToDuration(t *testing.T) {
 	seconds := 4*60*60 + 13*60 // 4h 13m
 	expected := time.Duration(seconds) * time.Second

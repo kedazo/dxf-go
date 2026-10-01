@@ -309,19 +309,27 @@ func readBoolText(line string) (bool, error) {
 }
 
 func readShortText(line string) (int16, error) {
-	value, err := strconv.ParseInt(strings.TrimSpace(line), 10, 64)
+	value, err := readLongText(line)
 	result := int16(value)
 	return result, err
 }
 
 func readIntText(line string) (int, error) {
-	value, err := strconv.ParseInt(strings.TrimSpace(line), 10, 64)
+	value, err := readLongText(line)
 	result := int(value)
 	return result, err
 }
 
 func readLongText(line string) (int64, error) {
-	return strconv.ParseInt(strings.TrimSpace(line), 10, 64)
+	trimmed := strings.TrimSpace(line)
+	value, err := strconv.ParseInt(trimmed, 10, 64)
+	if err != nil {
+		// some writers put integers as decimals ("1.0"); the fraction is dropped
+		if f, floatErr := strconv.ParseFloat(trimmed, 64); floatErr == nil && math.Abs(f) < 1<<63 {
+			return int64(f), nil
+		}
+	}
+	return value, err
 }
 
 func readDoubleText(line string) (float64, error) {
