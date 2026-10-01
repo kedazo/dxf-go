@@ -59,6 +59,9 @@ func generateTables() {
 			if !seenFields[field.Name] {
 				seenFields[field.Name] = true
 				builder.WriteString(fmt.Sprintf("	%s %s\n", field.Name, field.Type))
+				if field.TrackPresence {
+					builder.WriteString(fmt.Sprintf("	Has%s bool\n", field.Name))
+				}
 			}
 		}
 		builder.WriteString("}\n")

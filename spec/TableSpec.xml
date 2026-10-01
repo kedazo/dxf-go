@@ -75,6 +75,7 @@
       <Field Name="Name" Code="2" Type="string" DefaultValue='""' />
       <Field Name="Flags" Code="70" Type="int" DefaultValue="0" ReadConverter="int(%v)" WriteConverter="int16(%v)" />
       <Field Name="Color" Code="62" Type="Color" DefaultValue="Color(7)" ReadConverter="Color(%v)" WriteConverter="int16(%v)" />
+      <Field Name="Color24Bit" Code="420" Type="int" DefaultValue="0" TrackPresence="true" MinVersion="R2004" Comment="0xRRGGBB, only valid if HasColor24Bit" />
       <Field Name="LineTypeName" Code="6" Type="string" DefaultValue='"CONTINUOUS"' />
       <Field Name="IsLayerPlotted" Code="290" Type="bool" DefaultValue="true" MinVersion="R2000" />
       <Field Name="LineWeight" Code="370" Type="LineWeight" DefaultValue="NewLineWeightStandard()" ReadConverter="LineWeight(%v)" WriteConverter="int16(%v)" MinVersion="R2000" />

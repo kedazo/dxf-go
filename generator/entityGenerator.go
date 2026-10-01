@@ -58,7 +58,7 @@ type xmlField struct {
 	WriteConverter        string    `xml:"WriteConverter,attr"`
 	DisableWritingDefault bool      `xml:"DisableWritingDefault,attr"`
 	AllowMultiples        bool      `xml:"AllowMultiples,attr"`
-	TrackPresence         bool      `xml:"TrackPresence,attr"` // interface fields only: adds Has/Clear methods
+	TrackPresence         bool      `xml:"TrackPresence,attr"` // written whenever read or set, even with the default value: Has/Clear methods on interface fields, a public Has<Name> field otherwise
 	MinVersion            string    `xml:"MinVersion,attr"`
 	MaxVersion            string    `xml:"MaxVersion,attr"`
 	Comment               string    `xml:"Comment,attr"`
@@ -232,6 +232,9 @@ func generateEntities() {
 				fieldType = "[]" + fieldType
 			}
 			builder.WriteString(fmt.Sprintf("	%s %s%s\n", field.Name, fieldType, comment))
+			if field.TrackPresence {
+				builder.WriteString(fmt.Sprintf("	Has%s bool\n", field.Name))
+			}
 		}
 
 		// pointer fields
@@ -630,6 +633,9 @@ func readField(builder *strings.Builder, field xmlField, asInterface bool) {
 			builder.WriteString(fmt.Sprintf("		this.Set%s(%s)\n", field.Name, readValue))
 		} else {
 			builder.WriteString(fmt.Sprintf("		this.%s = %s\n", field.Name, readValue))
+			if field.TrackPresence {
+				builder.WriteString(fmt.Sprintf("		this.Has%s = true\n", field.Name))
+			}
 		}
 	}
 }
@@ -713,7 +719,11 @@ func fieldPredicates(field xmlField, asInterface bool) (predicates []string) {
 	}
 	if field.TrackPresence {
 		// written whenever it was set, even to the default value
-		predicates = append(predicates, fmt.Sprintf("this.Has%s()", field.Name))
+		if asInterface {
+			predicates = append(predicates, fmt.Sprintf("this.Has%s()", field.Name))
+		} else {
+			predicates = append(predicates, fmt.Sprintf("this.Has%s", field.Name))
+		}
 	} else if field.DisableWritingDefault {
 		suffix := ""
 		if asInterface {

@@ -50,6 +50,35 @@ func TestRoundTripLayer(t *testing.T) {
 	}
 }
 
+func TestReadAndWriteLayerTrueColor(t *testing.T) {
+	// 420 = 0 is true color black, not "no true color"
+	drawing := parseTableItem(t, "LAYER",
+		NewStringCodePair(2, "black"),
+		NewShortCodePair(62, 18),
+		NewIntCodePair(420, 0),
+	)
+	black := drawing.Layers[0]
+	assertEqBool(t, true, black.HasColor24Bit)
+	assertEqInt(t, 0, black.Color24Bit)
+
+	unset := *NewLayer()
+	unset.Name = "unset"
+	assertEqBool(t, false, unset.HasColor24Bit)
+
+	d := NewDrawing()
+	d.Header.Version = R2004
+	d.Layers = append(d.Layers, black, unset)
+	actual := drawingCodePairs(t, *d)
+	assertContainsCodePairs(t, []CodePair{
+		NewStringCodePair(2, "black"),
+		NewShortCodePair(70, 0),
+		NewShortCodePair(62, 18),
+		NewIntCodePair(420, 0),
+		NewStringCodePair(6, "CONTINUOUS"),
+	}, actual)
+	assertEqInt(t, 1, len(codePairsWithCode(420, actual)))
+}
+
 func TestReadLayers(t *testing.T) {
 	drawing := parseFromCodePairs(t,
 		// section decl

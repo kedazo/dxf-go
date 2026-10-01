@@ -600,6 +600,8 @@ type Layer struct {
 	Name string
 	Flags int
 	Color Color
+	Color24Bit int
+	HasColor24Bit bool
 	LineTypeName string
 	IsLayerPlotted bool
 	LineWeight LineWeight
@@ -612,6 +614,7 @@ func NewLayer() *Layer {
 		Name: "",
 		Flags: 0,
 		Color: Color(7),
+		Color24Bit: 0,
 		LineTypeName: "CONTINUOUS",
 		IsLayerPlotted: true,
 		LineWeight: NewLineWeightStandard(),
@@ -654,6 +657,9 @@ func (this *Layer) tryApplyCodePair(codePair CodePair) {
 		this.Flags = int(codePair.Value.(ShortCodePairValue).Value)
 	case 62:
 		this.Color = Color(codePair.Value.(ShortCodePairValue).Value)
+	case 420:
+		this.Color24Bit = codePair.Value.(IntCodePairValue).Value
+		this.HasColor24Bit = true
 	case 6:
 		this.LineTypeName = codePair.Value.(StringCodePairValue).Value
 	case 290:
@@ -694,6 +700,9 @@ func (this *Layer) codePairs(version AcadVersion) (pairs []CodePair) {
 	pairs = append(pairs, NewStringCodePair(2, this.Name))
 	pairs = append(pairs, NewShortCodePair(70, int16(this.Flags)))
 	pairs = append(pairs, NewShortCodePair(62, int16(this.Color)))
+	if version >= R2004 && this.HasColor24Bit {
+		pairs = append(pairs, NewIntCodePair(420, this.Color24Bit))
+	}
 	pairs = append(pairs, NewStringCodePair(6, this.LineTypeName))
 	if version >= R2000 {
 		pairs = append(pairs, NewBoolCodePair(290, this.IsLayerPlotted))
