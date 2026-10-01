@@ -8,10 +8,10 @@
         "kind": "build",
         "isDefault": true
       },
+      "dependsOrder": "sequence",
       "dependsOn": [
         "generate",
-        "build core",
-        "build examples"
+        "build core"
       ]
     },
     {
@@ -25,13 +25,6 @@
       "label": "build core",
       "type": "shell",
       "command": "go build",
-      "problemMatcher": "$go",
-      "group": "build"
-    },
-    {
-      "label": "build examples",
-      "type": "shell",
-      "command": "go build ./examples",
       "problemMatcher": "$go",
       "group": "build"
     }
