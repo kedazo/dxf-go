@@ -3,9 +3,10 @@ package dxf
 // MLineElementParameters is the parametrization of one MLINE element along one segment (codes 74/41 and 75/42).
 // Distances are along the segment direction unless noted.
 type MLineElementParameters struct {
-	// Line is the miter offset (from the vertex along the miter direction to the element), then the distance from
-	// there to where the element starts, then alternating dash and gap lengths. An element broken with MLEDIT has
-	// more values than its neighbours.
+	// Line is the miter offset (from the vertex along the miter direction to the element), then positions along the
+	// segment, measured from that miter point: where the element starts, then where it stops and starts again for
+	// every break (MLEDIT cuts and joints add them). With an even count the last start runs to the next vertex.
+	// Positions, not dash/gap lengths: an AutoCAD tee joint stores [-2.13, 0, 3.46, 5.06] for a gap from 3.46 to 5.06.
 	Line []float64
 	// AreaFill is the same for the fill area; usually empty.
 	AreaFill []float64

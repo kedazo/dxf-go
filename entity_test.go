@@ -481,13 +481,13 @@ func mlineVertexPairs(x float64, elements ...[]float64) []CodePair {
 }
 
 func TestReadMLineElementParameters(t *testing.T) {
-	// the top element of the first segment is cut by MLEDIT: dash 3, gap 1, then the rest
+	// the top element of the first segment is cut by MLEDIT: it stops at 3 and starts again at 4
 	pairs := []CodePair{
 		NewStringCodePair(100, "AcDbMline"),
 		NewShortCodePair(72, 2),
 		NewShortCodePair(73, 2),
 	}
-	pairs = append(pairs, mlineVertexPairs(0.0, []float64{0.5, 0.0, 3.0, 1.0}, []float64{-0.5, 0.0})...)
+	pairs = append(pairs, mlineVertexPairs(0.0, []float64{0.5, 0.0, 3.0, 4.0}, []float64{-0.5, 0.0})...)
 	pairs = append(pairs, mlineVertexPairs(10.0, []float64{0.5, 0.0}, []float64{-0.5, 0.0})...)
 	mline := parseEntity(t, "MLINE", pairs...).(*MLine)
 
@@ -495,7 +495,7 @@ func TestReadMLineElementParameters(t *testing.T) {
 		assertEqInt(t, 2, len(mline.ElementParameters))
 		assertEqInt(t, 2, len(mline.ElementParameters[0]))
 		assertEqInt(t, 4, len(mline.ElementParameters[0][0].Line))
-		assertEqFloat64(t, 1.0, mline.ElementParameters[0][0].Line[3])
+		assertEqFloat64(t, 4.0, mline.ElementParameters[0][0].Line[3])
 		assertEqInt(t, 2, len(mline.ElementParameters[0][1].Line))
 		assertEqFloat64(t, -0.5, mline.ElementParameters[0][1].Line[0])
 		assertEqFloat64(t, -0.5, mline.ElementParameters[1][1].Line[0])
