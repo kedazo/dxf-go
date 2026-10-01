@@ -98,6 +98,20 @@ func TestReadMLeaderStyle(t *testing.T) {
 	assert(t, drawing.MLeaderStyle(leader) == nil, "expected no style")
 }
 
+func TestReadMLeaderStyleDefaults(t *testing.T) {
+	drawing := objectsDrawing(t,
+		NewStringCodePair(0, "MLEADERSTYLE"), NewStringCodePair(5, "1A"),
+		NewStringCodePair(100, "AcDbMLeaderStyle"),
+		NewShortCodePair(170, 2),
+	)
+	style := drawing.MLeaderStyles[0]
+	// a missing 92 is BYBLOCK, not a 0.00 mm weight
+	assertEqBool(t, true, style.LeaderLineWeight.ByBlock())
+	assertEqBool(t, true, style.LeaderLineColor.IsByBlock())
+	assertEqBool(t, true, style.TextColor.IsByBlock())
+	assertEqBool(t, true, style.BlockContentColor.IsByBlock())
+}
+
 func tableCellStylePairs(name string, height float64, alignment int16) []CodePair {
 	pairs := []CodePair{
 		NewStringCodePair(7, name), NewDoubleCodePair(140, height), NewShortCodePair(170, alignment),

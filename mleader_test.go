@@ -79,6 +79,82 @@ func TestReadMLeaderWithText(t *testing.T) {
 	assertEqString(t, "Előtér\nszoba", mtext.PlainText())
 }
 
+func TestReadMLeaderProperties(t *testing.T) {
+	pairs := mleaderPairs(NewBoolCodePair(290, true), NewStringCodePair(304, "text"))
+	pairs = append(pairs,
+		NewIntCodePair(90, int(MLeaderOverrideLeaderLineColor|MLeaderOverrideLeaderLineWeight|MLeaderOverrideTextColor)),
+		NewShortCodePair(170, 2),
+		NewIntCodePair(91, -1023410171), // 0xC3000005: ACI 5
+		NewShortCodePair(171, 50),
+		NewBoolCodePair(290, false),
+		NewStringCodePair(342, "2A"),
+		NewDoubleCodePair(42, 0.25),
+		NewShortCodePair(172, 1),
+		NewStringCodePair(343, "11"),
+		NewIntCodePair(95, 3),
+		NewShortCodePair(175, 1),
+		NewIntCodePair(92, -1073741824), // 0xC0000000: BYLAYER
+		NewStringCodePair(344, "2F"),
+		NewDoubleCodePair(10, 2.0), NewDoubleCodePair(20, 3.0), NewDoubleCodePair(30, 4.0),
+		NewDoubleCodePair(43, 0.5),
+		NewIntCodePair(94, 0),
+		NewStringCodePair(345, "2B"),
+		NewStringCodePair(330, "3C"),
+		NewShortCodePair(177, 1),
+		NewDoubleCodePair(44, 0.0),
+		NewStringCodePair(302, "A-12"),
+		NewShortCodePair(179, 2),
+		NewDoubleCodePair(45, 2.0),
+		NewShortCodePair(272, 5),
+		NewShortCodePair(273, 6),
+	)
+	leader := parseEntity(t, "MULTILEADER", pairs...).(*MLeader)
+
+	// the context data is unaffected
+	assertEqFloat64(t, 2.0, leader.Scale)
+	assertEqString(t, "text", leader.Text)
+	assertEqInt(t, 1, len(leader.Leaders))
+	assertEqInt(t, 0x1A, int(leader.StyleHandle))
+
+	assertEqBool(t, true, leader.IsOverridden(MLeaderOverrideLeaderLineColor))
+	assertEqBool(t, true, leader.IsOverridden(MLeaderOverrideLeaderLineWeight))
+	assertEqBool(t, true, leader.IsOverridden(MLeaderOverrideTextColor))
+	assertEqBool(t, false, leader.IsOverridden(MLeaderOverrideTextStyle))
+	assertEqInt(t, 2, int(leader.LeaderLineType))
+	aci, ok := leader.LeaderLineColor.ACI()
+	assertEqBool(t, true, ok)
+	assertEqInt(t, 5, int(aci))
+	assertEqInt(t, 0x1B, int(leader.LeaderLineTypeHandle))
+	assertEqInt(t, 50, int(leader.LeaderLineWeight))
+	assertEqBool(t, false, leader.IsLandingEnabled)
+	assertEqBool(t, true, leader.IsDoglegEnabled) // missing: the default
+	assertEqFloat64(t, 99.0, leader.DoglegLength)
+	assertEqInt(t, 0x2A, int(leader.ArrowheadHandle))
+	assertEqFloat64(t, 0.25, leader.ArrowheadSize)
+	assertEqInt(t, 1, int(leader.ContentType))
+	assertEqInt(t, 0x11, int(leader.TextStyleHandle))
+	assertEqInt(t, 3, int(leader.TextRightAttachment))
+	assertEqInt(t, 1, int(leader.TextAlignment))
+	assertEqBool(t, true, leader.TextColor.IsByLayer())
+	assertEqBool(t, true, leader.BlockContentColor.IsByBlock()) // missing: the default
+	assertEqInt(t, 0x2F, int(leader.BlockContentHandle))
+	assertEqVector(t, Vector{2, 3, 4}, leader.BlockContentScale)
+	assertEqFloat64(t, 0.5, leader.BlockContentRotation)
+	assertEqInt(t, 1, len(leader.Arrowheads))
+	assertEqInt(t, 0x2B, int(leader.Arrowheads[0].Handle))
+	assertEqInt(t, 1, len(leader.BlockAttributes))
+	assertEqInt(t, 0x3C, int(leader.BlockAttributes[0].AttributeDefinitionHandle))
+	assertEqInt(t, 1, int(leader.BlockAttributes[0].Index))
+	assertEqString(t, "A-12", leader.BlockAttributes[0].Text)
+	assertEqInt(t, 2, int(leader.TextAttachmentPoint))
+	assertEqFloat64(t, 2.0, leader.StyleScale)
+	assertEqInt(t, 5, int(leader.BottomTextAttachment))
+	assertEqInt(t, 6, int(leader.TopTextAttachment))
+
+	// still written exactly as read
+	assertContainsCodePairs(t, pairs[2:], allCodePairs(leader, R2018))
+}
+
 func TestWriteMLeaderAsRead(t *testing.T) {
 	pairs := mleaderPairs(NewBoolCodePair(290, true), NewStringCodePair(304, "text"))
 	leader := parseEntity(t, "MULTILEADER", pairs...).(*MLeader)

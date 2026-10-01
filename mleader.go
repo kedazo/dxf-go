@@ -34,8 +34,103 @@ type MLeader struct {
 	// StyleHandle is the MLEADERSTYLE (code 340 after the context data); see Drawing.MLeaderStyle.
 	StyleHandle Handle
 
+	// The leader's own properties, after the context data. One that has an MLeaderOverride flag only applies when
+	// IsOverridden reports it; otherwise the MLEADERSTYLE's value does.
+	PropertyOverrides       MLeaderOverride // code 90
+	LeaderLineType          int16           // code 170: 0 = invisible, 1 = straight, 2 = spline
+	LeaderLineColor         ObjectColor     // code 91
+	LeaderLineTypeHandle    Handle          // code 341, the LTYPE
+	LeaderLineWeight        LineWeight      // code 171
+	IsLandingEnabled        bool            // code 290
+	IsDoglegEnabled         bool            // code 291
+	DoglegLength            float64         // code 41
+	ArrowheadHandle         Handle          // code 342, the arrowhead's BLOCK_RECORD; 0 = closed filled
+	ArrowheadSize           float64         // code 42
+	ContentType             int16           // code 172: 0 = none, 1 = block, 2 = MTEXT, 3 = tolerance
+	TextStyleHandle         Handle          // code 343, the STYLE
+	TextLeftAttachment      int16           // code 173
+	TextRightAttachment     int16           // code 95
+	TextAngleType           int16           // code 174
+	TextAlignment           int16           // code 175
+	TextColor               ObjectColor     // code 92
+	IsTextFrameEnabled      bool            // code 292
+	BlockContentHandle      Handle          // code 344, the BLOCK_RECORD
+	BlockContentColor       ObjectColor     // code 93
+	BlockContentScale       Vector          // codes 10/20/30
+	BlockContentRotation    float64         // code 43, radians
+	BlockContentConnection  int16           // code 176: 0 = extents, 1 = base point
+	IsAnnotative            bool            // code 293
+	IsTextDirectionNegative bool            // code 294
+	TextAlignInIPE          int16           // code 178
+	TextAttachmentPoint     int16           // code 179
+	StyleScale              float64         // code 45, overrides the style's Scale (MLeaderOverrideScale)
+	TextAttachmentDirection int16           // code 271: 0 = horizontal, 1 = vertical
+	BottomTextAttachment    int16           // code 272
+	TopTextAttachment       int16           // code 273
+	IsLeaderExtendedToText  bool            // code 295
+	// Arrowheads are the arrowheads of single leader lines (codes 94/345).
+	Arrowheads []MLeaderArrowhead
+	// BlockAttributes are the attribute values of the block content (codes 330/177/44/302).
+	BlockAttributes []MLeaderBlockAttribute
+
 	// the subclass data as read
 	leaderData []CodePair
+}
+
+// MLeaderOverride is a flag of MLeader.PropertyOverrides: the leader's own value of the property is used instead of
+// the MLEADERSTYLE's.
+type MLeaderOverride uint32
+
+const (
+	MLeaderOverrideLeaderLineType          MLeaderOverride = 1 << 0
+	MLeaderOverrideLeaderLineColor         MLeaderOverride = 1 << 1
+	MLeaderOverrideLeaderLineTypeHandle    MLeaderOverride = 1 << 2
+	MLeaderOverrideLeaderLineWeight        MLeaderOverride = 1 << 3
+	MLeaderOverrideLanding                 MLeaderOverride = 1 << 4
+	MLeaderOverrideLandingGap              MLeaderOverride = 1 << 5
+	MLeaderOverrideDogleg                  MLeaderOverride = 1 << 6
+	MLeaderOverrideDoglegLength            MLeaderOverride = 1 << 7
+	MLeaderOverrideArrowhead               MLeaderOverride = 1 << 8
+	MLeaderOverrideArrowheadSize           MLeaderOverride = 1 << 9
+	MLeaderOverrideContentType             MLeaderOverride = 1 << 10
+	MLeaderOverrideTextStyle               MLeaderOverride = 1 << 11
+	MLeaderOverrideTextLeftAttachment      MLeaderOverride = 1 << 12
+	MLeaderOverrideTextAngleType           MLeaderOverride = 1 << 13
+	MLeaderOverrideTextAlignment           MLeaderOverride = 1 << 14
+	MLeaderOverrideTextColor               MLeaderOverride = 1 << 15
+	MLeaderOverrideTextHeight              MLeaderOverride = 1 << 16 // the context's TextHeight
+	MLeaderOverrideTextFrame               MLeaderOverride = 1 << 17
+	MLeaderOverrideDefaultMText            MLeaderOverride = 1 << 18
+	MLeaderOverrideBlockContent            MLeaderOverride = 1 << 19
+	MLeaderOverrideBlockContentColor       MLeaderOverride = 1 << 20
+	MLeaderOverrideBlockContentScale       MLeaderOverride = 1 << 21
+	MLeaderOverrideBlockContentRotation    MLeaderOverride = 1 << 22
+	MLeaderOverrideBlockContentConnection  MLeaderOverride = 1 << 23
+	MLeaderOverrideScale                   MLeaderOverride = 1 << 24
+	MLeaderOverrideTextRightAttachment     MLeaderOverride = 1 << 25
+	MLeaderOverrideTextSwitchAlignment     MLeaderOverride = 1 << 26
+	MLeaderOverrideTextAttachmentDirection MLeaderOverride = 1 << 27
+	MLeaderOverrideTopTextAttachment       MLeaderOverride = 1 << 28
+	MLeaderOverrideBottomTextAttachment    MLeaderOverride = 1 << 29
+)
+
+// IsOverridden reports whether the leader's own value of a property is used instead of its MLEADERSTYLE's.
+func (e *MLeader) IsOverridden(property MLeaderOverride) bool {
+	return e.PropertyOverrides&property != 0
+}
+
+// MLeaderArrowhead is the arrowhead of one leader line.
+type MLeaderArrowhead struct {
+	Index  int    // code 94
+	Handle Handle // code 345, the arrowhead's BLOCK_RECORD
+}
+
+// MLeaderBlockAttribute is the value of one attribute of a MULTILEADER's block content.
+type MLeaderBlockAttribute struct {
+	AttributeDefinitionHandle Handle  // code 330, the ATTDEF in the content block
+	Index                     int16   // code 177
+	Width                     float64 // code 44
+	Text                      string  // code 302
 }
 
 // MLeaderLeader is one leader of a MULTILEADER: its lines end at the landing (LastLeaderPoint), from where the
@@ -54,6 +149,27 @@ func newMLeader() *MLeader {
 		Scale:        1.0,
 		BlockNormal:  *NewZAxis(),
 		BlockScale:   Vector{1, 1, 1},
+
+		// what AutoCAD assumes when a code is missing (as ezdxf)
+		LeaderLineType:       1,
+		LeaderLineColor:      ObjectColorByBlock,
+		LeaderLineWeight:     LineWeightByBlock,
+		IsLandingEnabled:     true,
+		IsDoglegEnabled:      true,
+		DoglegLength:         8,
+		ArrowheadSize:        4,
+		ContentType:          2,
+		TextLeftAttachment:   1,
+		TextRightAttachment:  1,
+		TextAngleType:        1,
+		TextAlignment:        2,
+		TextColor:            ObjectColorByBlock,
+		BlockContentColor:    ObjectColorByBlock,
+		BlockContentScale:    Vector{1, 1, 1},
+		TextAttachmentPoint:  1,
+		StyleScale:           1,
+		BottomTextAttachment: 9,
+		TopTextAttachment:    9,
 	}
 }
 
@@ -84,7 +200,7 @@ func (e *MLeader) tryApplyCodePair(codePair CodePair) {
 // parseLeaderData reads the context data: CONTEXT_DATA{ (300) … } (301) holds the content and the leaders, LEADER{
 // (302) … } (303), which hold their lines, LEADER_LINE{ (304) … } (305).
 func (e *MLeader) parseLeaderData() {
-	inContext, inLeader, inLine := false, false, false
+	inContext, inLeader, inLine, afterContext := false, false, false, false
 	var leader *MLeaderLeader
 	for _, pair := range e.leaderData {
 		code := pair.Code
@@ -93,11 +209,11 @@ func (e *MLeader) parseLeaderData() {
 			inContext = true
 			continue
 		case code == 301 && inContext && !inLeader:
-			inContext = false
+			inContext, afterContext = false, true
 			continue
 		case !inContext:
-			if code == 340 {
-				e.StyleHandle = handleFromString(stringValue(pair))
+			if afterContext {
+				e.applyPropertyCodePair(pair)
 			}
 			continue
 		case code == 302 && strings.HasPrefix(stringValue(pair), "LEADER"):
@@ -191,6 +307,103 @@ func (e *MLeader) applyContextCodePair(pair CodePair) {
 		e.BlockScale.Z = doubleValue(pair)
 	case 46:
 		e.BlockRotation = doubleValue(pair)
+	}
+}
+
+// applyPropertyCodePair reads the leader's own properties, which follow the context data.
+func (e *MLeader) applyPropertyCodePair(pair CodePair) {
+	switch pair.Code {
+	case 340:
+		e.StyleHandle = handleFromString(stringValue(pair))
+	case 90:
+		e.PropertyOverrides = MLeaderOverride(uint32(intValue(pair)))
+	case 170:
+		e.LeaderLineType = shortValue(pair)
+	case 91:
+		e.LeaderLineColor = ObjectColor(intValue(pair))
+	case 341:
+		e.LeaderLineTypeHandle = handleFromString(stringValue(pair))
+	case 171:
+		e.LeaderLineWeight = LineWeight(shortValue(pair))
+	case 290:
+		e.IsLandingEnabled = flagValue(pair)
+	case 291:
+		e.IsDoglegEnabled = flagValue(pair)
+	case 41:
+		e.DoglegLength = doubleValue(pair)
+	case 342:
+		e.ArrowheadHandle = handleFromString(stringValue(pair))
+	case 42:
+		e.ArrowheadSize = doubleValue(pair)
+	case 172:
+		e.ContentType = shortValue(pair)
+	case 343:
+		e.TextStyleHandle = handleFromString(stringValue(pair))
+	case 173:
+		e.TextLeftAttachment = shortValue(pair)
+	case 95:
+		e.TextRightAttachment = int16(intValue(pair))
+	case 174:
+		e.TextAngleType = shortValue(pair)
+	case 175:
+		e.TextAlignment = shortValue(pair)
+	case 92:
+		e.TextColor = ObjectColor(intValue(pair))
+	case 292:
+		e.IsTextFrameEnabled = flagValue(pair)
+	case 344:
+		e.BlockContentHandle = handleFromString(stringValue(pair))
+	case 93:
+		e.BlockContentColor = ObjectColor(intValue(pair))
+	case 10:
+		e.BlockContentScale.X = doubleValue(pair)
+	case 20:
+		e.BlockContentScale.Y = doubleValue(pair)
+	case 30:
+		e.BlockContentScale.Z = doubleValue(pair)
+	case 43:
+		e.BlockContentRotation = doubleValue(pair)
+	case 176:
+		e.BlockContentConnection = shortValue(pair)
+	case 293:
+		e.IsAnnotative = flagValue(pair)
+	case 94:
+		e.Arrowheads = append(e.Arrowheads, MLeaderArrowhead{Index: intValue(pair)})
+	case 345:
+		if len(e.Arrowheads) > 0 {
+			e.Arrowheads[len(e.Arrowheads)-1].Handle = handleFromString(stringValue(pair))
+		}
+	case 330:
+		e.BlockAttributes = append(e.BlockAttributes, MLeaderBlockAttribute{AttributeDefinitionHandle: handleFromString(stringValue(pair))})
+	case 177, 44, 302:
+		if len(e.BlockAttributes) == 0 {
+			return
+		}
+		attribute := &e.BlockAttributes[len(e.BlockAttributes)-1]
+		switch pair.Code {
+		case 177:
+			attribute.Index = shortValue(pair)
+		case 44:
+			attribute.Width = doubleValue(pair)
+		case 302:
+			attribute.Text = stringValue(pair)
+		}
+	case 294:
+		e.IsTextDirectionNegative = flagValue(pair)
+	case 178:
+		e.TextAlignInIPE = shortValue(pair)
+	case 179:
+		e.TextAttachmentPoint = shortValue(pair)
+	case 45:
+		e.StyleScale = doubleValue(pair)
+	case 271:
+		e.TextAttachmentDirection = shortValue(pair)
+	case 272:
+		e.BottomTextAttachment = shortValue(pair)
+	case 273:
+		e.TopTextAttachment = shortValue(pair)
+	case 295:
+		e.IsLeaderExtendedToText = flagValue(pair)
 	}
 }
 

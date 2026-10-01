@@ -32,6 +32,11 @@ func (v *WipeoutVariables) IsFramePlotted() bool { return v.Frame == 1 }
 // BYLAYER, 0xC1 = BYBLOCK, 0xC2 = true colour (RGB in the low 24 bits), 0xC3 = ACI (in the low byte).
 type ObjectColor int32
 
+const (
+	ObjectColorByLayer ObjectColor = -0x40000000 // 0xC0000000
+	ObjectColorByBlock ObjectColor = -0x3F000000 // 0xC1000000
+)
+
 // IsByLayer reports whether the colour is BYLAYER.
 func (c ObjectColor) IsByLayer() bool { return uint32(c)>>24 == 0xC0 }
 
@@ -63,7 +68,7 @@ type MLeaderStyle struct {
 	LeaderLineType                int16   // code 173: 0 = invisible, 1 = straight, 2 = spline
 	LeaderLineColor               ObjectColor
 	LeaderLineTypeHandle          Handle     // code 340, the LTYPE
-	LeaderLineWeight              LineWeight // code 92
+	LeaderLineWeight              LineWeight // code 92; BYBLOCK when missing (the colours too)
 	IsLandingEnabled              bool       // code 290
 	LandingGap                    float64    // code 42
 	IsDoglegEnabled               bool       // code 291
@@ -188,6 +193,11 @@ func parseWipeoutVariables(pairs []CodePair) *WipeoutVariables {
 
 func parseMLeaderStyle(pairs []CodePair) (style MLeaderStyle) {
 	style.XData = xdataFromPairs(pairs)
+	// what AutoCAD assumes when the code is missing (as ezdxf); a missing 92 isn't a 0.00 mm weight
+	style.LeaderLineColor = ObjectColorByBlock
+	style.LeaderLineWeight = LineWeightByBlock
+	style.TextColor = ObjectColorByBlock
+	style.BlockContentColor = ObjectColorByBlock
 	for _, pair := range pairs {
 		switch pair.Code {
 		case 5:
