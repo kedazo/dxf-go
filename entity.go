@@ -238,6 +238,8 @@ func afterRead(entity *Entity) {
 			}
 		}
 		ent.weights = []float64{}
+	case *Hatch:
+		ent.parseHatchData()
 	case *DgnUnderlay:
 		afterReadUnderlay(ent)
 	case *DwfUnderlay:
