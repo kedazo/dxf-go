@@ -16,12 +16,19 @@ type ExplodeOptions struct {
 	// KeepNegativeExtrusion keeps the (0, 0, -1) extrusion directions mirroring produces; by default such entities
 	// are rewritten with (0, 0, 1) so consumers that ignore extrusion directions draw them correctly.
 	KeepNegativeExtrusion bool
+	// ResolveXref supplies the drawings of external references, see WalkOptions.ResolveXref. Their entities are put
+	// on "<xref block>|<layer>" layers (layer "0" stays "0"), the way AutoCAD names xref layers; XrefLayers lists
+	// those layers.
+	ResolveXref func(block *Block) (*Drawing, error)
 }
 
 // ExplodeResult holds the exploded entities and everything that could not be exploded exactly.
 type ExplodeResult struct {
 	Entities []Entity
 	Issues   []WalkIssue
+	// XrefLayers are the layers of the resolved external references, named "<xref block>|<layer>" like their
+	// exploded entities, so their colors, line types and line weights can be looked up.
+	XrefLayers []Layer
 }
 
 // Explode returns the drawing's entities with every INSERT replaced by copies of its block's entities in world
@@ -37,8 +44,10 @@ func (d *Drawing) ExplodeInsert(insert *Insert, options ExplodeOptions) ExplodeR
 }
 
 func (d *Drawing) explodeEntities(entities []Entity, options ExplodeOptions) (result ExplodeResult) {
-	walkOptions := WalkOptions{IncludeDimensionBlocks: options.IncludeDimensionBlocks}
+	walkOptions := WalkOptions{IncludeDimensionBlocks: options.IncludeDimensionBlocks, ResolveXref: options.ResolveXref}
 	attributeOwners := map[*Attribute]*Insert{}
+	xrefsWithLayers := map[string]bool{}
+	var source walkSource
 
 	emitTransformed := func(transformed []Entity, issues []WalkIssue, path []*Insert) {
 		for _, issue := range issues {
@@ -48,6 +57,9 @@ func (d *Drawing) explodeEntities(entities []Entity, options ExplodeOptions) (re
 		for _, entity := range transformed {
 			if len(path) > 0 {
 				entity.SetIsInPaperSpace(path[0].IsInPaperSpace())
+			}
+			if source.xrefName != "" && entity.Layer() != "0" {
+				entity.SetLayer(source.xrefName + "|" + entity.Layer())
 			}
 			if options.InheritProperties {
 				ResolveInherited(entity, path)
@@ -60,7 +72,18 @@ func (d *Drawing) explodeEntities(entities []Entity, options ExplodeOptions) (re
 		emitTransformed(transformed, issues, path)
 	}
 
-	walkIssues, _ := d.WalkEntities(entities, IdentityMatrix(), walkOptions, func(e Entity, m Matrix, path []*Insert) error {
+	walkIssues, _ := d.walkEntitiesFrom(entities, IdentityMatrix(), walkOptions, func(e Entity, m Matrix, path []*Insert, from walkSource) error {
+		source = from
+		if source.xrefName != "" && !xrefsWithLayers[source.xrefName] {
+			xrefsWithLayers[source.xrefName] = true
+			for _, layer := range source.drawing.Layers {
+				if layer.Name != "0" {
+					layer.Name = source.xrefName + "|" + layer.Name
+					layer.SetHandle(0)
+					result.XrefLayers = append(result.XrefLayers, layer)
+				}
+			}
+		}
 		switch ent := e.(type) {
 		case *Insert:
 			for i := range ent.Attributes {

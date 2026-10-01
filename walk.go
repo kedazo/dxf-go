@@ -28,6 +28,12 @@ type WalkOptions struct {
 	IncludeInvisible bool
 	// MaxDepth limits how deeply blocks are nested; 0 means 64.
 	MaxDepth int
+	// ResolveXref supplies the drawing that an external reference (a block with IsXref()) points to; the model space
+	// of that drawing is then walked as the block's contents, with its own blocks, instead of reporting an IssueXref.
+	// It is called once per xref per walk. Returning an error or a nil drawing reports the xref as unresolved. See
+	// XrefFileResolver. The entities of a resolved xref keep their own layer names; their path contains the INSERT
+	// of the xref block.
+	ResolveXref func(block *Block) (*Drawing, error)
 }
 
 // IssueKind classifies a WalkIssue.
@@ -82,30 +88,97 @@ func (d *Drawing) Walk(options WalkOptions, fn WalkFunc) ([]WalkIssue, error) {
 
 // WalkEntities is like Walk for a list of entities whose coordinates m maps to world coordinates.
 func (d *Drawing) WalkEntities(entities []Entity, m Matrix, options WalkOptions, fn WalkFunc) ([]WalkIssue, error) {
-	walker := blockWalker{drawing: d, options: options, fn: fn, blocks: map[string]*Block{}}
-	if walker.options.MaxDepth <= 0 {
-		walker.options.MaxDepth = 64
+	return d.walkEntitiesFrom(entities, m, options, func(e Entity, m Matrix, path []*Insert, _ walkSource) error {
+		return fn(e, m, path)
+	})
+}
+
+// walkSource tells where a walked entity comes from: the drawing whose tables apply to it, and the name of the xref
+// block it was reached through (empty for the walked drawing itself).
+type walkSource struct {
+	drawing  *Drawing
+	xrefName string
+}
+
+type sourceWalkFunc func(e Entity, m Matrix, path []*Insert, source walkSource) error
+
+func (d *Drawing) walkEntitiesFrom(entities []Entity, m Matrix, options WalkOptions, fn sourceWalkFunc) ([]WalkIssue, error) {
+	if options.MaxDepth <= 0 {
+		options.MaxDepth = 64
 	}
+	state := &walkState{options: options, fn: fn, xrefs: map[string]*Drawing{}}
+	walker := newBlockWalker(d, "", state)
+	err := walker.walkEntities(entities, m, nil, nil)
+	return state.issues, err
+}
+
+// walkState is shared by the walkers of a drawing and of the external references it reaches.
+type walkState struct {
+	options WalkOptions
+	fn      sourceWalkFunc
+	issues  []WalkIssue
+	xrefs   map[string]*Drawing
+}
+
+type blockWalker struct {
+	*walkState
+	source walkSource
+	blocks map[string]*Block
+}
+
+func newBlockWalker(d *Drawing, xrefName string, state *walkState) *blockWalker {
+	walker := &blockWalker{walkState: state, source: walkSource{drawing: d, xrefName: xrefName}, blocks: map[string]*Block{}}
 	for i := range d.Blocks {
 		name := strings.ToUpper(d.Blocks[i].Name)
 		if _, exists := walker.blocks[name]; !exists {
 			walker.blocks[name] = &d.Blocks[i]
 		}
 	}
-	err := walker.walkEntities(entities, m, nil, nil)
-	return walker.issues, err
-}
-
-type blockWalker struct {
-	drawing *Drawing
-	options WalkOptions
-	fn      WalkFunc
-	blocks  map[string]*Block
-	issues  []WalkIssue
+	return walker
 }
 
 func (w *blockWalker) report(kind IssueKind, e Entity, path []*Insert, format string, args ...interface{}) {
 	w.issues = append(w.issues, WalkIssue{Kind: kind, Entity: e, Path: append([]*Insert(nil), path...), Message: fmt.Sprintf(format, args...)})
+}
+
+// xrefWalker returns the walker for the drawing an xref block points to, or nil (with an issue) if it can't be
+// resolved.
+func (w *blockWalker) xrefWalker(insert *Insert, block *Block, path []*Insert) *blockWalker {
+	key := strings.ToUpper(block.XrefName + "|" + block.Name)
+	xref, resolved := w.xrefs[key]
+	if !resolved {
+		var err error
+		xref, err = w.options.ResolveXref(block)
+		if err != nil {
+			w.report(IssueXref, insert, path, "block %q references the external drawing %q, which can't be read: %v", block.Name, block.XrefName, err)
+			xref = nil
+		} else if xref == nil {
+			w.report(IssueXref, insert, path, "block %q references the external drawing %q, which wasn't resolved", block.Name, block.XrefName)
+		}
+		w.xrefs[key] = xref
+	}
+	if xref == nil {
+		return nil
+	}
+	xrefName := block.Name
+	if w.source.xrefName != "" {
+		xrefName = w.source.xrefName + "|" + block.Name
+	}
+	return newBlockWalker(xref, xrefName, w.walkState)
+}
+
+func isXrefBlock(block *Block) bool {
+	return block.IsXref() || block.XrefName != ""
+}
+
+// modelSpaceEntities returns the entities of a drawing's model space.
+func modelSpaceEntities(d *Drawing) (entities []Entity) {
+	for _, e := range d.Entities {
+		if !e.IsInPaperSpace() {
+			entities = append(entities, e)
+		}
+	}
+	return
 }
 
 func (w *blockWalker) walkEntities(entities []Entity, m Matrix, path []*Insert, blockNames []string) error {
@@ -126,7 +199,7 @@ func (w *blockWalker) walkEntity(e Entity, m Matrix, path []*Insert, blockNames 
 	}
 
 	visiblePath := path[:len(path):len(path)]
-	err := w.fn(e, m, visiblePath)
+	err := w.fn(e, m, visiblePath, w.source)
 	if err == SkipBlock {
 		return nil
 	}
@@ -149,7 +222,7 @@ func (w *blockWalker) walkEntity(e Entity, m Matrix, path []*Insert, blockNames 
 		// a table shows its block like an INSERT; the INSERT in the path carries the table's properties
 		return w.walkInsert(ent.asInsert(), m, path, blockNames)
 	case *MLeader:
-		if insert := ent.contentInsert(w.drawing); insert != nil {
+		if insert := ent.contentInsert(w.source.drawing); insert != nil {
 			return w.walkInsert(insert, m, path, blockNames)
 		}
 	case Dimension:
@@ -168,6 +241,13 @@ func (w *blockWalker) walkInsert(insert *Insert, m Matrix, path []*Insert, block
 	if block == nil {
 		return nil
 	}
+	contents, walker := block.Entities, w
+	if isXrefBlock(block) {
+		if walker = w.xrefWalker(insert, block, path); walker == nil {
+			return nil
+		}
+		contents = modelSpaceEntities(walker.source.drawing)
+	}
 
 	insertPath := append(path[:len(path):len(path)], insert)
 	nestedNames := append(blockNames[:len(blockNames):len(blockNames)], strings.ToUpper(block.Name))
@@ -179,7 +259,7 @@ func (w *blockWalker) walkInsert(insert *Insert, m Matrix, path []*Insert, block
 				w.report(IssueDegenerate, insert, path, "INSERT of %q has a degenerate transformation", insert.Name)
 				return nil
 			}
-			if err := w.walkEntities(block.Entities, cellMatrix, insertPath, nestedNames); err != nil {
+			if err := walker.walkEntities(contents, cellMatrix, insertPath, nestedNames); err != nil {
 				return err
 			}
 		}
@@ -194,7 +274,7 @@ func (w *blockWalker) resolveBlock(e Entity, name string, path []*Insert, blockN
 	case !ok:
 		w.report(IssueMissingBlock, e, path, "block %q does not exist", name)
 		return nil
-	case block.IsXref() || block.XrefName != "":
+	case isXrefBlock(block) && w.options.ResolveXref == nil:
 		w.report(IssueXref, e, path, "block %q references the external drawing %q", name, block.XrefName)
 		return nil
 	case len(blockNames) >= w.options.MaxDepth:

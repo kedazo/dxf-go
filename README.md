@@ -18,7 +18,7 @@ entities, and writes drawings back.
   points. Boundaries can be flattened to polygons.
 - **Blocks:** `Walk` visits everything reachable through nested block references with its world transform, and
   `Explode` turns them into world-space copies. The transforms are exact, including mirrored, non-uniformly scaled
-  and tilted blocks.
+  and tilted blocks. External references (xrefs) can be resolved to other drawings, e.g. DXF files next to the host.
 - **Text:** pre-2007 code pages (`$DWGCODEPAGE`, e.g. ANSI_1250), UTF-8 for 2007+, and plain text from MTEXT and
   TEXT formatting codes.
 - **Geometry helpers:** vectors, matrices and the object coordinate system (OCS) used by planar entities.
