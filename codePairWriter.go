@@ -208,8 +208,9 @@ func formatFloat64Binary(val float64) []byte {
 	return buf
 }
 
-func formatStringBinary(val string) []byte {
-	buf := []byte(val)
+func formatStringBinary(val string, version AcadVersion) []byte {
+	// pre-2007 binary files use the same `\U+XXXX` escapes as text files
+	buf := []byte(formatStringText(val, version))
 	buf = append(buf, 0x00)
 	return buf
 }
@@ -306,7 +307,7 @@ func (b *binaryCodePairWriter) writeDouble(val float64) error {
 }
 
 func (b *binaryCodePairWriter) writeString(val string) error {
-	return b.writeBytes(formatStringBinary(val))
+	return b.writeBytes(formatStringBinary(val, b.version))
 }
 
 func writeSectionStart(writer codePairWriter, sectionName string) (error error) {

@@ -100,7 +100,26 @@ func TestWriteDoubleAsBinary(t *testing.T) {
 }
 
 func TestWriteStringAsBinary(t *testing.T) {
-	assertBinary(t, []byte{0x61, 0x00}, formatStringBinary("a"))
+	assertBinary(t, []byte{0x61, 0x00}, formatStringBinary("a", R2004))
+	assertBinary(t, []byte("\\U+00E9\x00"), formatStringBinary("é", R2004))
+	assertBinary(t, []byte("é\x00"), formatStringBinary("é", R2007))
+}
+
+func TestRoundTripNonAsciiBinaryFile(t *testing.T) {
+	for _, version := range []AcadVersion{R12, R2004, R2007, R2018} {
+		drawing := *NewDrawing()
+		drawing.Header.Version = version
+		drawing.Header.CurrentLayer = "Előtér"
+		buf := new(bytes.Buffer)
+		if err := drawing.SaveToWriterBinary(buf); err != nil {
+			t.Fatal(err)
+		}
+		reread, err := ReadFromReader(bytes.NewReader(buf.Bytes()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		assertEqString(t, "Előtér", reread.Header.CurrentLayer)
+	}
 }
 
 func TestWriteCodePairAsBinary(t *testing.T) {
