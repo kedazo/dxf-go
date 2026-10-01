@@ -46,6 +46,14 @@ type Layout struct {
 	BlockRecordHandle        Handle // code 330 of the layout: the BLOCK_RECORD of its *Model_Space or *Paper_Space block
 	LastActiveViewportHandle Handle // code 331
 
+	// the layout's UCS, as it was when the layout was last active; zero vectors if the file has none
+	UCSOrigin           Point  // codes 13/23/33
+	UCSXAxis            Vector // codes 16/26/36
+	UCSYAxis            Vector // codes 17/27/37
+	UCSOrthographicType int16  // code 76: 0 = not orthographic, 1 = top, 2 = bottom, 3 = front, 4 = back, 5 = left, 6 = right
+	NamedUCSHandle      Handle // code 345, a UCS table record; 0 if the UCS is unnamed or the world
+	BaseUCSHandle       Handle // code 346, the UCS the orthographic type is relative to; 0 = the world
+
 	XData XData // extended data (1001…)
 }
 
@@ -160,6 +168,26 @@ func parseLayout(pairs []CodePair) (layout Layout) {
 				layout.BlockRecordHandle = handleFromString(stringValue(pair))
 			case 331:
 				layout.LastActiveViewportHandle = handleFromString(stringValue(pair))
+			case 13, 23, 33:
+				applyPointCodePair(&layout.UCSOrigin, 13, pair)
+			case 16:
+				layout.UCSXAxis.X = doubleValue(pair)
+			case 26:
+				layout.UCSXAxis.Y = doubleValue(pair)
+			case 36:
+				layout.UCSXAxis.Z = doubleValue(pair)
+			case 17:
+				layout.UCSYAxis.X = doubleValue(pair)
+			case 27:
+				layout.UCSYAxis.Y = doubleValue(pair)
+			case 37:
+				layout.UCSYAxis.Z = doubleValue(pair)
+			case 76:
+				layout.UCSOrthographicType = shortValue(pair)
+			case 345:
+				layout.NamedUCSHandle = handleFromString(stringValue(pair))
+			case 346:
+				layout.BaseUCSHandle = handleFromString(stringValue(pair))
 			}
 		} else if subclass == "AcDbPlotSettings" {
 			switch pair.Code {

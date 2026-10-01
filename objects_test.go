@@ -43,6 +43,10 @@ func layoutDrawing(t *testing.T) Drawing {
 		NewStringCodePair(100, "AcDbLayout"), NewStringCodePair(1, "Sheet A"), NewShortCodePair(70, 0), NewShortCodePair(71, 1),
 		NewDoubleCodePair(14, 1), NewDoubleCodePair(24, 2), NewDoubleCodePair(34, 0),
 		NewStringCodePair(330, "1B"), NewStringCodePair(331, "5E"),
+		NewDoubleCodePair(13, 10), NewDoubleCodePair(23, 20), NewDoubleCodePair(33, 0),
+		NewDoubleCodePair(16, 0), NewDoubleCodePair(26, 1), NewDoubleCodePair(36, 0),
+		NewDoubleCodePair(17, -1), NewDoubleCodePair(27, 0), NewDoubleCodePair(37, 0),
+		NewShortCodePair(76, 1), NewStringCodePair(345, "6A"), NewStringCodePair(346, "6B"),
 		NewStringCodePair(0, "LAYOUT"), NewStringCodePair(5, "1D"),
 		NewStringCodePair(100, "AcDbPlotSettings"), NewDoubleCodePair(44, 297), NewDoubleCodePair(45, 210), NewShortCodePair(72, 1),
 		NewStringCodePair(100, "AcDbLayout"), NewStringCodePair(1, "Sheet B"), NewShortCodePair(71, 2), NewStringCodePair(330, "1C"),
@@ -81,6 +85,14 @@ func TestReadLayouts(t *testing.T) {
 	assertEqPoint(t, Point{1, 2, 0}, sheet.ExtentsMin)
 	assertEqUInt64(t, 0x1B, uint64(sheet.BlockRecordHandle))
 	assertEqUInt64(t, 0x5E, uint64(sheet.LastActiveViewportHandle))
+	assertEqPoint(t, Point{10, 20, 0}, sheet.UCSOrigin)
+	assertEqVector(t, Vector{0, 1, 0}, sheet.UCSXAxis)
+	assertEqVector(t, Vector{-1, 0, 0}, sheet.UCSYAxis)
+	assertEqInt(t, 1, int(sheet.UCSOrthographicType))
+	assertEqUInt64(t, 0x6A, uint64(sheet.NamedUCSHandle))
+	assertEqUInt64(t, 0x6B, uint64(sheet.BaseUCSHandle))
+	// the model layout has no UCS data
+	assertEqVector(t, Vector{}, model.UCSXAxis)
 }
 
 func TestLayoutSheetRectangle(t *testing.T) {
