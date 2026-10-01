@@ -1151,10 +1151,11 @@ func (v *Vertex) codePairs(version AcadVersion) (pairs []CodePair) {
 	pairs = append(pairs, NewDoubleCodePair(10, v.Location.X))
 	pairs = append(pairs, NewDoubleCodePair(20, v.Location.Y))
 	pairs = append(pairs, NewDoubleCodePair(30, v.Location.Z))
-	if v.StartingWidth != 0.0 {
+	// an explicit 0 overrides the POLYLINE's default width, so it's written when it was read or set
+	if v.HasStartingWidth || v.StartingWidth != 0.0 {
 		pairs = append(pairs, NewDoubleCodePair(40, v.StartingWidth))
 	}
-	if v.EndingWidth != 0.0 {
+	if v.HasEndingWidth || v.EndingWidth != 0.0 {
 		pairs = append(pairs, NewDoubleCodePair(41, v.EndingWidth))
 	}
 	if v.Bulge != 0.0 {

@@ -67,6 +67,54 @@ func TestPolyfaceFacesOfOrdinaryPolyline(t *testing.T) {
 	assertEqInt(t, 0, len(polyline.PolyfaceFaces()))
 }
 
+func TestVertexWidthsFallBackToPolylineDefaults(t *testing.T) {
+	polyline := parseEntities(t,
+		NewStringCodePair(0, "POLYLINE"),
+		NewShortCodePair(66, 1),
+		NewDoubleCodePair(40, 2.0),
+		NewDoubleCodePair(41, 3.0),
+		NewStringCodePair(0, "VERTEX"), // no widths: the defaults
+		NewDoubleCodePair(10, 0.0),
+		NewStringCodePair(0, "VERTEX"), // explicit 0
+		NewDoubleCodePair(10, 1.0),
+		NewDoubleCodePair(40, 0.0),
+		NewDoubleCodePair(41, 0.0),
+		NewStringCodePair(0, "VERTEX"), // start width only
+		NewDoubleCodePair(10, 2.0),
+		NewDoubleCodePair(40, 1.0),
+		NewStringCodePair(0, "SEQEND"),
+	)[0].(*Polyline)
+	assertEqInt(t, 3, len(polyline.Vertices))
+	assertEqBool(t, false, polyline.Vertices[0].HasStartingWidth)
+	assertEqBool(t, true, polyline.Vertices[1].HasStartingWidth)
+	assertEqBool(t, true, polyline.Vertices[1].HasEndingWidth)
+
+	expected := [][2]float64{{2, 3}, {0, 0}, {1, 3}}
+	for i, widths := range expected {
+		start, end := polyline.VertexWidths(i)
+		assertEqFloat64(t, widths[0], start)
+		assertEqFloat64(t, widths[1], end)
+	}
+
+	// the explicit zeros survive a round trip
+	written := drawingCodePairsFromEntity(t, polyline, R2000)
+	assertContainsCodePairs(t, []CodePair{
+		NewDoubleCodePair(10, 1.0),
+		NewDoubleCodePair(20, 0.0),
+		NewDoubleCodePair(30, 0.0),
+		NewDoubleCodePair(40, 0.0),
+		NewDoubleCodePair(41, 0.0),
+	}, written)
+	vertexPairs := written
+	for i, pair := range written {
+		if pair.Code == 0 && stringValue(pair) == "VERTEX" {
+			vertexPairs = written[i:]
+			break
+		}
+	}
+	assertEqInt(t, 2, len(codePairsWithCode(40, vertexPairs))) // the explicit 0 and 1.0, nothing on the first vertex
+}
+
 func TestPolygonMeshGrid(t *testing.T) {
 	polyline := NewPolyline()
 	polyline.SetIs3DPolygonMesh(true)

@@ -10,6 +10,23 @@ type PolyfaceFace struct {
 	EdgeVisible []bool
 }
 
+// VertexWidths returns the start and end width of vertex i: its own 40/41 where it has them, else the POLYLINE's
+// DefaultStartingWidth/DefaultEndingWidth. An explicit 0 on the vertex stays 0.
+func (p *Polyline) VertexWidths(i int) (start, end float64) {
+	start, end = p.DefaultStartingWidth, p.DefaultEndingWidth
+	if i < 0 || i >= len(p.Vertices) {
+		return
+	}
+	v := &p.Vertices[i]
+	if v.HasStartingWidth || v.StartingWidth != 0 {
+		start = v.StartingWidth
+	}
+	if v.HasEndingWidth || v.EndingWidth != 0 {
+		end = v.EndingWidth
+	}
+	return
+}
+
 // PolyfaceVertices returns the vertex locations of a polyface mesh, i.e. the vertices that faces index into.
 func (p *Polyline) PolyfaceVertices() (points []Point) {
 	if !p.IsPolyfaceMesh() {

@@ -17789,8 +17789,10 @@ type Vertex struct {
 	shadowMode ShadowMode
 	xData XData
 	Location Point
-	StartingWidth float64
-	EndingWidth float64
+	StartingWidth float64 // without HasStartingWidth the POLYLINE's DefaultStartingWidth applies, see Polyline.VertexWidths
+	HasStartingWidth bool
+	EndingWidth float64 // without HasEndingWidth the POLYLINE's DefaultEndingWidth applies
+	HasEndingWidth bool
 	Bulge float64
 	Flags int
 	CurveFitTangentDirection float64
@@ -18150,8 +18152,10 @@ func (this *Vertex) tryApplyCodePair(codePair CodePair) {
 		this.Location.Z = codePair.Value.(DoubleCodePairValue).Value
 	case 40:
 		this.StartingWidth = codePair.Value.(DoubleCodePairValue).Value
+		this.HasStartingWidth = true
 	case 41:
 		this.EndingWidth = codePair.Value.(DoubleCodePairValue).Value
+		this.HasEndingWidth = true
 	case 42:
 		this.Bulge = codePair.Value.(DoubleCodePairValue).Value
 	case 70:

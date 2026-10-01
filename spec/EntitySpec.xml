@@ -1257,8 +1257,8 @@
   -->
   <Entity Name="Vertex" SubclassMarker="AcDbVertex" TypeString="VERTEX" GenerateWriter="false">
     <Field Name="Location" Code="10" Type="Point" DefaultValue="*NewOrigin()" CodeOverrides="10,20,30" />
-    <Field Name="StartingWidth" Code="40" Type="float64" DefaultValue="0.0" DisableWritingDefault="true" />
-    <Field Name="EndingWidth" Code="41" Type="float64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="StartingWidth" Code="40" Type="float64" DefaultValue="0.0" TrackPresence="true" Comment="without HasStartingWidth the POLYLINE's DefaultStartingWidth applies, see Polyline.VertexWidths" />
+    <Field Name="EndingWidth" Code="41" Type="float64" DefaultValue="0.0" TrackPresence="true" Comment="without HasEndingWidth the POLYLINE's DefaultEndingWidth applies" />
     <Field Name="Bulge" Code="42" Type="float64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="Flags" Code="70" Type="int" DefaultValue="0" ReadConverter="int(%v)" WriteConverter="int16(%v)">
       <Flag Name="IsExtraCreatedByCurveFit" Mask="1" />
