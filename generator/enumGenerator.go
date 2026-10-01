@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -68,22 +69,44 @@ func generateEnums() {
 		// `String()`
 		builder.WriteString(fmt.Sprintf("func (this %s) String() string {\n", enum.Name))
 		builder.WriteString("	switch this {\n")
-		seenValues := make(map[string]bool)
-		for _, value := range enum.Values {
-			if !seenValues[value.Value] {
-				seenValues[value.Value] = true
+		// aliases share a value; only the first name of each value gets a case
+		seenValues := make(map[int64]bool)
+		resolved := resolveEnumValues(enum)
+		for i, value := range enum.Values {
+			if !seenValues[resolved[i]] {
+				seenValues[resolved[i]] = true
 				builder.WriteString(fmt.Sprintf("	case %s%s:\n", enum.Name, value.Name))
 				builder.WriteString(fmt.Sprintf("		return \"%s%s\"\n", enum.Name, value.Name))
 			}
 		}
 		builder.WriteString("	default:\n")
-		builder.WriteString(fmt.Sprintf("		return fmt.Sprintf(\"%%v\", %s(this))\n", enum.BaseType))
+		builder.WriteString(fmt.Sprintf("		return fmt.Sprintf(\"%s(%%d)\", %s(this))\n", enum.Name, baseType))
 		builder.WriteString("	}\n")
 		builder.WriteString("}\n")
 		builder.WriteString("\n")
 	}
 
 	writeFile("enums.generated.go", builder)
+}
+
+// resolveEnumValues returns the numeric value of each enum value as Go assigns it: an empty value repeats the previous
+// expression, which is either iota (the position in the const block) or an integer literal.
+func resolveEnumValues(enum xmlEnum) []int64 {
+	resolved := make([]int64, len(enum.Values))
+	expression := ""
+	for i, value := range enum.Values {
+		if len(value.Value) > 0 {
+			expression = value.Value
+		}
+		if expression == "iota" {
+			resolved[i] = int64(i)
+		} else {
+			number, err := strconv.ParseInt(expression, 0, 64)
+			check(err)
+			resolved[i] = number
+		}
+	}
+	return resolved
 }
 
 func readEnums(reader io.Reader) ([]xmlEnum, error) {

@@ -22,8 +22,14 @@ func (this AngleFormat) String() string {
 		return "AngleFormatDecimalDegrees"
 	case AngleFormatDegreesMinutesSeconds:
 		return "AngleFormatDegreesMinutesSeconds"
+	case AngleFormatGradians:
+		return "AngleFormatGradians"
+	case AngleFormatRadians:
+		return "AngleFormatRadians"
+	case AngleFormatSurveyorUnits:
+		return "AngleFormatSurveyorUnits"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("AngleFormat(%d)", int16(this))
 	}
 }
 
@@ -41,7 +47,7 @@ func (this AngleDirection) String() string {
 	case AngleDirectionClockwise:
 		return "AngleDirectionClockwise"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("AngleDirection(%d)", int16(this))
 	}
 }
 
@@ -80,7 +86,7 @@ func (this AttachmentPoint) String() string {
 	case AttachmentPointBottomRight:
 		return "AttachmentPointBottomRight"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("AttachmentPoint(%d)", int16(this))
 	}
 }
 
@@ -98,8 +104,10 @@ func (this AttributeVisibility) String() string {
 		return "AttributeVisibilityNone"
 	case AttributeVisibilityNormal:
 		return "AttributeVisibilityNormal"
+	case AttributeVisibilityAll:
+		return "AttributeVisibilityAll"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("AttributeVisibility(%d)", int16(this))
 	}
 }
 
@@ -117,8 +125,10 @@ func (this BackgroundFillSetting) String() string {
 		return "BackgroundFillSettingOff"
 	case BackgroundFillSettingUseBackgroundFillColor:
 		return "BackgroundFillSettingUseBackgroundFillColor"
+	case BackgroundFillSettingUseDrawingWindowColor:
+		return "BackgroundFillSettingUseDrawingWindowColor"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("BackgroundFillSetting(%d)", int16(this))
 	}
 }
 
@@ -136,8 +146,10 @@ func (this CoordinateDisplay) String() string {
 		return "CoordinateDisplayStatic"
 	case CoordinateDisplayContinuousUpdate:
 		return "CoordinateDisplayContinuousUpdate"
+	case CoordinateDisplayDistanceAngleFormat:
+		return "CoordinateDisplayDistanceAngleFormat"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("CoordinateDisplay(%d)", int16(this))
 	}
 }
 
@@ -155,7 +167,7 @@ func (this DefaultLightingType) String() string {
 	case DefaultLightingTypeTwoDistanceLights:
 		return "DefaultLightingTypeTwoDistanceLights"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("DefaultLightingType(%d)", int16(this))
 	}
 }
 
@@ -173,8 +185,10 @@ func (this DimensionArcSymbolDisplayMode) String() string {
 		return "DimensionArcSymbolDisplayModeSymbolBeforeText"
 	case DimensionArcSymbolDisplayModeSymbolAboveText:
 		return "DimensionArcSymbolDisplayModeSymbolAboveText"
+	case DimensionArcSymbolDisplayModeSuppress:
+		return "DimensionArcSymbolDisplayModeSuppress"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("DimensionArcSymbolDisplayMode(%d)", int16(this))
 	}
 }
 
@@ -192,8 +206,10 @@ func (this DimensionAssociativity) String() string {
 		return "DimensionAssociativityNoAssociationExploded"
 	case DimensionAssociativityNonAssociativeObjects:
 		return "DimensionAssociativityNonAssociativeObjects"
+	case DimensionAssociativityAssociativeObjects:
+		return "DimensionAssociativityAssociativeObjects"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("DimensionAssociativity(%d)", int16(this))
 	}
 }
 
@@ -212,8 +228,12 @@ func (this DimensionFit) String() string {
 		return "DimensionFitTextAndArrowsOutsideLines"
 	case DimensionFitMoveArrowsFirst:
 		return "DimensionFitMoveArrowsFirst"
+	case DimensionFitMoveTextFirst:
+		return "DimensionFitMoveTextFirst"
+	case DimensionFitMoveEitherForBestFit:
+		return "DimensionFitMoveEitherForBestFit"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("DimensionFit(%d)", int16(this))
 	}
 }
 
@@ -231,8 +251,10 @@ func (this DimensionFractionFormat) String() string {
 		return "DimensionFractionFormatHorizontalStacking"
 	case DimensionFractionFormatDiagonalStacking:
 		return "DimensionFractionFormatDiagonalStacking"
+	case DimensionFractionFormatNotStacked:
+		return "DimensionFractionFormatNotStacked"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("DimensionFractionFormat(%d)", int16(this))
 	}
 }
 
@@ -250,8 +272,10 @@ func (this DimensionTextBackgroundColorMode) String() string {
 		return "DimensionTextBackgroundColorModeNone"
 	case DimensionTextBackgroundColorModeUseDrawingBackground:
 		return "DimensionTextBackgroundColorModeUseDrawingBackground"
+	case DimensionTextBackgroundColorModeCustom:
+		return "DimensionTextBackgroundColorModeCustom"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("DimensionTextBackgroundColorMode(%d)", int16(this))
 	}
 }
 
@@ -271,8 +295,14 @@ func (this DimensionTextJustification) String() string {
 		return "DimensionTextJustificationAboveLineCenter"
 	case DimensionTextJustificationAboveLineNextToFirstExtension:
 		return "DimensionTextJustificationAboveLineNextToFirstExtension"
+	case DimensionTextJustificationAboveLineNextToSecondExtension:
+		return "DimensionTextJustificationAboveLineNextToSecondExtension"
+	case DimensionTextJustificationAboveLineCenteredOnFirstExtension:
+		return "DimensionTextJustificationAboveLineCenteredOnFirstExtension"
+	case DimensionTextJustificationAboveLineCenteredOnSecondExtension:
+		return "DimensionTextJustificationAboveLineCenteredOnSecondExtension"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("DimensionTextJustification(%d)", int16(this))
 	}
 }
 
@@ -290,8 +320,10 @@ func (this DimensionTextMovementRule) String() string {
 		return "DimensionTextMovementRuleMoveLineWithText"
 	case DimensionTextMovementRuleAddLeaderWhenTextIsMoved:
 		return "DimensionTextMovementRuleAddLeaderWhenTextIsMoved"
+	case DimensionTextMovementRuleMoveTextFreely:
+		return "DimensionTextMovementRuleMoveTextFreely"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("DimensionTextMovementRule(%d)", int16(this))
 	}
 }
 
@@ -313,8 +345,18 @@ func (this DimensionType) String() string {
 		return "DimensionTypeRotatedHorizontalOrVertical"
 	case DimensionTypeAligned:
 		return "DimensionTypeAligned"
+	case DimensionTypeAngular:
+		return "DimensionTypeAngular"
+	case DimensionTypeDiameter:
+		return "DimensionTypeDiameter"
+	case DimensionTypeRadius:
+		return "DimensionTypeRadius"
+	case DimensionTypeAngularThreePoint:
+		return "DimensionTypeAngularThreePoint"
+	case DimensionTypeOrdinate:
+		return "DimensionTypeOrdinate"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("DimensionType(%d)", int16(this))
 	}
 }
 
@@ -332,8 +374,10 @@ func (this DragMode) String() string {
 		return "DragModeOff"
 	case DragModeOn:
 		return "DragModeOn"
+	case DragModeAuto:
+		return "DragModeAuto"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("DragMode(%d)", int16(this))
 	}
 }
 
@@ -354,7 +398,7 @@ func (this DrawingDirection) String() string {
 	case DrawingDirectionByStyle:
 		return "DrawingDirectionByStyle"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("DrawingDirection(%d)", int16(this))
 	}
 }
 
@@ -372,7 +416,7 @@ func (this DrawingUnits) String() string {
 	case DrawingUnitsMetric:
 		return "DrawingUnitsMetric"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("DrawingUnits(%d)", int16(this))
 	}
 }
 
@@ -394,8 +438,18 @@ func (this Dwf3DPrecision) String() string {
 		return "Dwf3DPrecision_"
 	case Dwf3DPrecisionDeviation1:
 		return "Dwf3DPrecisionDeviation1"
+	case Dwf3DPrecisionDeviation0_5:
+		return "Dwf3DPrecisionDeviation0_5"
+	case Dwf3DPrecisionDeviation0_2:
+		return "Dwf3DPrecisionDeviation0_2"
+	case Dwf3DPrecisionDeviation0_1:
+		return "Dwf3DPrecisionDeviation0_1"
+	case Dwf3DPrecisionDeviation0_01:
+		return "Dwf3DPrecisionDeviation0_01"
+	case Dwf3DPrecisionDeviation0_001:
+		return "Dwf3DPrecisionDeviation0_001"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("Dwf3DPrecision(%d)", int16(this))
 	}
 }
 
@@ -414,8 +468,12 @@ func (this EndCapSetting) String() string {
 		return "EndCapSettingNone"
 	case EndCapSettingRound:
 		return "EndCapSettingRound"
+	case EndCapSettingAngle:
+		return "EndCapSettingAngle"
+	case EndCapSettingSquare:
+		return "EndCapSettingSquare"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("EndCapSetting(%d)", int16(this))
 	}
 }
 
@@ -433,7 +491,7 @@ func (this FontType) String() string {
 	case FontTypeSHX:
 		return "FontTypeSHX"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("FontType(%d)", int16(this))
 	}
 }
 
@@ -451,8 +509,10 @@ func (this HelixConstraint) String() string {
 		return "HelixConstraintConstrainTurnHeight"
 	case HelixConstraintConstrainTurns:
 		return "HelixConstraintConstrainTurns"
+	case HelixConstraintConstrainHeight:
+		return "HelixConstraintConstrainHeight"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("HelixConstraint(%d)", int16(this))
 	}
 }
 
@@ -473,8 +533,16 @@ func (this HorizontalTextJustification) String() string {
 		return "HorizontalTextJustificationLeft"
 	case HorizontalTextJustificationCenter:
 		return "HorizontalTextJustificationCenter"
+	case HorizontalTextJustificationRight:
+		return "HorizontalTextJustificationRight"
+	case HorizontalTextJustificationAligned:
+		return "HorizontalTextJustificationAligned"
+	case HorizontalTextJustificationMiddle:
+		return "HorizontalTextJustificationMiddle"
+	case HorizontalTextJustificationFit:
+		return "HorizontalTextJustificationFit"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("HorizontalTextJustification(%d)", int16(this))
 	}
 }
 
@@ -492,7 +560,7 @@ func (this ImageClippingBoundaryType) String() string {
 	case ImageClippingBoundaryTypePolygonal:
 		return "ImageClippingBoundaryTypePolygonal"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("ImageClippingBoundaryType(%d)", int16(this))
 	}
 }
 
@@ -511,8 +579,12 @@ func (this JoinStyle) String() string {
 		return "JoinStyleNone"
 	case JoinStyleRound:
 		return "JoinStyleRound"
+	case JoinStyleAngle:
+		return "JoinStyleAngle"
+	case JoinStyleFlat:
+		return "JoinStyleFlat"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("JoinStyle(%d)", int16(this))
 	}
 }
 
@@ -530,8 +602,10 @@ func (this Justification) String() string {
 		return "JustificationTop"
 	case JustificationMiddle:
 		return "JustificationMiddle"
+	case JustificationBottom:
+		return "JustificationBottom"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("Justification(%d)", int16(this))
 	}
 }
 
@@ -550,8 +624,12 @@ func (this LayerAndSpatialIndexSaveMode) String() string {
 		return "LayerAndSpatialIndexSaveModeNone"
 	case LayerAndSpatialIndexSaveModeLayerIndex:
 		return "LayerAndSpatialIndexSaveModeLayerIndex"
+	case LayerAndSpatialIndexSaveModeSpatialIndex:
+		return "LayerAndSpatialIndexSaveModeSpatialIndex"
+	case LayerAndSpatialIndexSaveModeLayerAndSpatialIndex:
+		return "LayerAndSpatialIndexSaveModeLayerAndSpatialIndex"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("LayerAndSpatialIndexSaveMode(%d)", int16(this))
 	}
 }
 
@@ -570,8 +648,12 @@ func (this LeaderCreationAnnotationType) String() string {
 		return "LeaderCreationAnnotationTypeWithTextAnnotation"
 	case LeaderCreationAnnotationTypeWithToleranceAnnotation:
 		return "LeaderCreationAnnotationTypeWithToleranceAnnotation"
+	case LeaderCreationAnnotationTypeWithBlockReferenceAnnotation:
+		return "LeaderCreationAnnotationTypeWithBlockReferenceAnnotation"
+	case LeaderCreationAnnotationTypeNoAnnotation:
+		return "LeaderCreationAnnotationTypeNoAnnotation"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("LeaderCreationAnnotationType(%d)", int16(this))
 	}
 }
 
@@ -589,7 +671,7 @@ func (this LeaderHooklineDirection) String() string {
 	case LeaderHooklineDirectionSameAsHorizontalVector:
 		return "LeaderHooklineDirectionSameAsHorizontalVector"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("LeaderHooklineDirection(%d)", int16(this))
 	}
 }
 
@@ -607,7 +689,7 @@ func (this LeaderPathType) String() string {
 	case LeaderPathTypeSpline:
 		return "LeaderPathTypeSpline"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("LeaderPathType(%d)", int16(this))
 	}
 }
 
@@ -628,7 +710,7 @@ func (this LightType) String() string {
 	case LightTypeSpot:
 		return "LightTypeSpot"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("LightType(%d)", int16(this))
 	}
 }
 
@@ -646,8 +728,10 @@ func (this LightAttenuationType) String() string {
 		return "LightAttenuationTypeNone"
 	case LightAttenuationTypeInverseLinear:
 		return "LightAttenuationTypeInverseLinear"
+	case LightAttenuationTypeInverseSquare:
+		return "LightAttenuationTypeInverseSquare"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("LightAttenuationType(%d)", int16(this))
 	}
 }
 
@@ -674,8 +758,28 @@ func (this LineTypeStyle) String() string {
 		return "LineTypeStyleOff"
 	case LineTypeStyleSolid:
 		return "LineTypeStyleSolid"
+	case LineTypeStyleDashed:
+		return "LineTypeStyleDashed"
+	case LineTypeStyleDotted:
+		return "LineTypeStyleDotted"
+	case LineTypeStyleShortDash:
+		return "LineTypeStyleShortDash"
+	case LineTypeStyleMediumDash:
+		return "LineTypeStyleMediumDash"
+	case LineTypeStyleLongDash:
+		return "LineTypeStyleLongDash"
+	case LineTypeStyleDoubleShortDash:
+		return "LineTypeStyleDoubleShortDash"
+	case LineTypeStyleDoubleMediumDash:
+		return "LineTypeStyleDoubleMediumDash"
+	case LineTypeStyleDoubleLongDash:
+		return "LineTypeStyleDoubleLongDash"
+	case LineTypeStyleMediumLongDash:
+		return "LineTypeStyleMediumLongDash"
+	case LineTypeStyleSparseDot:
+		return "LineTypeStyleSparseDot"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("LineTypeStyle(%d)", int16(this))
 	}
 }
 
@@ -697,8 +801,18 @@ func (this LoftedObjectNormalMode) String() string {
 		return "LoftedObjectNormalModeRuled"
 	case LoftedObjectNormalModeSmoothFit:
 		return "LoftedObjectNormalModeSmoothFit"
+	case LoftedObjectNormalModeStartCrossSection:
+		return "LoftedObjectNormalModeStartCrossSection"
+	case LoftedObjectNormalModeEndCrossSection:
+		return "LoftedObjectNormalModeEndCrossSection"
+	case LoftedObjectNormalModeStartAndEndCrossSections:
+		return "LoftedObjectNormalModeStartAndEndCrossSections"
+	case LoftedObjectNormalModeAllCrossSections:
+		return "LoftedObjectNormalModeAllCrossSections"
+	case LoftedObjectNormalModeUseDraftAngleAndMagnitude:
+		return "LoftedObjectNormalModeUseDraftAngleAndMagnitude"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("LoftedObjectNormalMode(%d)", int16(this))
 	}
 }
 
@@ -716,7 +830,7 @@ func (this MTextFlag) String() string {
 	case MTextFlagConstantMultilineAttributeDefinition:
 		return "MTextFlagConstantMultilineAttributeDefinition"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("MTextFlag(%d)", int16(this))
 	}
 }
 
@@ -734,7 +848,7 @@ func (this MTextLineSpacingStyle) String() string {
 	case MTextLineSpacingStyleExact:
 		return "MTextLineSpacingStyleExact"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("MTextLineSpacingStyle(%d)", int16(this))
 	}
 }
 
@@ -755,8 +869,16 @@ func (this NonAngularUnits) String() string {
 		return "NonAngularUnitsScientific"
 	case NonAngularUnitsDecimal:
 		return "NonAngularUnitsDecimal"
+	case NonAngularUnitsEngineering:
+		return "NonAngularUnitsEngineering"
+	case NonAngularUnitsArchitectural:
+		return "NonAngularUnitsArchitectural"
+	case NonAngularUnitsFractional:
+		return "NonAngularUnitsFractional"
+	case NonAngularUnitsWindowsDesktop:
+		return "NonAngularUnitsWindowsDesktop"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("NonAngularUnits(%d)", int16(this))
 	}
 }
 
@@ -777,7 +899,7 @@ func (this OleObjectType) String() string {
 	case OleObjectTypeStatic:
 		return "OleObjectTypeStatic"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("OleObjectType(%d)", int16(this))
 	}
 }
 
@@ -799,8 +921,18 @@ func (this OrthographicViewType) String() string {
 		return "OrthographicViewTypeNone"
 	case OrthographicViewTypeTop:
 		return "OrthographicViewTypeTop"
+	case OrthographicViewTypeBottom:
+		return "OrthographicViewTypeBottom"
+	case OrthographicViewTypeFront:
+		return "OrthographicViewTypeFront"
+	case OrthographicViewTypeBack:
+		return "OrthographicViewTypeBack"
+	case OrthographicViewTypeLeft:
+		return "OrthographicViewTypeLeft"
+	case OrthographicViewTypeRight:
+		return "OrthographicViewTypeRight"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("OrthographicViewType(%d)", int16(this))
 	}
 }
 
@@ -819,8 +951,12 @@ func (this PickStyle) String() string {
 		return "PickStyleNone"
 	case PickStyleGroup:
 		return "PickStyleGroup"
+	case PickStyleAssociativeHatch:
+		return "PickStyleAssociativeHatch"
+	case PickStyleGroupAndAssociativeHatch:
+		return "PickStyleGroupAndAssociativeHatch"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("PickStyle(%d)", int16(this))
 	}
 }
 
@@ -839,8 +975,12 @@ func (this PolylineCurvedAndSmoothSurfaceType) String() string {
 		return "PolylineCurvedAndSmoothSurfaceTypeNone"
 	case PolylineCurvedAndSmoothSurfaceTypeQuadraticBSpline:
 		return "PolylineCurvedAndSmoothSurfaceTypeQuadraticBSpline"
+	case PolylineCurvedAndSmoothSurfaceTypeCubicBSpline:
+		return "PolylineCurvedAndSmoothSurfaceTypeCubicBSpline"
+	case PolylineCurvedAndSmoothSurfaceTypeBezier:
+		return "PolylineCurvedAndSmoothSurfaceTypeBezier"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("PolylineCurvedAndSmoothSurfaceType(%d)", int16(this))
 	}
 }
 
@@ -858,8 +998,10 @@ func (this PolylineType) String() string {
 		return "PolylineTypeBaseline"
 	case PolylineTypeInternal:
 		return "PolylineTypeInternal"
+	case PolylineTypeOutline:
+		return "PolylineTypeOutline"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("PolylineType(%d)", int16(this))
 	}
 }
 
@@ -877,7 +1019,7 @@ func (this PolySketchMode) String() string {
 	case PolySketchModeSketchPolyLines:
 		return "PolySketchModeSketchPolyLines"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("PolySketchMode(%d)", int16(this))
 	}
 }
 
@@ -896,8 +1038,12 @@ func (this PlotStyle) String() string {
 		return "PlotStyleByLayer"
 	case PlotStyleByBlock:
 		return "PlotStyleByBlock"
+	case PlotStyleByDictionaryDefault:
+		return "PlotStyleByDictionaryDefault"
+	case PlotStyleByObjectId:
+		return "PlotStyleByObjectId"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("PlotStyle(%d)", int16(this))
 	}
 }
 
@@ -916,8 +1062,12 @@ func (this ShadeEdgeMode) String() string {
 		return "ShadeEdgeModeFacesShadedEdgeNotHighlighted"
 	case ShadeEdgeModeFacesShadedEdgesHighlightedInBlack:
 		return "ShadeEdgeModeFacesShadedEdgesHighlightedInBlack"
+	case ShadeEdgeModeFacesNotFilledEdgesInEntityColor:
+		return "ShadeEdgeModeFacesNotFilledEdgesInEntityColor"
+	case ShadeEdgeModeFacesInEntityColorEdgesInBlack:
+		return "ShadeEdgeModeFacesInEntityColorEdgesInBlack"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("ShadeEdgeMode(%d)", int16(this))
 	}
 }
 
@@ -936,8 +1086,12 @@ func (this ShadowMode) String() string {
 		return "ShadowModeCastsAndReceivesShadows"
 	case ShadowModeCastsShadows:
 		return "ShadowModeCastsShadows"
+	case ShadowModeReceivesShadows:
+		return "ShadowModeReceivesShadows"
+	case ShadowModeIgnoresShadows:
+		return "ShadowModeIgnoresShadows"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("ShadowMode(%d)", int16(this))
 	}
 }
 
@@ -955,7 +1109,7 @@ func (this ShadowType) String() string {
 	case ShadowTypeShadowMaps:
 		return "ShadowTypeShadowMaps"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("ShadowType(%d)", int16(this))
 	}
 }
 
@@ -973,8 +1127,10 @@ func (this SnapIsometricPlane) String() string {
 		return "SnapIsometricPlaneLeft"
 	case SnapIsometricPlaneTop:
 		return "SnapIsometricPlaneTop"
+	case SnapIsometricPlaneRight:
+		return "SnapIsometricPlaneRight"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("SnapIsometricPlane(%d)", int16(this))
 	}
 }
 
@@ -992,7 +1148,7 @@ func (this SnapStyle) String() string {
 	case SnapStyleIsometric:
 		return "SnapStyleIsometric"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("SnapStyle(%d)", int16(this))
 	}
 }
 
@@ -1010,8 +1166,10 @@ func (this SolidHistoryMode) String() string {
 		return "SolidHistoryModeNone"
 	case SolidHistoryModeDoesNotOverride:
 		return "SolidHistoryModeDoesNotOverride"
+	case SolidHistoryModeOverride:
+		return "SolidHistoryModeOverride"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("SolidHistoryMode(%d)", int16(this))
 	}
 }
 
@@ -1029,7 +1187,7 @@ func (this TextDirection) String() string {
 	case TextDirectionRightToLeft:
 		return "TextDirectionRightToLeft"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("TextDirection(%d)", int16(this))
 	}
 }
 
@@ -1047,7 +1205,7 @@ func (this TextLineSpacingStyle) String() string {
 	case TextLineSpacingStyleExact:
 		return "TextLineSpacingStyleExact"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("TextLineSpacingStyle(%d)", int16(this))
 	}
 }
 
@@ -1065,7 +1223,7 @@ func (this TileModeDescriptor) String() string {
 	case TileModeDescriptorInNonTiledViewport:
 		return "TileModeDescriptorInNonTiledViewport"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("TileModeDescriptor(%d)", int16(this))
 	}
 }
 
@@ -1304,7 +1462,7 @@ func (this TimeZone) String() string {
 	case TimeZoneNukualofa_Tonga:
 		return "TimeZoneNukualofa_Tonga"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("TimeZone(%d)", int16(this))
 	}
 }
 
@@ -1322,8 +1480,10 @@ func (this UnderlayFrameMode) String() string {
 		return "UnderlayFrameModeNone"
 	case UnderlayFrameModeDisplayAndPlot:
 		return "UnderlayFrameModeDisplayAndPlot"
+	case UnderlayFrameModeDisplayNoPlot:
+		return "UnderlayFrameModeDisplayNoPlot"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("UnderlayFrameMode(%d)", int16(this))
 	}
 }
 
@@ -1344,10 +1504,22 @@ func (this UnitFormat) String() string {
 	switch this {
 	case UnitFormat_:
 		return "UnitFormat_"
+	case UnitFormatScientific:
+		return "UnitFormatScientific"
 	case UnitFormatDecimal:
 		return "UnitFormatDecimal"
+	case UnitFormatEngineering:
+		return "UnitFormatEngineering"
+	case UnitFormatArchitecturalStacked:
+		return "UnitFormatArchitecturalStacked"
+	case UnitFormatFractionalStacked:
+		return "UnitFormatFractionalStacked"
+	case UnitFormatArchitectural:
+		return "UnitFormatArchitectural"
+	case UnitFormatFractional:
+		return "UnitFormatFractional"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("UnitFormat(%d)", int16(this))
 	}
 }
 
@@ -1387,8 +1559,54 @@ func (this Units) String() string {
 		return "UnitsUnitless"
 	case UnitsInches:
 		return "UnitsInches"
+	case UnitsFeet:
+		return "UnitsFeet"
+	case UnitsMiles:
+		return "UnitsMiles"
+	case UnitsMillimeters:
+		return "UnitsMillimeters"
+	case UnitsCentimeters:
+		return "UnitsCentimeters"
+	case UnitsMeters:
+		return "UnitsMeters"
+	case UnitsKilometers:
+		return "UnitsKilometers"
+	case UnitsMicroinches:
+		return "UnitsMicroinches"
+	case UnitsMils:
+		return "UnitsMils"
+	case UnitsYards:
+		return "UnitsYards"
+	case UnitsAngstroms:
+		return "UnitsAngstroms"
+	case UnitsNanometers:
+		return "UnitsNanometers"
+	case UnitsMicrons:
+		return "UnitsMicrons"
+	case UnitsDecimeters:
+		return "UnitsDecimeters"
+	case UnitsDecameters:
+		return "UnitsDecameters"
+	case UnitsHectometers:
+		return "UnitsHectometers"
+	case UnitsGigameters:
+		return "UnitsGigameters"
+	case UnitsAstronomicalUnits:
+		return "UnitsAstronomicalUnits"
+	case UnitsLightYears:
+		return "UnitsLightYears"
+	case UnitsParsecs:
+		return "UnitsParsecs"
+	case UnitsUSSurveyFeet:
+		return "UnitsUSSurveyFeet"
+	case UnitsUSSurveyInch:
+		return "UnitsUSSurveyInch"
+	case UnitsUSSurveyYard:
+		return "UnitsUSSurveyYard"
+	case UnitsUSSurveyMile:
+		return "UnitsUSSurveyMile"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("Units(%d)", int16(this))
 	}
 }
 
@@ -1407,8 +1625,12 @@ func (this UnitZeroSuppression) String() string {
 		return "UnitZeroSuppressionSuppressZeroFeetAndZeroInches"
 	case UnitZeroSuppressionIncludeZeroFeetAndZeroInches:
 		return "UnitZeroSuppressionIncludeZeroFeetAndZeroInches"
+	case UnitZeroSuppressionIncludeZeroFeetAndSuppressZeroInches:
+		return "UnitZeroSuppressionIncludeZeroFeetAndSuppressZeroInches"
+	case UnitZeroSuppressionIncludeZeroInchesAndSuppressZeroFeet:
+		return "UnitZeroSuppressionIncludeZeroInchesAndSuppressZeroFeet"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("UnitZeroSuppression(%d)", int16(this))
 	}
 }
 
@@ -1423,7 +1645,7 @@ func (this Version) String() string {
 	case VersionR2010:
 		return "VersionR2010"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("Version(%d)", int16(this))
 	}
 }
 
@@ -1442,8 +1664,12 @@ func (this VerticalTextJustification) String() string {
 		return "VerticalTextJustificationBaseline"
 	case VerticalTextJustificationBottom:
 		return "VerticalTextJustificationBottom"
+	case VerticalTextJustificationMiddle:
+		return "VerticalTextJustificationMiddle"
+	case VerticalTextJustificationTop:
+		return "VerticalTextJustificationTop"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("VerticalTextJustification(%d)", int16(this))
 	}
 }
 
@@ -1465,8 +1691,18 @@ func (this ViewRenderMode) String() string {
 		return "ViewRenderModeClassic2D"
 	case ViewRenderModeWireframe:
 		return "ViewRenderModeWireframe"
+	case ViewRenderModeHiddenLine:
+		return "ViewRenderModeHiddenLine"
+	case ViewRenderModeFlatShaded:
+		return "ViewRenderModeFlatShaded"
+	case ViewRenderModeGouraudShaded:
+		return "ViewRenderModeGouraudShaded"
+	case ViewRenderModeFlatShadedWithWireframe:
+		return "ViewRenderModeFlatShadedWithWireframe"
+	case ViewRenderModeGouraudShadedWithWireframe:
+		return "ViewRenderModeGouraudShadedWithWireframe"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("ViewRenderMode(%d)", int16(this))
 	}
 }
 
@@ -1484,8 +1720,10 @@ func (this XrefClippingBoundaryVisibility) String() string {
 		return "XrefClippingBoundaryVisibilityNotDisplayedNotPlotted"
 	case XrefClippingBoundaryVisibilityDisplayedAndPlotted:
 		return "XrefClippingBoundaryVisibilityDisplayedAndPlotted"
+	case XrefClippingBoundaryVisibilityDisplayedNotPlotted:
+		return "XrefClippingBoundaryVisibilityDisplayedNotPlotted"
 	default:
-		return fmt.Sprintf("%v", (this))
+		return fmt.Sprintf("XrefClippingBoundaryVisibility(%d)", int16(this))
 	}
 }
 
