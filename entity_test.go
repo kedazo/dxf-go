@@ -1227,6 +1227,44 @@ func TestWriteXLine(t *testing.T) {
 	}, actual)
 }
 
+func TestReadSkipsApplicationGroups(t *testing.T) {
+	line := parseEntity(t, "LINE",
+		NewStringCodePair(5, "A1"),
+		NewStringCodePair(330, "1F"),
+		// a reactor after the owner used to replace it
+		NewStringCodePair(102, "{ACAD_REACTORS"),
+		NewStringCodePair(330, "2E"),
+		NewStringCodePair(102, "}"),
+		NewStringCodePair(102, "{ACAD_XDICTIONARY"),
+		NewStringCodePair(360, "3D"),
+		NewStringCodePair(102, "}"),
+		NewDoubleCodePair(10, 1.0),
+	).(*Line)
+	assertEqInt(t, 0x1F, int(line.getOwnerPointer().handle))
+	assertEqPoint(t, Point{1.0, 0.0, 0.0}, line.P1)
+
+	viewport := parseEntity(t, "VIEWPORT",
+		NewStringCodePair(102, "{BLKREFS"),
+		NewStringCodePair(331, "4C"),
+		NewStringCodePair(102, "}"),
+		NewStringCodePair(331, "5B"),
+	).(*Viewport)
+	assertEqInt(t, 1, len(viewport.FrozenLayerHandles))
+	assertEqInt(t, 0x5B, int(viewport.FrozenLayerHandles[0]))
+}
+
+func TestReadUnclosedApplicationGroupEndsWithTheEntity(t *testing.T) {
+	entities := parseEntities(t,
+		NewStringCodePair(0, "LINE"),
+		NewStringCodePair(102, "{ACAD_REACTORS"),
+		NewStringCodePair(330, "2E"),
+		NewStringCodePair(0, "CIRCLE"),
+		NewDoubleCodePair(40, 2.0),
+	)
+	assertEqInt(t, 2, len(entities))
+	assertEqFloat64(t, 2.0, entities[1].(*Circle).Radius)
+}
+
 func parseEntity(t *testing.T, entityType string, body ...CodePair) Entity {
 	codePairs := []CodePair{NewStringCodePair(0, entityType)}
 	codePairs = append(codePairs, body...)

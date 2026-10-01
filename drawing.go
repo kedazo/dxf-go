@@ -350,6 +350,7 @@ func ParseDrawingFromCodePairs(codePairs ...CodePair) (Drawing, error) {
 }
 
 func readFromCodePairReader(reader codePairReader) (Drawing, error) {
+	reader = &applicationGroupFilteringReader{inner: reader}
 	drawing := *NewDrawing()
 
 	// read sections

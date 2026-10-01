@@ -91,6 +91,39 @@ func (r *commentFilteringReader) setCodePage(name string) {
 	r.inner.setCodePage(name)
 }
 
+// applicationGroupFilteringReader wraps a codePairReader and skips application groups: 102/{NAME up to 102/}, e.g.
+// {ACAD_REACTORS (330s), {ACAD_XDICTIONARY (360) or {BLKREFS (331s). Their handles would otherwise be read as the
+// item's own codes, like the owner (330) or a viewport's frozen layers (331).
+type applicationGroupFilteringReader struct {
+	inner codePairReader
+}
+
+func (r *applicationGroupFilteringReader) readCodePair() (CodePair, error) {
+	pair, err := r.inner.readCodePair()
+	for err == nil && isApplicationGroupStart(pair) {
+		// skip to the closing 102/}; a group that isn't closed ends with the item
+		for err == nil && pair.Code != 0 && !(pair.Code == 102 && stringValue(pair) == "}") {
+			pair, err = r.inner.readCodePair()
+		}
+		if err == nil && pair.Code == 102 {
+			pair, err = r.inner.readCodePair()
+		}
+	}
+	return pair, err
+}
+
+func isApplicationGroupStart(pair CodePair) bool {
+	return pair.Code == 102 && strings.HasPrefix(stringValue(pair), "{")
+}
+
+func (r *applicationGroupFilteringReader) setUtf8Reader() {
+	r.inner.setUtf8Reader()
+}
+
+func (r *applicationGroupFilteringReader) setCodePage(name string) {
+	r.inner.setCodePage(name)
+}
+
 // code pairs
 type directCodePairReader struct {
 	index     int
