@@ -211,6 +211,13 @@ func TestWalkInvisibleEntitiesAndDimensionBlocks(t *testing.T) {
 	visits, _ = walkAll(t, &drawing, WalkOptions{IncludeInvisible: true, IncludeDimensionBlocks: true})
 	assertEqInt(t, 3, len(visits))
 	assertEqInt(t, 2, len(visitsOf[*Line](visits)))
+
+	// arc dimensions have dimension blocks too
+	arcDimension := NewArcDimension()
+	arcDimension.SetBlockName("*D1")
+	drawing.Entities = []Entity{arcDimension}
+	visits, _ = walkAll(t, &drawing, WalkOptions{IncludeDimensionBlocks: true})
+	assertEqInt(t, 1, len(visitsOf[*Line](visits)))
 }
 
 func TestInsertMatrix(t *testing.T) {

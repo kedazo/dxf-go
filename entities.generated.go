@@ -6574,6 +6574,417 @@ func (this *OrdinateDimension) codePairs(version AcadVersion) (pairs []CodePair)
 	return
 }
 
+type ArcDimension struct {
+	// fields for Entity interface
+	handle Handle
+	isInPaperSpace bool
+	layer string
+	lineTypeName string
+	elevation float64
+	materialHandle string
+	color Color
+	lineWeight LineWeight
+	lineTypeScale float64
+	isVisible bool
+	imageByteCount int
+	previewImageData []string
+	color24Bit int
+	colorName string
+	transparency int
+	shadowMode ShadowMode
+	// fields for Dimension interface
+	version Version
+	blockName string
+	definitionPoint1 Point
+	textMidPoint Point
+	dimensionType DimensionType
+	attachmentPoint AttachmentPoint
+	textLineSpacingStyle TextLineSpacingStyle
+	textLineSpacingFactor float64
+	actualMeasurement float64
+	text string
+	textRotationAngle float64
+	horizontalDirectionAngle float64
+	normal Vector
+	dimensionStyleName string
+	DefinitionPoint2 Point // Start point of the first extension line.
+	DefinitionPoint3 Point // Start point of the second extension line.
+	ArcCenter Point
+	StartAngle float64 // Radians.
+	EndAngle float64 // Radians.
+	IsPartial bool
+	HasLeader bool
+	LeaderPoint1 Point
+	LeaderPoint2 Point
+	lastSubclassMarker string
+	pointerOwner pointer
+	pointerPlotStyle pointer
+}
+
+func NewArcDimension() *ArcDimension {
+	return &ArcDimension{
+		handle: 0,
+		isInPaperSpace: false,
+		layer: "0",
+		lineTypeName: "BYLAYER",
+		elevation: 0.0,
+		materialHandle: "BYLAYER",
+		color: ByLayer(),
+		lineWeight: NewLineWeightStandard(),
+		lineTypeScale: 1.0,
+		isVisible: true,
+		imageByteCount: 0,
+		previewImageData: []string{},
+		color24Bit: 0,
+		colorName: "",
+		transparency: 0,
+		shadowMode: ShadowModeCastsAndReceivesShadows,
+		version: VersionR2010,
+		blockName: "*MODEL_SPACE",
+		definitionPoint1: *NewOrigin(),
+		textMidPoint: *NewOrigin(),
+		dimensionType: DimensionTypeAligned,
+		attachmentPoint: AttachmentPointTopLeft,
+		textLineSpacingStyle: TextLineSpacingStyleAtLeast,
+		textLineSpacingFactor: 1.0,
+		actualMeasurement: 0.0,
+		text: "<>",
+		textRotationAngle: 0.0,
+		horizontalDirectionAngle: 0.0,
+		normal: *NewZAxis(),
+		dimensionStyleName: "STANDARD",
+		DefinitionPoint2: *NewOrigin(),
+		DefinitionPoint3: *NewOrigin(),
+		ArcCenter: *NewOrigin(),
+		StartAngle: 0.0,
+		EndAngle: 0.0,
+		IsPartial: false,
+		HasLeader: false,
+		LeaderPoint1: *NewOrigin(),
+		LeaderPoint2: *NewOrigin(),
+		lastSubclassMarker: "",
+	}
+}
+
+func (e *ArcDimension) pointers() (pointers []*pointer) {
+	pointers = append(pointers, &e.pointerOwner)
+	pointers = append(pointers, &e.pointerPlotStyle)
+	return
+}
+
+func (e *ArcDimension) getOwnerPointer() pointer {
+	return e.pointerOwner
+}
+
+func (e *ArcDimension) setOwnerPointerHandle(h Handle) {
+	e.pointerOwner.handle = h
+}
+
+func (e *ArcDimension) Owner() *DrawingItem {
+	return e.pointerOwner.value
+}
+
+func (e *ArcDimension) SetOwner(val *DrawingItem) {
+	e.pointerOwner.value = val
+}
+
+func (e *ArcDimension) getPlotStylePointer() pointer {
+	return e.pointerPlotStyle
+}
+
+func (e *ArcDimension) setPlotStylePointerHandle(h Handle) {
+	e.pointerPlotStyle.handle = h
+}
+
+func (e *ArcDimension) PlotStyle() *DrawingItem {
+	return e.pointerPlotStyle.value
+}
+
+func (e *ArcDimension) SetPlotStyle(val *DrawingItem) {
+	e.pointerPlotStyle.value = val
+}
+
+func (this *ArcDimension) Handle() Handle {
+	return this.handle
+}
+
+func (this *ArcDimension) SetHandle(val Handle) {
+	this.handle = val
+}
+
+func (this *ArcDimension) IsInPaperSpace() bool {
+	return this.isInPaperSpace
+}
+
+func (this *ArcDimension) SetIsInPaperSpace(val bool) {
+	this.isInPaperSpace = val
+}
+
+func (this *ArcDimension) Layer() string {
+	return this.layer
+}
+
+func (this *ArcDimension) SetLayer(val string) {
+	this.layer = val
+}
+
+func (this *ArcDimension) LineTypeName() string {
+	return this.lineTypeName
+}
+
+func (this *ArcDimension) SetLineTypeName(val string) {
+	this.lineTypeName = val
+}
+
+func (this *ArcDimension) Elevation() float64 {
+	return this.elevation
+}
+
+func (this *ArcDimension) SetElevation(val float64) {
+	this.elevation = val
+}
+
+func (this *ArcDimension) MaterialHandle() string {
+	return this.materialHandle
+}
+
+func (this *ArcDimension) SetMaterialHandle(val string) {
+	this.materialHandle = val
+}
+
+func (this *ArcDimension) Color() Color {
+	return this.color
+}
+
+func (this *ArcDimension) SetColor(val Color) {
+	this.color = val
+}
+
+func (this *ArcDimension) LineWeight() LineWeight {
+	return this.lineWeight
+}
+
+func (this *ArcDimension) SetLineWeight(val LineWeight) {
+	this.lineWeight = val
+}
+
+func (this *ArcDimension) LineTypeScale() float64 {
+	return this.lineTypeScale
+}
+
+func (this *ArcDimension) SetLineTypeScale(val float64) {
+	this.lineTypeScale = val
+}
+
+func (this *ArcDimension) IsVisible() bool {
+	return this.isVisible
+}
+
+func (this *ArcDimension) SetIsVisible(val bool) {
+	this.isVisible = val
+}
+
+func (this *ArcDimension) ImageByteCount() int {
+	return this.imageByteCount
+}
+
+func (this *ArcDimension) SetImageByteCount(val int) {
+	this.imageByteCount = val
+}
+
+func (this *ArcDimension) PreviewImageData() []string {
+	return this.previewImageData
+}
+
+func (this *ArcDimension) SetPreviewImageData(val []string) {
+	this.previewImageData = val
+}
+
+func (this *ArcDimension) Color24Bit() int {
+	return this.color24Bit
+}
+
+func (this *ArcDimension) SetColor24Bit(val int) {
+	this.color24Bit = val
+}
+
+func (this *ArcDimension) ColorName() string {
+	return this.colorName
+}
+
+func (this *ArcDimension) SetColorName(val string) {
+	this.colorName = val
+}
+
+func (this *ArcDimension) Transparency() int {
+	return this.transparency
+}
+
+func (this *ArcDimension) SetTransparency(val int) {
+	this.transparency = val
+}
+
+func (this *ArcDimension) ShadowMode() ShadowMode {
+	return this.shadowMode
+}
+
+func (this *ArcDimension) SetShadowMode(val ShadowMode) {
+	this.shadowMode = val
+}
+
+func (this *ArcDimension) Version() Version {
+	return this.version
+}
+
+func (this *ArcDimension) SetVersion(val Version) {
+	this.version = val
+}
+
+func (this *ArcDimension) BlockName() string {
+	return this.blockName
+}
+
+func (this *ArcDimension) SetBlockName(val string) {
+	this.blockName = val
+}
+
+func (this *ArcDimension) DefinitionPoint1() Point {
+	return this.definitionPoint1
+}
+
+func (this *ArcDimension) SetDefinitionPoint1(val Point) {
+	this.definitionPoint1 = val
+}
+
+func (this *ArcDimension) TextMidPoint() Point {
+	return this.textMidPoint
+}
+
+func (this *ArcDimension) SetTextMidPoint(val Point) {
+	this.textMidPoint = val
+}
+
+func (this *ArcDimension) DimensionType() DimensionType {
+	return this.dimensionType
+}
+
+func (this *ArcDimension) SetDimensionType(val DimensionType) {
+	this.dimensionType = val
+}
+
+func (this *ArcDimension) AttachmentPoint() AttachmentPoint {
+	return this.attachmentPoint
+}
+
+func (this *ArcDimension) SetAttachmentPoint(val AttachmentPoint) {
+	this.attachmentPoint = val
+}
+
+func (this *ArcDimension) TextLineSpacingStyle() TextLineSpacingStyle {
+	return this.textLineSpacingStyle
+}
+
+func (this *ArcDimension) SetTextLineSpacingStyle(val TextLineSpacingStyle) {
+	this.textLineSpacingStyle = val
+}
+
+func (this *ArcDimension) TextLineSpacingFactor() float64 {
+	return this.textLineSpacingFactor
+}
+
+func (this *ArcDimension) SetTextLineSpacingFactor(val float64) {
+	this.textLineSpacingFactor = val
+}
+
+func (this *ArcDimension) ActualMeasurement() float64 {
+	return this.actualMeasurement
+}
+
+func (this *ArcDimension) SetActualMeasurement(val float64) {
+	this.actualMeasurement = val
+}
+
+func (this *ArcDimension) Text() string {
+	return this.text
+}
+
+func (this *ArcDimension) SetText(val string) {
+	this.text = val
+}
+
+func (this *ArcDimension) TextRotationAngle() float64 {
+	return this.textRotationAngle
+}
+
+func (this *ArcDimension) SetTextRotationAngle(val float64) {
+	this.textRotationAngle = val
+}
+
+func (this *ArcDimension) HorizontalDirectionAngle() float64 {
+	return this.horizontalDirectionAngle
+}
+
+func (this *ArcDimension) SetHorizontalDirectionAngle(val float64) {
+	this.horizontalDirectionAngle = val
+}
+
+func (this *ArcDimension) Normal() Vector {
+	return this.normal
+}
+
+func (this *ArcDimension) SetNormal(val Vector) {
+	this.normal = val
+}
+
+func (this *ArcDimension) DimensionStyleName() string {
+	return this.dimensionStyleName
+}
+
+func (this *ArcDimension) SetDimensionStyleName(val string) {
+	this.dimensionStyleName = val
+}
+
+func (this *ArcDimension) typeString() string {
+	return "ARC_DIMENSION"
+}
+
+func (this *ArcDimension) minVersion() (version AcadVersion) {
+	return R2004
+}
+
+func (this *ArcDimension) maxVersion() (version AcadVersion) {
+	return R2018
+}
+
+func (this *ArcDimension) codePairs(version AcadVersion) (pairs []CodePair) {
+	pairs = append(pairs, NewStringCodePair(0, "ARC_DIMENSION"))
+	pairs = append(pairs, codePairsForEntity(this, version)...)
+	pairs = append(pairs, codePairsForDimension(this, version)...)
+	if version >= R13 {
+		pairs = append(pairs, NewStringCodePair(100, "AcDbArcDimension"))
+	}
+	pairs = append(pairs, NewDoubleCodePair(13, this.DefinitionPoint2.X))
+	pairs = append(pairs, NewDoubleCodePair(23, this.DefinitionPoint2.Y))
+	pairs = append(pairs, NewDoubleCodePair(33, this.DefinitionPoint2.Z))
+	pairs = append(pairs, NewDoubleCodePair(14, this.DefinitionPoint3.X))
+	pairs = append(pairs, NewDoubleCodePair(24, this.DefinitionPoint3.Y))
+	pairs = append(pairs, NewDoubleCodePair(34, this.DefinitionPoint3.Z))
+	pairs = append(pairs, NewDoubleCodePair(15, this.ArcCenter.X))
+	pairs = append(pairs, NewDoubleCodePair(25, this.ArcCenter.Y))
+	pairs = append(pairs, NewDoubleCodePair(35, this.ArcCenter.Z))
+	pairs = append(pairs, NewDoubleCodePair(40, this.StartAngle))
+	pairs = append(pairs, NewDoubleCodePair(41, this.EndAngle))
+	pairs = append(pairs, NewShortCodePair(70, shortFromBool(this.IsPartial)))
+	pairs = append(pairs, NewShortCodePair(71, shortFromBool(this.HasLeader)))
+	pairs = append(pairs, NewDoubleCodePair(16, this.LeaderPoint1.X))
+	pairs = append(pairs, NewDoubleCodePair(26, this.LeaderPoint1.Y))
+	pairs = append(pairs, NewDoubleCodePair(36, this.LeaderPoint1.Z))
+	pairs = append(pairs, NewDoubleCodePair(17, this.LeaderPoint2.X))
+	pairs = append(pairs, NewDoubleCodePair(27, this.LeaderPoint2.Y))
+	pairs = append(pairs, NewDoubleCodePair(37, this.LeaderPoint2.Z))
+	return
+}
+
 type Ellipse struct {
 	// fields for Entity interface
 	handle Handle
@@ -16982,6 +17393,8 @@ func createEntity(entityType string) (entity Entity, ok bool) {
 		entity = NewCircle()
 	case "DIMENSION":
 		entity = NewdimensionHelper()
+	case "ARC_DIMENSION":
+		entity = NewArcDimension()
 	case "ELLIPSE":
 		entity = NewEllipse()
 	case "HELIX":

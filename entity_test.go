@@ -506,6 +506,63 @@ func TestReadDimensionTypeWithFlags(t *testing.T) {
 	assertEqFloat64(t, 1.5, radial.LeaderLength)
 }
 
+func TestReadArcDimension(t *testing.T) {
+	dimension := parseEntity(t, "ARC_DIMENSION",
+		NewStringCodePair(100, "AcDbEntity"),
+		NewStringCodePair(8, "DIMS"),
+		NewStringCodePair(100, "AcDbDimension"),
+		NewStringCodePair(2, "*D7"),
+		NewDoubleCodePair(10, 1.0),
+		NewShortCodePair(70, 5|32),
+		NewShortCodePair(71, 5),
+		NewDoubleCodePair(41, 1.25),
+		NewStringCodePair(100, "AcDbArcDimension"),
+		NewDoubleCodePair(13, 2.0),
+		NewDoubleCodePair(14, 3.0),
+		NewDoubleCodePair(15, 4.0),
+		NewDoubleCodePair(25, 5.0),
+		NewDoubleCodePair(40, 0.5),
+		NewDoubleCodePair(41, 1.5),
+		NewShortCodePair(70, 1),
+		NewShortCodePair(71, 1),
+		NewDoubleCodePair(16, 6.0),
+		NewDoubleCodePair(17, 7.0),
+	).(*ArcDimension)
+	assertEqString(t, "DIMS", dimension.Layer())
+	assertEqString(t, "*D7", dimension.BlockName())
+	// the dimension data and the arc data use the same codes
+	assertEqInt(t, 5|32, int(dimension.DimensionType()))
+	assertEqInt(t, 5, int(dimension.AttachmentPoint()))
+	assertEqFloat64(t, 1.25, dimension.TextLineSpacingFactor())
+	assertEqFloat64(t, 0.5, dimension.StartAngle)
+	assertEqFloat64(t, 1.5, dimension.EndAngle)
+	assertEqBool(t, true, dimension.IsPartial)
+	assertEqBool(t, true, dimension.HasLeader)
+	assertEqPoint(t, Point{4.0, 5.0, 0.0}, dimension.ArcCenter)
+	assertEqFloat64(t, 2.0, dimension.DefinitionPoint2.X)
+	assertEqFloat64(t, 7.0, dimension.LeaderPoint2.X)
+}
+
+func TestRoundTripArcDimension(t *testing.T) {
+	dimension := NewArcDimension()
+	dimension.SetBlockName("*D1")
+	dimension.ArcCenter = Point{1, 2, 0}
+	dimension.StartAngle, dimension.EndAngle = 0.25, 1.75
+	dimension.IsPartial = true
+	drawing := *NewDrawing()
+	drawing.Header.Version = R2018
+	drawing.Entities = append(drawing.Entities, dimension)
+	roundTripped := roundTripDrawing(t, &drawing)
+	actual := roundTripped.Entities[0].(*ArcDimension)
+	assertEqPoint(t, Point{1, 2, 0}, actual.ArcCenter)
+	assertEqFloat64(t, 1.75, actual.EndAngle)
+	assertEqBool(t, true, actual.IsPartial)
+	assertEqInt(t, int(DimensionTypeAngularThreePoint), int(actual.DimensionType()))
+
+	// ARC_DIMENSION exists since AutoCAD 2004
+	assertNotContainsCodePairs(t, []CodePair{NewStringCodePair(0, "ARC_DIMENSION")}, drawingCodePairsFromEntity(t, dimension, R2000))
+}
+
 func TestReadUnsupportedDimensionTypeKeepsReading(t *testing.T) {
 	entities := parseEntities(t,
 		NewStringCodePair(0, "DIMENSION"),

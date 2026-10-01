@@ -455,6 +455,20 @@
     <Field Name="DefinitionPoint2" Code="13" Type="Point" DefaultValue="*NewOrigin()" CodeOverrides="13,23,33" />
     <Field Name="DefinitionPoint3" Code="14" Type="Point" DefaultValue="*NewOrigin()" CodeOverrides="14,24,34" />
   </Entity>
+  <!-- ARC_DIMENSION reuses codes 70, 71 and 41 of the dimension data, so it is read by hand (arcDimension.go) -->
+  <Entity Name="ArcDimension" SubclassMarker="AcDbArcDimension" TypeString="ARC_DIMENSION" ImplementInterfaces="Entity,Dimension" GenerateReader="false" MinVersion="R2004">
+    <Field Name="DefinitionPoint2" Code="13" Type="Point" DefaultValue="*NewOrigin()" CodeOverrides="13,23,33" Comment="Start point of the first extension line." />
+    <Field Name="DefinitionPoint3" Code="14" Type="Point" DefaultValue="*NewOrigin()" CodeOverrides="14,24,34" Comment="Start point of the second extension line." />
+    <Field Name="ArcCenter" Code="15" Type="Point" DefaultValue="*NewOrigin()" CodeOverrides="15,25,35" />
+    <Field Name="StartAngle" Code="40" Type="float64" DefaultValue="0.0" Comment="Radians." />
+    <Field Name="EndAngle" Code="41" Type="float64" DefaultValue="0.0" Comment="Radians." />
+    <Field Name="IsPartial" Code="70" Type="bool" DefaultValue="false" ReadConverter="boolFromShort(%v)" WriteConverter="shortFromBool(%v)" />
+    <Field Name="HasLeader" Code="71" Type="bool" DefaultValue="false" ReadConverter="boolFromShort(%v)" WriteConverter="shortFromBool(%v)" />
+    <Field Name="LeaderPoint1" Code="16" Type="Point" DefaultValue="*NewOrigin()" CodeOverrides="16,26,36" />
+    <Field Name="LeaderPoint2" Code="17" Type="Point" DefaultValue="*NewOrigin()" CodeOverrides="17,27,37" />
+    <!-- private tracking fields -->
+    <Field Name="lastSubclassMarker" Code="-1" Type="string" DefaultValue='""' />
+  </Entity>
   <!--
 
   ELLIPSE

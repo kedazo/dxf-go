@@ -209,6 +209,11 @@ func beforeWrite(entity Entity) {
 		ent.graphicsDataString = bytesToStrings(ent.GraphicsData)
 		ent.entityDataSize = len(ent.EntityData)
 		ent.entityDataString = bytesToStrings(ent.EntityData)
+	case *ArcDimension:
+		// AutoCAD writes ARC_DIMENSIONs with the angular dimension type, not the default aligned one
+		if ent.DimensionType()&0x0F == DimensionTypeAligned {
+			ent.SetDimensionType(ent.DimensionType()&^0x0F | DimensionTypeAngularThreePoint)
+		}
 	case *Polyline:
 		// set vertex types
 		for i := range ent.Vertices {
