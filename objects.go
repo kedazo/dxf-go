@@ -82,6 +82,15 @@ var objectParsers = map[string]func(drawing *Drawing, pairs []CodePair){
 		d.MLeaderStyles = append(d.MLeaderStyles, parseMLeaderStyle(pairs))
 	},
 	"TABLESTYLE": func(d *Drawing, pairs []CodePair) { d.TableStyles = append(d.TableStyles, parseTableStyle(pairs)) },
+	"DICTIONARY": func(d *Drawing, pairs []CodePair) { d.Dictionaries = append(d.Dictionaries, parseDictionary(pairs)) },
+	"ACDBDICTIONARYWDFLT": func(d *Drawing, pairs []CodePair) {
+		d.Dictionaries = append(d.Dictionaries, parseDictionary(pairs))
+	},
+	"XRECORD": func(d *Drawing, pairs []CodePair) { d.XRecords = append(d.XRecords, parseXRecord(pairs)) },
+	"DICTIONARYVAR": func(d *Drawing, pairs []CodePair) {
+		d.DictionaryVariables = append(d.DictionaryVariables, parseDictionaryVariable(pairs))
+	},
+	"SCALE": func(d *Drawing, pairs []CodePair) { d.Scales = append(d.Scales, parseScale(pairs)) },
 }
 
 // readObjectsSection reads the objects in objectParsers; other objects are skipped.

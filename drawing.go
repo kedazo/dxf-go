@@ -37,6 +37,11 @@ type Drawing struct {
 	WipeoutVariables *WipeoutVariables
 	MLeaderStyles    []MLeaderStyle
 	TableStyles      []TableStyle
+	// Dictionaries name the other objects; see NamedObjectDictionary, NamedObject and ObjectName.
+	Dictionaries        []Dictionary
+	XRecords            []XRecord
+	DictionaryVariables []DictionaryVariable
+	Scales              []Scale
 
 	// Classes and Thumbnail are read from the CLASSES and THUMBNAILIMAGE sections, which are not written. Thumbnail is
 	// the preview image as stored (a BMP without its file header); see ThumbnailBMP.

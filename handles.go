@@ -15,7 +15,8 @@ func ParseHandle(s string) Handle {
 //   - entities, also inside blocks, and their sub-records: *Vertex of a POLYLINE, *Attribute of an INSERT;
 //   - table records: *AppId, *BlockRecord, *DimStyle, *Layer, *LineType, *Style, *Ucs, *View, *ViewPort;
 //   - blocks: *Block;
-//   - objects: *Layout, *ImageDefinition, *RasterVariables, *WipeoutVariables, *MLeaderStyle, *TableStyle.
+//   - objects: *Layout, *ImageDefinition, *RasterVariables, *WipeoutVariables, *MLeaderStyle, *TableStyle,
+//     *Dictionary, *XRecord, *DictionaryVariable, *Scale.
 //
 // Each call indexes the whole drawing; for many lookups, build HandleIndex once.
 func (d *Drawing) ItemByHandle(h Handle) any {
@@ -101,6 +102,18 @@ func (d *Drawing) HandleIndex() map[Handle]any {
 	}
 	for i := range d.TableStyles {
 		add(d.TableStyles[i].Handle, &d.TableStyles[i])
+	}
+	for i := range d.Dictionaries {
+		add(d.Dictionaries[i].Handle, &d.Dictionaries[i])
+	}
+	for i := range d.XRecords {
+		add(d.XRecords[i].Handle, &d.XRecords[i])
+	}
+	for i := range d.DictionaryVariables {
+		add(d.DictionaryVariables[i].Handle, &d.DictionaryVariables[i])
+	}
+	for i := range d.Scales {
+		add(d.Scales[i].Handle, &d.Scales[i])
 	}
 	return index
 }
