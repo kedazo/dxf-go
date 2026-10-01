@@ -1,0 +1,355 @@
+package dxf
+
+import (
+	"strconv"
+	"strings"
+)
+
+// MTextRun is a piece of MTEXT content with the same formatting.
+type MTextRun struct {
+	Text string
+	// NewParagraph is set if a paragraph break (\P) precedes the run.
+	NewParagraph bool
+
+	Font   string // \f font family or \F font file; empty for the text style's font
+	Bold   bool
+	Italic bool
+	// Height is an absolute text height set by \H, or 0 for the entity's height; HeightFactor is the product of the
+	// relative heights (\H…x).
+	Height       float64
+	HeightFactor float64
+	Color        Color // \C, ByLayer() when not set
+	TrueColor    int   // \c as 0xRRGGBB, -1 when not set
+	WidthFactor  float64
+	ObliqueAngle float64 // degrees
+	Tracking     float64
+	Underline    bool
+	Overline     bool
+	Strike       bool
+	// Stacked is set for stacked fractions (\S); Text is then "numerator/denominator".
+	Stacked bool
+}
+
+// FormattedText returns the complete MTEXT content including formatting codes: the extended text chunks (code 3)
+// followed by the text (code 1).
+func (m *MText) FormattedText() string {
+	return strings.Join(m.ExtendedText, "") + m.Text
+}
+
+// Runs returns the MTEXT content split into formatted runs.
+func (m *MText) Runs() []MTextRun {
+	return ParseMTextRuns(m.FormattedText())
+}
+
+// PlainText returns the MTEXT content without formatting codes; paragraph breaks become newlines.
+func (m *MText) PlainText() string {
+	return mtextRunsToPlainText(m.Runs())
+}
+
+// PlainText returns the TEXT value with its control codes (%%u, %%o, %%k, %%c, %%d, %%p, %%nnn) resolved.
+func (t *Text) PlainText() string {
+	return decodePercentCodes(t.Value, true)
+}
+
+func mtextRunsToPlainText(runs []MTextRun) string {
+	var builder strings.Builder
+	for _, run := range runs {
+		if run.NewParagraph {
+			builder.WriteByte('\n')
+		}
+		builder.WriteString(run.Text)
+	}
+	return builder.String()
+}
+
+// ParseMTextRuns splits MTEXT content into runs of equally formatted text, resolving escapes, special characters and
+// stacked fractions.
+func ParseMTextRuns(text string) []MTextRun {
+	parser := mtextParser{input: text}
+	parser.state = MTextRun{HeightFactor: 1, Color: ByLayer(), TrueColor: -1, WidthFactor: 1, Tracking: 1}
+	parser.parse()
+	return parser.runs
+}
+
+type mtextParser struct {
+	input            string
+	position         int
+	state            MTextRun
+	stack            []MTextRun
+	text             strings.Builder
+	runs             []MTextRun
+	pendingParagraph bool
+}
+
+func (p *mtextParser) parse() {
+	for p.position < len(p.input) {
+		c := p.input[p.position]
+		switch {
+		case c == '\\' && p.position+1 < len(p.input):
+			p.position++
+			p.parseCode(p.input[p.position])
+		case c == '{':
+			p.position++
+			p.flush()
+			p.stack = append(p.stack, p.state)
+		case c == '}':
+			p.position++
+			p.flush()
+			if len(p.stack) > 0 {
+				p.state = p.stack[len(p.stack)-1]
+				p.stack = p.stack[:len(p.stack)-1]
+			}
+		case c == '^' && p.position+1 < len(p.input):
+			p.parseCaret(p.input[p.position+1])
+			p.position += 2
+		case c == '%' && strings.HasPrefix(p.input[p.position:], "%%"):
+			p.parsePercent()
+		default:
+			p.text.WriteByte(c)
+			p.position++
+		}
+	}
+	p.flush()
+	if p.pendingParagraph {
+		run := p.state
+		run.Text = ""
+		run.NewParagraph = true
+		p.runs = append(p.runs, run)
+	}
+}
+
+// parseCode handles the code after a backslash; position is at the code letter.
+func (p *mtextParser) parseCode(code byte) {
+	p.position++
+	switch code {
+	case '\\', '{', '}':
+		p.text.WriteByte(code)
+	case 'P', 'X', 'N':
+		// paragraph break, dimension line break and column break all start a new line
+		p.flush()
+		if p.pendingParagraph {
+			// consecutive breaks keep an empty paragraph
+			run := p.state
+			run.NewParagraph = true
+			p.runs = append(p.runs, run)
+		}
+		p.pendingParagraph = true
+	case '~':
+		p.text.WriteString(" ")
+	case 'L', 'l', 'O', 'o', 'K', 'k':
+		p.flush()
+		on := code >= 'A' && code <= 'Z'
+		switch code {
+		case 'L', 'l':
+			p.state.Underline = on
+		case 'O', 'o':
+			p.state.Overline = on
+		default:
+			p.state.Strike = on
+		}
+	case 'f', 'F':
+		p.flush()
+		p.parseFont(p.readArgument())
+	case 'H':
+		p.flush()
+		if value, relative, ok := parseRelativeValue(p.readArgument()); ok {
+			if relative {
+				p.state.HeightFactor *= value
+			} else {
+				p.state.Height = value
+				p.state.HeightFactor = 1
+			}
+		}
+	case 'W':
+		p.flush()
+		if value, relative, ok := parseRelativeValue(p.readArgument()); ok {
+			if relative {
+				p.state.WidthFactor *= value
+			} else {
+				p.state.WidthFactor = value
+			}
+		}
+	case 'T':
+		p.flush()
+		if value, relative, ok := parseRelativeValue(p.readArgument()); ok {
+			if relative {
+				p.state.Tracking *= value
+			} else {
+				p.state.Tracking = value
+			}
+		}
+	case 'Q':
+		p.flush()
+		if value, err := strconv.ParseFloat(strings.TrimSpace(p.readArgument()), 64); err == nil {
+			p.state.ObliqueAngle = value
+		}
+	case 'C':
+		p.flush()
+		if value, err := strconv.Atoi(strings.TrimSpace(p.readArgument())); err == nil {
+			p.state.Color = Color(value)
+		}
+	case 'c':
+		p.flush()
+		if value, err := strconv.Atoi(strings.TrimSpace(p.readArgument())); err == nil {
+			p.state.TrueColor = value
+		}
+	case 'S':
+		p.parseStack(p.readArgument())
+	case 'A', 'p':
+		// alignment and paragraph properties don't change the text
+		p.readArgument()
+	default:
+		// an unknown code; it has no argument we could skip reliably
+	}
+}
+
+// readArgument returns the text up to the terminating semicolon (or the end) and moves past it.
+func (p *mtextParser) readArgument() string {
+	rest := p.input[p.position:]
+	end := strings.IndexByte(rest, ';')
+	if end < 0 {
+		p.position = len(p.input)
+		return rest
+	}
+	p.position += end + 1
+	return rest[:end]
+}
+
+func (p *mtextParser) parseFont(argument string) {
+	parts := strings.Split(argument, "|")
+	p.state.Font = parts[0]
+	p.state.Bold = false
+	p.state.Italic = false
+	for _, part := range parts[1:] {
+		if len(part) < 2 {
+			continue
+		}
+		switch part[0] {
+		case 'b':
+			p.state.Bold = part[1:] != "0"
+		case 'i':
+			p.state.Italic = part[1:] != "0"
+		}
+	}
+}
+
+func (p *mtextParser) parseStack(argument string) {
+	p.flush()
+	numerator, denominator := argument, ""
+	if index := strings.IndexAny(argument, "^/#"); index >= 0 {
+		numerator, denominator = argument[:index], argument[index+1:]
+	}
+	run := p.state
+	run.Text = strings.TrimSpace(numerator) + "/" + strings.TrimSpace(denominator)
+	run.Stacked = true
+	p.appendRun(run)
+}
+
+func (p *mtextParser) parseCaret(next byte) {
+	switch next {
+	case 'I':
+		p.text.WriteByte('\t')
+	case 'J', 'M':
+		p.text.WriteByte('\n')
+	case ' ':
+		p.text.WriteByte('^')
+	default:
+		p.text.WriteByte('^')
+		p.text.WriteByte(next)
+	}
+}
+
+func (p *mtextParser) parsePercent() {
+	rest := p.input[p.position:]
+	if len(rest) >= 3 {
+		if special, ok := percentSpecialCharacters[rest[2]|0x20]; ok {
+			p.text.WriteString(special)
+			p.position += 3
+			return
+		}
+		if rest[2] == '%' {
+			p.text.WriteByte('%')
+			p.position += 3
+			return
+		}
+	}
+	p.text.WriteString("%%")
+	p.position += 2
+}
+
+func (p *mtextParser) flush() {
+	if p.text.Len() == 0 {
+		return
+	}
+	run := p.state
+	run.Text = p.text.String()
+	p.text.Reset()
+	p.appendRun(run)
+}
+
+func (p *mtextParser) appendRun(run MTextRun) {
+	run.NewParagraph = p.pendingParagraph
+	p.pendingParagraph = false
+	p.runs = append(p.runs, run)
+}
+
+// parseRelativeValue parses "1.5" or the relative form "1.5x".
+func parseRelativeValue(argument string) (value float64, relative bool, ok bool) {
+	argument = strings.TrimSpace(argument)
+	if strings.HasSuffix(argument, "x") || strings.HasSuffix(argument, "X") {
+		relative = true
+		argument = argument[:len(argument)-1]
+	}
+	value, err := strconv.ParseFloat(argument, 64)
+	return value, relative, err == nil
+}
+
+var percentSpecialCharacters = map[byte]string{
+	'c': "⌀", // diameter
+	'd': "°", // degree
+	'p': "±", // plus-minus
+}
+
+// decodePercentCodes resolves the %% control codes of TEXT values.
+func decodePercentCodes(value string, dropToggles bool) string {
+	if !strings.Contains(value, "%%") {
+		return value
+	}
+	var builder strings.Builder
+	for i := 0; i < len(value); {
+		if !strings.HasPrefix(value[i:], "%%") || i+2 >= len(value) {
+			builder.WriteByte(value[i])
+			i++
+			continue
+		}
+		code := value[i+2]
+		switch {
+		case percentSpecialCharacters[code|0x20] != "":
+			builder.WriteString(percentSpecialCharacters[code|0x20])
+			i += 3
+		case code == '%':
+			builder.WriteByte('%')
+			i += 3
+		case dropToggles && (code|0x20 == 'u' || code|0x20 == 'o' || code|0x20 == 'k'):
+			// underline, overline and strike-through toggles
+			i += 3
+		case code >= '0' && code <= '9' && i+5 <= len(value) && isDecimalDigits(value[i+2:i+5]):
+			number, _ := strconv.Atoi(value[i+2 : i+5])
+			builder.WriteRune(rune(number))
+			i += 5
+		default:
+			builder.WriteString("%%")
+			i += 2
+		}
+	}
+	return builder.String()
+}
+
+func isDecimalDigits(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] < '0' || s[i] > '9' {
+			return false
+		}
+	}
+	return true
+}
