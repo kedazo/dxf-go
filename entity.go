@@ -44,6 +44,9 @@ func readEntity(np CodePair, reader codePairReader) (entity Entity, nextPair Cod
 	entityType := nextPair.Value.(StringCodePairValue).Value
 	entity, ok := createEntity(entityType)
 	if !ok {
+		entity, ok = createCustomEntity(entityType)
+	}
+	if !ok {
 		// swallow unsupported entity
 		nextPair, error = reader.readCodePair()
 		for error == nil && nextPair.Code != 0 {
@@ -65,6 +68,18 @@ func readEntity(np CodePair, reader codePairReader) (entity Entity, nextPair Cod
 	switch dim := entity.(type) {
 	case *dimensionHelper:
 		entity, error = createAndPopulateDimension(dim)
+	}
+	return
+}
+
+// createCustomEntity creates entities that are hand-written instead of generated from spec/EntitySpec.xml.
+func createCustomEntity(entityType string) (entity Entity, ok bool) {
+	ok = true
+	switch entityType {
+	case "HATCH":
+		entity = NewHatch()
+	default:
+		ok = false
 	}
 	return
 }

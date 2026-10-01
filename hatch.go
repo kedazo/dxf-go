@@ -75,7 +75,7 @@ func NewHatch() *Hatch {
 }
 
 func (e *Hatch) typeString() string { return "HATCH" }
-func (e *Hatch) minVersion() AcadVersion { return R13 }
+func (e *Hatch) minVersion() AcadVersion { return R14 }
 func (e *Hatch) maxVersion() AcadVersion { return R2018 }
 
 func (e *Hatch) tryApplyCodePair(codePair CodePair) {
