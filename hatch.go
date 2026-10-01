@@ -118,7 +118,9 @@ type HatchGradient struct {
 type HatchGradientColor struct {
 	Value     float64 // code 463
 	Color     Color   // code 63, 0 if not set
-	TrueColor int     // code 421
+	TrueColor int     // code 421 as 0xRRGGBB; 0 is black when HasTrueColor is set
+	// HasTrueColor is set when the color has a code 421; it is written when this is set or TrueColor isn't 0
+	HasTrueColor bool
 }
 
 // Hatch represents a DXF HATCH entity.
@@ -279,6 +281,7 @@ func (e *Hatch) parseHatchData() {
 		case 421:
 			if gradientColor != nil {
 				gradientColor.TrueColor = intValue(pair)
+				gradientColor.HasTrueColor = true
 			}
 		case 470:
 			gradient().Name = stringValue(pair)
@@ -695,7 +698,9 @@ func (g *HatchGradient) codePairs() (pairs []CodePair) {
 		if color.Color != 0 {
 			pairs = append(pairs, NewShortCodePair(63, int16(color.Color)))
 		}
-		pairs = append(pairs, NewIntCodePair(421, color.TrueColor))
+		if color.HasTrueColor || color.TrueColor != 0 {
+			pairs = append(pairs, NewIntCodePair(421, color.TrueColor))
+		}
 	}
 	pairs = append(pairs, NewStringCodePair(470, g.Name))
 	return

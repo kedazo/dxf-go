@@ -326,6 +326,22 @@ func TestReadSolidHatchWithSeedPointsAndGradient(t *testing.T) {
 	assertEqInt(t, 16776960, gradient.Colors[1].TrueColor)
 }
 
+func TestHatchGradientTrueColorBlack(t *testing.T) {
+	// 421 = 0 is black; a color without 421 has no true color
+	hatch := NewHatch()
+	hatch.Gradient = &HatchGradient{IsGradient: true, Name: "LINEAR", Colors: []HatchGradientColor{
+		{Value: 0, Color: 5, TrueColor: 0, HasTrueColor: true},
+		{Value: 1, Color: 3},
+	}}
+	written := hatchDataCodePairs(t, hatch, R2004)
+	assertEqCodePairs(t, []CodePair{NewIntCodePair(421, 0)}, codePairsWithCode(421, written))
+
+	reread := parseHatch(t, written[1:]...)
+	assertEqBool(t, true, reread.Gradient.Colors[0].HasTrueColor)
+	assertEqInt(t, 0, reread.Gradient.Colors[0].TrueColor)
+	assertEqBool(t, false, reread.Gradient.Colors[1].HasTrueColor)
+}
+
 func TestReadHatchPatternLines(t *testing.T) {
 	hatch := parseHatch(t,
 		NewStringCodePair(2, "ANSI32"),
@@ -601,7 +617,7 @@ func TestRoundTripHatch(t *testing.T) {
 		IsGradient: true,
 		Angle:      0.25,
 		Tint:       0.5,
-		Colors:     []HatchGradientColor{{Value: 0, TrueColor: 255}, {Value: 1, Color: 3, TrueColor: 65280}},
+		Colors:     []HatchGradientColor{{Value: 0, TrueColor: 255, HasTrueColor: true}, {Value: 1, Color: 3, TrueColor: 0, HasTrueColor: true}},
 		Name:       "SPHERICAL",
 	}
 
