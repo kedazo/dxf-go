@@ -17160,6 +17160,819 @@ func (this *Vertex) tryApplyCodePair(codePair CodePair) {
 	}
 }
 
+type Viewport struct {
+	// fields for Entity interface
+	handle Handle
+	isInPaperSpace bool
+	layer string
+	lineTypeName string
+	elevation float64
+	materialHandle string
+	color Color
+	lineWeight LineWeight
+	lineTypeScale float64
+	isVisible bool
+	imageByteCount int
+	previewImageData []string
+	color24Bit int
+	hasColor24Bit bool
+	colorName string
+	transparency int
+	shadowMode ShadowMode
+	Center Point // Center in paper space
+	Width float64 // Width in paper space
+	Height float64 // Height in paper space
+	Status int16 // 0 = off, -1 = on but not active, > 0 = on (stacking order)
+	ID int16 // 1 is the layout's own paper space view
+	ViewCenter Point // View center in display coordinates
+	SnapBasePoint Point
+	SnapSpacing Vector
+	GridSpacing Vector
+	ViewDirection Vector // From the target towards the viewer, in model space
+	ViewTarget Point // In model space
+	LensLength float64
+	FrontClipZ float64
+	BackClipZ float64
+	ViewHeight float64 // Height of the view in model space units
+	SnapAngle float64 // Degrees
+	TwistAngle float64 // Degrees, counter-clockwise
+	CircleSides int16
+	FrozenLayerHandles []Handle
+	StatusFlags int
+	PlotStyleSheetName string
+	RenderMode int16
+	HasUCSPerViewport bool
+	DisplayUCSIcon int16
+	UCSOrigin Point
+	UCSXAxis Vector
+	UCSYAxis Vector
+	UCSOrthographicType int16
+	UCSElevation float64
+	ShadePlotMode int16
+	MajorGridFrequency int16
+	VisualStyleHandle Handle
+	IsDefaultLightingOn bool
+	DefaultLightingType int16
+	Brightness float64
+	Contrast float64
+	AmbientLightColor Color
+	pointerOwner pointer
+	pointerPlotStyle pointer
+	pointerClipBoundary pointer
+}
+
+func NewViewport() *Viewport {
+	return &Viewport{
+		handle: 0,
+		isInPaperSpace: false,
+		layer: "0",
+		lineTypeName: "BYLAYER",
+		elevation: 0.0,
+		materialHandle: "BYLAYER",
+		color: ByLayer(),
+		lineWeight: NewLineWeightStandard(),
+		lineTypeScale: 1.0,
+		isVisible: true,
+		imageByteCount: 0,
+		previewImageData: []string{},
+		color24Bit: 0,
+		colorName: "",
+		transparency: 0,
+		shadowMode: ShadowModeCastsAndReceivesShadows,
+		Center: *NewOrigin(),
+		Width: 0.0,
+		Height: 0.0,
+		Status: 0,
+		ID: 0,
+		ViewCenter: *NewOrigin(),
+		SnapBasePoint: *NewOrigin(),
+		SnapSpacing: Vector{X: 0.5, Y: 0.5},
+		GridSpacing: *NewZeroVector(),
+		ViewDirection: *NewZAxis(),
+		ViewTarget: *NewOrigin(),
+		LensLength: 50.0,
+		FrontClipZ: 0.0,
+		BackClipZ: 0.0,
+		ViewHeight: 0.0,
+		SnapAngle: 0.0,
+		TwistAngle: 0.0,
+		CircleSides: 100,
+		FrozenLayerHandles: []Handle{},
+		StatusFlags: 0,
+		PlotStyleSheetName: "",
+		RenderMode: 0,
+		HasUCSPerViewport: false,
+		DisplayUCSIcon: 0,
+		UCSOrigin: *NewOrigin(),
+		UCSXAxis: *NewXAxis(),
+		UCSYAxis: *NewYAxis(),
+		UCSOrthographicType: 0,
+		UCSElevation: 0.0,
+		ShadePlotMode: 0,
+		MajorGridFrequency: 5,
+		VisualStyleHandle: 0,
+		IsDefaultLightingOn: true,
+		DefaultLightingType: 1,
+		Brightness: 0.0,
+		Contrast: 0.0,
+		AmbientLightColor: Color(250),
+	}
+}
+
+func (e *Viewport) pointers() (pointers []*pointer) {
+	pointers = append(pointers, &e.pointerOwner)
+	pointers = append(pointers, &e.pointerPlotStyle)
+	pointers = append(pointers, &e.pointerClipBoundary)
+	return
+}
+
+func (e *Viewport) getOwnerPointer() pointer {
+	return e.pointerOwner
+}
+
+func (e *Viewport) setOwnerPointerHandle(h Handle) {
+	e.pointerOwner.handle = h
+}
+
+func (e *Viewport) Owner() *DrawingItem {
+	return e.pointerOwner.value
+}
+
+func (e *Viewport) SetOwner(val *DrawingItem) {
+	e.pointerOwner.value = val
+}
+
+func (e *Viewport) getPlotStylePointer() pointer {
+	return e.pointerPlotStyle
+}
+
+func (e *Viewport) setPlotStylePointerHandle(h Handle) {
+	e.pointerPlotStyle.handle = h
+}
+
+func (e *Viewport) PlotStyle() *DrawingItem {
+	return e.pointerPlotStyle.value
+}
+
+func (e *Viewport) SetPlotStyle(val *DrawingItem) {
+	e.pointerPlotStyle.value = val
+}
+
+func (e *Viewport) ClipBoundary() *DrawingItem {
+	return e.pointerClipBoundary.value
+}
+
+func (e *Viewport) SetClipBoundary(val *DrawingItem) {
+	e.pointerClipBoundary.value = val
+}
+
+func (this *Viewport) Handle() Handle {
+	return this.handle
+}
+
+func (this *Viewport) SetHandle(val Handle) {
+	this.handle = val
+}
+
+func (this *Viewport) IsInPaperSpace() bool {
+	return this.isInPaperSpace
+}
+
+func (this *Viewport) SetIsInPaperSpace(val bool) {
+	this.isInPaperSpace = val
+}
+
+func (this *Viewport) Layer() string {
+	return this.layer
+}
+
+func (this *Viewport) SetLayer(val string) {
+	this.layer = val
+}
+
+func (this *Viewport) LineTypeName() string {
+	return this.lineTypeName
+}
+
+func (this *Viewport) SetLineTypeName(val string) {
+	this.lineTypeName = val
+}
+
+func (this *Viewport) Elevation() float64 {
+	return this.elevation
+}
+
+func (this *Viewport) SetElevation(val float64) {
+	this.elevation = val
+}
+
+func (this *Viewport) MaterialHandle() string {
+	return this.materialHandle
+}
+
+func (this *Viewport) SetMaterialHandle(val string) {
+	this.materialHandle = val
+}
+
+func (this *Viewport) Color() Color {
+	return this.color
+}
+
+func (this *Viewport) SetColor(val Color) {
+	this.color = val
+}
+
+func (this *Viewport) LineWeight() LineWeight {
+	return this.lineWeight
+}
+
+func (this *Viewport) SetLineWeight(val LineWeight) {
+	this.lineWeight = val
+}
+
+func (this *Viewport) LineTypeScale() float64 {
+	return this.lineTypeScale
+}
+
+func (this *Viewport) SetLineTypeScale(val float64) {
+	this.lineTypeScale = val
+}
+
+func (this *Viewport) IsVisible() bool {
+	return this.isVisible
+}
+
+func (this *Viewport) SetIsVisible(val bool) {
+	this.isVisible = val
+}
+
+func (this *Viewport) ImageByteCount() int {
+	return this.imageByteCount
+}
+
+func (this *Viewport) SetImageByteCount(val int) {
+	this.imageByteCount = val
+}
+
+func (this *Viewport) PreviewImageData() []string {
+	return this.previewImageData
+}
+
+func (this *Viewport) SetPreviewImageData(val []string) {
+	this.previewImageData = val
+}
+
+func (this *Viewport) Color24Bit() int {
+	return this.color24Bit
+}
+
+func (this *Viewport) SetColor24Bit(val int) {
+	this.color24Bit = val
+	this.hasColor24Bit = true
+}
+
+func (this *Viewport) HasColor24Bit() bool {
+	return this.hasColor24Bit
+}
+
+func (this *Viewport) ClearColor24Bit() {
+	this.color24Bit = 0
+	this.hasColor24Bit = false
+}
+
+func (this *Viewport) ColorName() string {
+	return this.colorName
+}
+
+func (this *Viewport) SetColorName(val string) {
+	this.colorName = val
+}
+
+func (this *Viewport) Transparency() int {
+	return this.transparency
+}
+
+func (this *Viewport) SetTransparency(val int) {
+	this.transparency = val
+}
+
+func (this *Viewport) ShadowMode() ShadowMode {
+	return this.shadowMode
+}
+
+func (this *Viewport) SetShadowMode(val ShadowMode) {
+	this.shadowMode = val
+}
+
+// IsPerspective status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) IsPerspective() bool {
+	return this.StatusFlags & 1 != 0
+}
+
+// IsPerspective status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) SetIsPerspective(val bool) {
+	if val {
+		this.StatusFlags = this.StatusFlags | 1
+	} else {
+		this.StatusFlags = this.StatusFlags & ^1
+	}
+}
+
+// IsFrontClipOn status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) IsFrontClipOn() bool {
+	return this.StatusFlags & 2 != 0
+}
+
+// IsFrontClipOn status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) SetIsFrontClipOn(val bool) {
+	if val {
+		this.StatusFlags = this.StatusFlags | 2
+	} else {
+		this.StatusFlags = this.StatusFlags & ^2
+	}
+}
+
+// IsBackClipOn status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) IsBackClipOn() bool {
+	return this.StatusFlags & 4 != 0
+}
+
+// IsBackClipOn status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) SetIsBackClipOn(val bool) {
+	if val {
+		this.StatusFlags = this.StatusFlags | 4
+	} else {
+		this.StatusFlags = this.StatusFlags & ^4
+	}
+}
+
+// IsUCSFollowModeOn status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) IsUCSFollowModeOn() bool {
+	return this.StatusFlags & 8 != 0
+}
+
+// IsUCSFollowModeOn status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) SetIsUCSFollowModeOn(val bool) {
+	if val {
+		this.StatusFlags = this.StatusFlags | 8
+	} else {
+		this.StatusFlags = this.StatusFlags & ^8
+	}
+}
+
+// IsFrontClipNotAtEye status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) IsFrontClipNotAtEye() bool {
+	return this.StatusFlags & 16 != 0
+}
+
+// IsFrontClipNotAtEye status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) SetIsFrontClipNotAtEye(val bool) {
+	if val {
+		this.StatusFlags = this.StatusFlags | 16
+	} else {
+		this.StatusFlags = this.StatusFlags & ^16
+	}
+}
+
+// IsUCSIconVisible status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) IsUCSIconVisible() bool {
+	return this.StatusFlags & 32 != 0
+}
+
+// IsUCSIconVisible status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) SetIsUCSIconVisible(val bool) {
+	if val {
+		this.StatusFlags = this.StatusFlags | 32
+	} else {
+		this.StatusFlags = this.StatusFlags & ^32
+	}
+}
+
+// IsUCSIconAtOrigin status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) IsUCSIconAtOrigin() bool {
+	return this.StatusFlags & 64 != 0
+}
+
+// IsUCSIconAtOrigin status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) SetIsUCSIconAtOrigin(val bool) {
+	if val {
+		this.StatusFlags = this.StatusFlags | 64
+	} else {
+		this.StatusFlags = this.StatusFlags & ^64
+	}
+}
+
+// IsFastZoomOn status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) IsFastZoomOn() bool {
+	return this.StatusFlags & 128 != 0
+}
+
+// IsFastZoomOn status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) SetIsFastZoomOn(val bool) {
+	if val {
+		this.StatusFlags = this.StatusFlags | 128
+	} else {
+		this.StatusFlags = this.StatusFlags & ^128
+	}
+}
+
+// IsSnapOn status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) IsSnapOn() bool {
+	return this.StatusFlags & 256 != 0
+}
+
+// IsSnapOn status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) SetIsSnapOn(val bool) {
+	if val {
+		this.StatusFlags = this.StatusFlags | 256
+	} else {
+		this.StatusFlags = this.StatusFlags & ^256
+	}
+}
+
+// IsGridOn status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) IsGridOn() bool {
+	return this.StatusFlags & 512 != 0
+}
+
+// IsGridOn status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) SetIsGridOn(val bool) {
+	if val {
+		this.StatusFlags = this.StatusFlags | 512
+	} else {
+		this.StatusFlags = this.StatusFlags & ^512
+	}
+}
+
+// IsIsometricSnapStyle status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) IsIsometricSnapStyle() bool {
+	return this.StatusFlags & 1024 != 0
+}
+
+// IsIsometricSnapStyle status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) SetIsIsometricSnapStyle(val bool) {
+	if val {
+		this.StatusFlags = this.StatusFlags | 1024
+	} else {
+		this.StatusFlags = this.StatusFlags & ^1024
+	}
+}
+
+// IsHidePlot status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) IsHidePlot() bool {
+	return this.StatusFlags & 2048 != 0
+}
+
+// IsHidePlot status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) SetIsHidePlot(val bool) {
+	if val {
+		this.StatusFlags = this.StatusFlags | 2048
+	} else {
+		this.StatusFlags = this.StatusFlags & ^2048
+	}
+}
+
+// IsZoomLocked status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) IsZoomLocked() bool {
+	return this.StatusFlags & 16384 != 0
+}
+
+// IsZoomLocked status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) SetIsZoomLocked(val bool) {
+	if val {
+		this.StatusFlags = this.StatusFlags | 16384
+	} else {
+		this.StatusFlags = this.StatusFlags & ^16384
+	}
+}
+
+// IsNonRectangularClipping status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) IsNonRectangularClipping() bool {
+	return this.StatusFlags & 65536 != 0
+}
+
+// IsNonRectangularClipping status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) SetIsNonRectangularClipping(val bool) {
+	if val {
+		this.StatusFlags = this.StatusFlags | 65536
+	} else {
+		this.StatusFlags = this.StatusFlags & ^65536
+	}
+}
+
+// IsTurnedOff status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) IsTurnedOff() bool {
+	return this.StatusFlags & 131072 != 0
+}
+
+// IsTurnedOff status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) SetIsTurnedOff(val bool) {
+	if val {
+		this.StatusFlags = this.StatusFlags | 131072
+	} else {
+		this.StatusFlags = this.StatusFlags & ^131072
+	}
+}
+
+// IsGridBeyondLimits status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) IsGridBeyondLimits() bool {
+	return this.StatusFlags & 262144 != 0
+}
+
+// IsGridBeyondLimits status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) SetIsGridBeyondLimits(val bool) {
+	if val {
+		this.StatusFlags = this.StatusFlags | 262144
+	} else {
+		this.StatusFlags = this.StatusFlags & ^262144
+	}
+}
+
+// IsAdaptiveGrid status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) IsAdaptiveGrid() bool {
+	return this.StatusFlags & 524288 != 0
+}
+
+// IsAdaptiveGrid status flag.  Minimum AutoCAD version R2000.
+func (this *Viewport) SetIsAdaptiveGrid(val bool) {
+	if val {
+		this.StatusFlags = this.StatusFlags | 524288
+	} else {
+		this.StatusFlags = this.StatusFlags & ^524288
+	}
+}
+
+func (this *Viewport) AddFrozenLayerHandles(val Handle) {
+	this.FrozenLayerHandles = append(this.FrozenLayerHandles, val)
+}
+
+func (this *Viewport) ClearFrozenLayerHandles() {
+	this.FrozenLayerHandles = []Handle{}
+}
+
+func (this *Viewport) typeString() string {
+	return "VIEWPORT"
+}
+
+func (this *Viewport) minVersion() (version AcadVersion) {
+	return Version1_0
+}
+
+func (this *Viewport) maxVersion() (version AcadVersion) {
+	return R2018
+}
+
+func (this *Viewport) tryApplyCodePair(codePair CodePair) {
+	switch codePair.Code {
+	case 10:
+		this.Center.X = codePair.Value.(DoubleCodePairValue).Value
+	case 20:
+		this.Center.Y = codePair.Value.(DoubleCodePairValue).Value
+	case 30:
+		this.Center.Z = codePair.Value.(DoubleCodePairValue).Value
+	case 40:
+		this.Width = codePair.Value.(DoubleCodePairValue).Value
+	case 41:
+		this.Height = codePair.Value.(DoubleCodePairValue).Value
+	case 68:
+		this.Status = codePair.Value.(ShortCodePairValue).Value
+	case 69:
+		this.ID = codePair.Value.(ShortCodePairValue).Value
+	case 12:
+		this.ViewCenter.X = codePair.Value.(DoubleCodePairValue).Value
+	case 22:
+		this.ViewCenter.Y = codePair.Value.(DoubleCodePairValue).Value
+	case 13:
+		this.SnapBasePoint.X = codePair.Value.(DoubleCodePairValue).Value
+	case 23:
+		this.SnapBasePoint.Y = codePair.Value.(DoubleCodePairValue).Value
+	case 14:
+		this.SnapSpacing.X = codePair.Value.(DoubleCodePairValue).Value
+	case 24:
+		this.SnapSpacing.Y = codePair.Value.(DoubleCodePairValue).Value
+	case 15:
+		this.GridSpacing.X = codePair.Value.(DoubleCodePairValue).Value
+	case 25:
+		this.GridSpacing.Y = codePair.Value.(DoubleCodePairValue).Value
+	case 16:
+		this.ViewDirection.X = codePair.Value.(DoubleCodePairValue).Value
+	case 26:
+		this.ViewDirection.Y = codePair.Value.(DoubleCodePairValue).Value
+	case 36:
+		this.ViewDirection.Z = codePair.Value.(DoubleCodePairValue).Value
+	case 17:
+		this.ViewTarget.X = codePair.Value.(DoubleCodePairValue).Value
+	case 27:
+		this.ViewTarget.Y = codePair.Value.(DoubleCodePairValue).Value
+	case 37:
+		this.ViewTarget.Z = codePair.Value.(DoubleCodePairValue).Value
+	case 42:
+		this.LensLength = codePair.Value.(DoubleCodePairValue).Value
+	case 43:
+		this.FrontClipZ = codePair.Value.(DoubleCodePairValue).Value
+	case 44:
+		this.BackClipZ = codePair.Value.(DoubleCodePairValue).Value
+	case 45:
+		this.ViewHeight = codePair.Value.(DoubleCodePairValue).Value
+	case 50:
+		this.SnapAngle = codePair.Value.(DoubleCodePairValue).Value
+	case 51:
+		this.TwistAngle = codePair.Value.(DoubleCodePairValue).Value
+	case 72:
+		this.CircleSides = codePair.Value.(ShortCodePairValue).Value
+	case 331:
+		this.FrozenLayerHandles = append(this.FrozenLayerHandles, handleFromString(codePair.Value.(StringCodePairValue).Value))
+	case 90:
+		this.StatusFlags = codePair.Value.(IntCodePairValue).Value
+	case 1:
+		this.PlotStyleSheetName = codePair.Value.(StringCodePairValue).Value
+	case 281:
+		this.RenderMode = codePair.Value.(ShortCodePairValue).Value
+	case 71:
+		this.HasUCSPerViewport = boolFromShort(codePair.Value.(ShortCodePairValue).Value)
+	case 74:
+		this.DisplayUCSIcon = codePair.Value.(ShortCodePairValue).Value
+	case 110:
+		this.UCSOrigin.X = codePair.Value.(DoubleCodePairValue).Value
+	case 120:
+		this.UCSOrigin.Y = codePair.Value.(DoubleCodePairValue).Value
+	case 130:
+		this.UCSOrigin.Z = codePair.Value.(DoubleCodePairValue).Value
+	case 111:
+		this.UCSXAxis.X = codePair.Value.(DoubleCodePairValue).Value
+	case 121:
+		this.UCSXAxis.Y = codePair.Value.(DoubleCodePairValue).Value
+	case 131:
+		this.UCSXAxis.Z = codePair.Value.(DoubleCodePairValue).Value
+	case 112:
+		this.UCSYAxis.X = codePair.Value.(DoubleCodePairValue).Value
+	case 122:
+		this.UCSYAxis.Y = codePair.Value.(DoubleCodePairValue).Value
+	case 132:
+		this.UCSYAxis.Z = codePair.Value.(DoubleCodePairValue).Value
+	case 79:
+		this.UCSOrthographicType = codePair.Value.(ShortCodePairValue).Value
+	case 146:
+		this.UCSElevation = codePair.Value.(DoubleCodePairValue).Value
+	case 170:
+		this.ShadePlotMode = codePair.Value.(ShortCodePairValue).Value
+	case 61:
+		this.MajorGridFrequency = codePair.Value.(ShortCodePairValue).Value
+	case 348:
+		this.VisualStyleHandle = handleFromString(codePair.Value.(StringCodePairValue).Value)
+	case 292:
+		this.IsDefaultLightingOn = codePair.Value.(BoolCodePairValue).Value
+	case 282:
+		this.DefaultLightingType = codePair.Value.(ShortCodePairValue).Value
+	case 141:
+		this.Brightness = codePair.Value.(DoubleCodePairValue).Value
+	case 142:
+		this.Contrast = codePair.Value.(DoubleCodePairValue).Value
+	case 63:
+		this.AmbientLightColor = Color(codePair.Value.(ShortCodePairValue).Value)
+	case 340:
+		this.pointerClipBoundary.handle = handleFromString(codePair.Value.(StringCodePairValue).Value)
+	default:
+		appliedCodePair := false
+		if !appliedCodePair {
+			appliedCodePair = tryApplyCodePairForEntity(this, codePair)
+		}
+	}
+}
+
+func (this *Viewport) codePairs(version AcadVersion) (pairs []CodePair) {
+	pairs = append(pairs, NewStringCodePair(0, "VIEWPORT"))
+	pairs = append(pairs, codePairsForEntity(this, version)...)
+	if version >= R13 {
+		pairs = append(pairs, NewStringCodePair(100, "AcDbViewport"))
+	}
+	pairs = append(pairs, NewDoubleCodePair(10, this.Center.X))
+	pairs = append(pairs, NewDoubleCodePair(20, this.Center.Y))
+	pairs = append(pairs, NewDoubleCodePair(30, this.Center.Z))
+	pairs = append(pairs, NewDoubleCodePair(40, this.Width))
+	pairs = append(pairs, NewDoubleCodePair(41, this.Height))
+	pairs = append(pairs, NewShortCodePair(68, this.Status))
+	pairs = append(pairs, NewShortCodePair(69, this.ID))
+	if version >= R13 {
+		pairs = append(pairs, NewDoubleCodePair(12, this.ViewCenter.X))
+		pairs = append(pairs, NewDoubleCodePair(22, this.ViewCenter.Y))
+	}
+	if version >= R13 {
+		pairs = append(pairs, NewDoubleCodePair(13, this.SnapBasePoint.X))
+		pairs = append(pairs, NewDoubleCodePair(23, this.SnapBasePoint.Y))
+	}
+	if version >= R13 {
+		pairs = append(pairs, NewDoubleCodePair(14, this.SnapSpacing.X))
+		pairs = append(pairs, NewDoubleCodePair(24, this.SnapSpacing.Y))
+	}
+	if version >= R13 {
+		pairs = append(pairs, NewDoubleCodePair(15, this.GridSpacing.X))
+		pairs = append(pairs, NewDoubleCodePair(25, this.GridSpacing.Y))
+	}
+	if version >= R13 {
+		pairs = append(pairs, NewDoubleCodePair(16, this.ViewDirection.X))
+		pairs = append(pairs, NewDoubleCodePair(26, this.ViewDirection.Y))
+		pairs = append(pairs, NewDoubleCodePair(36, this.ViewDirection.Z))
+	}
+	if version >= R13 {
+		pairs = append(pairs, NewDoubleCodePair(17, this.ViewTarget.X))
+		pairs = append(pairs, NewDoubleCodePair(27, this.ViewTarget.Y))
+		pairs = append(pairs, NewDoubleCodePair(37, this.ViewTarget.Z))
+	}
+	if version >= R13 {
+		pairs = append(pairs, NewDoubleCodePair(42, this.LensLength))
+	}
+	if version >= R13 {
+		pairs = append(pairs, NewDoubleCodePair(43, this.FrontClipZ))
+	}
+	if version >= R13 {
+		pairs = append(pairs, NewDoubleCodePair(44, this.BackClipZ))
+	}
+	if version >= R13 {
+		pairs = append(pairs, NewDoubleCodePair(45, this.ViewHeight))
+	}
+	if version >= R13 {
+		pairs = append(pairs, NewDoubleCodePair(50, this.SnapAngle))
+	}
+	if version >= R13 {
+		pairs = append(pairs, NewDoubleCodePair(51, this.TwistAngle))
+	}
+	if version >= R13 {
+		pairs = append(pairs, NewShortCodePair(72, this.CircleSides))
+	}
+	if version >= R13 {
+		for _, val := range this.FrozenLayerHandles {
+			pairs = append(pairs, NewStringCodePair(331, stringFromHandle(val)))
+		}
+	}
+	if version >= R2000 {
+		pairs = append(pairs, NewIntCodePair(90, this.StatusFlags))
+	}
+	if version >= R2000 {
+		if this.pointerClipBoundary.handle != 0 {
+			pairs = append(pairs, NewStringCodePair(340, stringFromHandle(this.pointerClipBoundary.handle)))
+		}
+	}
+	if version >= R2000 {
+		pairs = append(pairs, NewStringCodePair(1, this.PlotStyleSheetName))
+	}
+	if version >= R2000 {
+		pairs = append(pairs, NewShortCodePair(281, this.RenderMode))
+	}
+	if version >= R2000 {
+		pairs = append(pairs, NewShortCodePair(71, shortFromBool(this.HasUCSPerViewport)))
+	}
+	if version >= R2000 {
+		pairs = append(pairs, NewShortCodePair(74, this.DisplayUCSIcon))
+	}
+	if version >= R2000 {
+		pairs = append(pairs, NewDoubleCodePair(110, this.UCSOrigin.X))
+		pairs = append(pairs, NewDoubleCodePair(120, this.UCSOrigin.Y))
+		pairs = append(pairs, NewDoubleCodePair(130, this.UCSOrigin.Z))
+	}
+	if version >= R2000 {
+		pairs = append(pairs, NewDoubleCodePair(111, this.UCSXAxis.X))
+		pairs = append(pairs, NewDoubleCodePair(121, this.UCSXAxis.Y))
+		pairs = append(pairs, NewDoubleCodePair(131, this.UCSXAxis.Z))
+	}
+	if version >= R2000 {
+		pairs = append(pairs, NewDoubleCodePair(112, this.UCSYAxis.X))
+		pairs = append(pairs, NewDoubleCodePair(122, this.UCSYAxis.Y))
+		pairs = append(pairs, NewDoubleCodePair(132, this.UCSYAxis.Z))
+	}
+	if version >= R2000 {
+		pairs = append(pairs, NewShortCodePair(79, this.UCSOrthographicType))
+	}
+	if version >= R2000 {
+		pairs = append(pairs, NewDoubleCodePair(146, this.UCSElevation))
+	}
+	if version >= R2004 {
+		pairs = append(pairs, NewShortCodePair(170, this.ShadePlotMode))
+	}
+	if version >= R2007 {
+		pairs = append(pairs, NewShortCodePair(61, this.MajorGridFrequency))
+	}
+	if version >= R2007 && this.VisualStyleHandle != 0 {
+		pairs = append(pairs, NewStringCodePair(348, stringFromHandle(this.VisualStyleHandle)))
+	}
+	if version >= R2007 {
+		pairs = append(pairs, NewBoolCodePair(292, this.IsDefaultLightingOn))
+	}
+	if version >= R2007 {
+		pairs = append(pairs, NewShortCodePair(282, this.DefaultLightingType))
+	}
+	if version >= R2007 {
+		pairs = append(pairs, NewDoubleCodePair(141, this.Brightness))
+	}
+	if version >= R2007 {
+		pairs = append(pairs, NewDoubleCodePair(142, this.Contrast))
+	}
+	if version >= R2007 {
+		pairs = append(pairs, NewShortCodePair(63, int16(this.AmbientLightColor)))
+	}
+	return
+}
+
 type Wipeout struct {
 	// fields for Entity interface
 	handle Handle
@@ -17985,6 +18798,8 @@ func createEntity(entityType string) (entity Entity, ok bool) {
 		entity = NewPdfUnderlay()
 	case "VERTEX":
 		entity = NewVertex()
+	case "VIEWPORT":
+		entity = NewViewport()
 	case "WIPEOUT":
 		entity = NewWipeout()
 	case "XLINE":

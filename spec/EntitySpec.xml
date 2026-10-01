@@ -1273,7 +1273,106 @@
   VIEWPORT
 
   -->
-  <!-- TODO MinVersion="R12" -->
+  <!-- R12 keeps everything after the ID in XDATA, which isn't read; the view fields are R13+ -->
+  <Entity Name="Viewport" SubclassMarker="AcDbViewport" TypeString="VIEWPORT">
+    <Field Name="Center" Code="10" Type="Point" DefaultValue="*NewOrigin()" CodeOverrides="10,20,30" Comment="Center in paper space" />
+    <Field Name="Width" Code="40" Type="float64" DefaultValue="0.0" Comment="Width in paper space" />
+    <Field Name="Height" Code="41" Type="float64" DefaultValue="0.0" Comment="Height in paper space" />
+    <Field Name="Status" Code="68" Type="int16" DefaultValue="0" Comment="0 = off, -1 = on but not active, &gt; 0 = on (stacking order)" />
+    <Field Name="ID" Code="69" Type="int16" DefaultValue="0" Comment="1 is the layout's own paper space view" />
+    <Field Name="ViewCenter" Code="12" Type="Point" DefaultValue="*NewOrigin()" CodeOverrides="12,22" MinVersion="R13" Comment="View center in display coordinates" />
+    <Field Name="SnapBasePoint" Code="13" Type="Point" DefaultValue="*NewOrigin()" CodeOverrides="13,23" MinVersion="R13" />
+    <Field Name="SnapSpacing" Code="14" Type="Vector" DefaultValue="Vector{X: 0.5, Y: 0.5}" CodeOverrides="14,24" MinVersion="R13" />
+    <Field Name="GridSpacing" Code="15" Type="Vector" DefaultValue="*NewZeroVector()" CodeOverrides="15,25" MinVersion="R13" />
+    <Field Name="ViewDirection" Code="16" Type="Vector" DefaultValue="*NewZAxis()" CodeOverrides="16,26,36" MinVersion="R13" Comment="From the target towards the viewer, in model space" />
+    <Field Name="ViewTarget" Code="17" Type="Point" DefaultValue="*NewOrigin()" CodeOverrides="17,27,37" MinVersion="R13" Comment="In model space" />
+    <Field Name="LensLength" Code="42" Type="float64" DefaultValue="50.0" MinVersion="R13" />
+    <Field Name="FrontClipZ" Code="43" Type="float64" DefaultValue="0.0" MinVersion="R13" />
+    <Field Name="BackClipZ" Code="44" Type="float64" DefaultValue="0.0" MinVersion="R13" />
+    <Field Name="ViewHeight" Code="45" Type="float64" DefaultValue="0.0" MinVersion="R13" Comment="Height of the view in model space units" />
+    <Field Name="SnapAngle" Code="50" Type="float64" DefaultValue="0.0" MinVersion="R13" Comment="Degrees" />
+    <Field Name="TwistAngle" Code="51" Type="float64" DefaultValue="0.0" MinVersion="R13" Comment="Degrees, counter-clockwise" />
+    <Field Name="CircleSides" Code="72" Type="int16" DefaultValue="100" MinVersion="R13" />
+    <Field Name="FrozenLayerHandles" Code="331" Type="Handle" DefaultValue="[]Handle{}" AllowMultiples="true" ReadConverter="handleFromString(%v)" WriteConverter="stringFromHandle(%v)" MinVersion="R13" />
+    <Field Name="StatusFlags" Code="90" Type="int" DefaultValue="0" MinVersion="R2000">
+      <Flag Name="IsPerspective" Mask="1" />
+      <Flag Name="IsFrontClipOn" Mask="2" />
+      <Flag Name="IsBackClipOn" Mask="4" />
+      <Flag Name="IsUCSFollowModeOn" Mask="8" />
+      <Flag Name="IsFrontClipNotAtEye" Mask="16" />
+      <Flag Name="IsUCSIconVisible" Mask="32" />
+      <Flag Name="IsUCSIconAtOrigin" Mask="64" />
+      <Flag Name="IsFastZoomOn" Mask="128" />
+      <Flag Name="IsSnapOn" Mask="256" />
+      <Flag Name="IsGridOn" Mask="512" />
+      <Flag Name="IsIsometricSnapStyle" Mask="1024" />
+      <Flag Name="IsHidePlot" Mask="2048" />
+      <Flag Name="IsZoomLocked" Mask="16384" />
+      <Flag Name="IsNonRectangularClipping" Mask="65536" />
+      <Flag Name="IsTurnedOff" Mask="131072" />
+      <Flag Name="IsGridBeyondLimits" Mask="262144" />
+      <Flag Name="IsAdaptiveGrid" Mask="524288" />
+    </Field>
+    <Pointer Name="ClipBoundary" Code="340" Type="DrawingItem" />
+    <Field Name="PlotStyleSheetName" Code="1" Type="string" DefaultValue='""' MinVersion="R2000" />
+    <Field Name="RenderMode" Code="281" Type="int16" DefaultValue="0" MinVersion="R2000" />
+    <Field Name="HasUCSPerViewport" Code="71" Type="bool" DefaultValue="false" ReadConverter="boolFromShort(%v)" WriteConverter="shortFromBool(%v)" MinVersion="R2000" />
+    <Field Name="DisplayUCSIcon" Code="74" Type="int16" DefaultValue="0" MinVersion="R2000" />
+    <Field Name="UCSOrigin" Code="110" Type="Point" DefaultValue="*NewOrigin()" CodeOverrides="110,120,130" MinVersion="R2000" />
+    <Field Name="UCSXAxis" Code="111" Type="Vector" DefaultValue="*NewXAxis()" CodeOverrides="111,121,131" MinVersion="R2000" />
+    <Field Name="UCSYAxis" Code="112" Type="Vector" DefaultValue="*NewYAxis()" CodeOverrides="112,122,132" MinVersion="R2000" />
+    <Field Name="UCSOrthographicType" Code="79" Type="int16" DefaultValue="0" MinVersion="R2000" />
+    <Field Name="UCSElevation" Code="146" Type="float64" DefaultValue="0.0" MinVersion="R2000" />
+    <Field Name="ShadePlotMode" Code="170" Type="int16" DefaultValue="0" MinVersion="R2004" />
+    <Field Name="MajorGridFrequency" Code="61" Type="int16" DefaultValue="5" MinVersion="R2007" />
+    <Field Name="VisualStyleHandle" Code="348" Type="Handle" DefaultValue="0" ReadConverter="handleFromString(%v)" WriteConverter="stringFromHandle(%v)" DisableWritingDefault="true" MinVersion="R2007" />
+    <Field Name="IsDefaultLightingOn" Code="292" Type="bool" DefaultValue="true" MinVersion="R2007" />
+    <Field Name="DefaultLightingType" Code="282" Type="int16" DefaultValue="1" MinVersion="R2007" />
+    <Field Name="Brightness" Code="141" Type="float64" DefaultValue="0.0" MinVersion="R2007" />
+    <Field Name="Contrast" Code="142" Type="float64" DefaultValue="0.0" MinVersion="R2007" />
+    <Field Name="AmbientLightColor" Code="63" Type="Color" DefaultValue="Color(250)" ReadConverter="Color(%v)" WriteConverter="int16(%v)" MinVersion="R2007" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value='"AcDbViewport"' MinVersion="R13" />
+      <WriteField Field="Center" />
+      <WriteField Field="Width" />
+      <WriteField Field="Height" />
+      <WriteField Field="Status" />
+      <WriteField Field="ID" />
+      <WriteField Field="ViewCenter" />
+      <WriteField Field="SnapBasePoint" />
+      <WriteField Field="SnapSpacing" />
+      <WriteField Field="GridSpacing" />
+      <WriteField Field="ViewDirection" />
+      <WriteField Field="ViewTarget" />
+      <WriteField Field="LensLength" />
+      <WriteField Field="FrontClipZ" />
+      <WriteField Field="BackClipZ" />
+      <WriteField Field="ViewHeight" />
+      <WriteField Field="SnapAngle" />
+      <WriteField Field="TwistAngle" />
+      <WriteField Field="CircleSides" />
+      <WriteField Field="FrozenLayerHandles" />
+      <WriteField Field="StatusFlags" />
+      <WritePointer Pointer="ClipBoundary" MinVersion="R2000" />
+      <WriteField Field="PlotStyleSheetName" />
+      <WriteField Field="RenderMode" />
+      <WriteField Field="HasUCSPerViewport" />
+      <WriteField Field="DisplayUCSIcon" />
+      <WriteField Field="UCSOrigin" />
+      <WriteField Field="UCSXAxis" />
+      <WriteField Field="UCSYAxis" />
+      <WriteField Field="UCSOrthographicType" />
+      <WriteField Field="UCSElevation" />
+      <WriteField Field="ShadePlotMode" />
+      <WriteField Field="MajorGridFrequency" />
+      <WriteField Field="VisualStyleHandle" />
+      <WriteField Field="IsDefaultLightingOn" />
+      <WriteField Field="DefaultLightingType" />
+      <WriteField Field="Brightness" />
+      <WriteField Field="Contrast" />
+      <WriteField Field="AmbientLightColor" />
+    </WriteOrder>
+  </Entity>
   <!--
 
   WIPEOUT

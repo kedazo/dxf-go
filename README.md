@@ -10,7 +10,9 @@ entities, and writes drawings back.
 
 - **Entities:** lines, arcs, circles, ellipses, (LW)polylines with bulges, polyface and polygon meshes, splines,
   text, MTEXT, attributes, inserts (including MINSERT arrays), dimensions (including ARC_DIMENSION), leaders,
-  hatches, solids, 3D faces, images, MESH, ACAD_TABLE and MULTILEADER.
+  hatches, solids, 3D faces, images, viewports, MESH, ACAD_TABLE and MULTILEADER.
+- **Viewports:** the model-to-paper transform (view target, twist and scale) and the clip outline, to place model
+  space on a layout.
 - **Unsupported entity types** are kept as `UnknownEntity` with their raw group codes instead of being dropped.
 - **HATCH:** polyline and edge boundaries (lines, arcs, ellipses, splines), bulges, patterns, gradients and seed
   points. Boundaries can be flattened to polygons.
