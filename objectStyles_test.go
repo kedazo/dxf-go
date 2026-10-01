@@ -110,6 +110,13 @@ func TestReadMLeaderStyleDefaults(t *testing.T) {
 	assertEqBool(t, true, style.LeaderLineColor.IsByBlock())
 	assertEqBool(t, true, style.TextColor.IsByBlock())
 	assertEqBool(t, true, style.BlockContentColor.IsByBlock())
+	// a missing 173 is a straight leader, not an invisible one
+	assertEqInt(t, 1, int(style.LeaderLineType))
+	assertEqBool(t, true, style.IsLandingEnabled)
+	assertEqFloat64(t, 1.0, style.Scale)
+	assertEqVector(t, Vector{1, 1, 1}, style.BlockContentScale)
+	// a value that is present wins
+	assertEqInt(t, 2, int(style.ContentType))
 }
 
 func tableCellStylePairs(name string, height float64, alignment int16) []CodePair {

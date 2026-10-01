@@ -54,7 +54,8 @@ func (c ObjectColor) ACI() (color Color, ok bool) {
 }
 
 // MLeaderStyle is an MLEADERSTYLE object: the defaults of the MULTILEADER entities that use it. Its name is the key
-// of its entry in the ACAD_MLEADERSTYLE dictionary.
+// of its entry in the ACAD_MLEADERSTYLE dictionary. A missing code reads as AutoCAD's default (as in ezdxf), e.g. a
+// straight leader, BYBLOCK colours and line weight, landing and dogleg on.
 type MLeaderStyle struct {
 	Handle      Handle
 	Description string // code 3
@@ -191,13 +192,36 @@ func parseWipeoutVariables(pairs []CodePair) *WipeoutVariables {
 	return variables
 }
 
-func parseMLeaderStyle(pairs []CodePair) (style MLeaderStyle) {
-	style.XData = xdataFromPairs(pairs)
-	// what AutoCAD assumes when the code is missing (as ezdxf); a missing 92 isn't a 0.00 mm weight
-	style.LeaderLineColor = ObjectColorByBlock
-	style.LeaderLineWeight = LineWeightByBlock
-	style.TextColor = ObjectColorByBlock
-	style.BlockContentColor = ObjectColorByBlock
+func parseMLeaderStyle(pairs []CodePair) MLeaderStyle {
+	// what AutoCAD assumes when a code is missing (as ezdxf): a missing 92 isn't a 0.00 mm weight, nor a missing
+	// 173 an invisible leader
+	style := MLeaderStyle{
+		ContentType:                   2,
+		DrawMLeaderOrder:              1,
+		MaxLeaderSegmentPoints:        2,
+		LeaderLineType:                1,
+		LeaderLineColor:               ObjectColorByBlock,
+		LeaderLineWeight:              LineWeightByBlock,
+		IsLandingEnabled:              true,
+		LandingGap:                    2,
+		IsDoglegEnabled:               true,
+		DoglegLength:                  8,
+		ArrowheadSize:                 4,
+		TextLeftAttachment:            1,
+		TextAngleType:                 1,
+		TextRightAttachment:           1,
+		TextColor:                     ObjectColorByBlock,
+		TextHeight:                    4,
+		AlignGap:                      4,
+		BlockContentColor:             ObjectColorByBlock,
+		BlockContentScale:             Vector{1, 1, 1},
+		IsBlockContentRotationEnabled: true,
+		Scale:                         1,
+		BreakGapSize:                  3.75,
+		BottomTextAttachment:          9,
+		TopTextAttachment:             9,
+		XData:                         xdataFromPairs(pairs),
+	}
 	for _, pair := range pairs {
 		switch pair.Code {
 		case 5:
@@ -292,7 +316,7 @@ func parseMLeaderStyle(pairs []CodePair) (style MLeaderStyle) {
 			style.TopTextAttachment = shortValue(pair)
 		}
 	}
-	return
+	return style
 }
 
 func parseTableStyle(pairs []CodePair) (style TableStyle) {
